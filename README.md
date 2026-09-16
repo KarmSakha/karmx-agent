@@ -10,7 +10,7 @@ _your terminal coding agent — with in-process browser preview, a context engin
 
 karmX is a fork of [goose](https://github.com/block/goose) (Apache-2.0). Same native agent — desktop, CLI, and API — plus platform features that run **in the agent process**, not as MCP servers.
 
-**No baked-in Lucy, no baked-in local LLM.** You configure the OpenAI-compatible endpoint you want.
+**No baked-in model.** You configure the OpenAI-compatible endpoint you want.
 
 https://github.com/KarmSakha/karmx-agent/raw/main/videos/karmx.mp4
 
