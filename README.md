@@ -6,6 +6,8 @@ _your terminal coding agent — with in-process browser preview, a context engin
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+https://github.com/user-attachments/assets/bceeddd4-3007-49da-bc09-d18d94224876
+
 </div>
 
 karmX is a fork of [goose](https://github.com/block/goose) (Apache-2.0). Same native agent — desktop, CLI, and API — plus platform features that run **in the agent process**, not as MCP servers.
