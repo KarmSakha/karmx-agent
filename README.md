@@ -6,15 +6,13 @@ _your terminal coding agent — with in-process browser preview, a context engin
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+https://github.com/user-attachments/assets/04dd6fc0-5862-4982-8843-e3e0a516e776
+
 </div>
 
 karmX is a fork of [goose](https://github.com/block/goose) (Apache-2.0). Same native agent — desktop, CLI, and API — plus platform features that run **in the agent process**, not as MCP servers.
 
 **No baked-in model.** You configure the OpenAI-compatible endpoint you want.
-
-https://github.com/KarmSakha/karmx-agent/raw/main/videos/karmx.mp4
-
-[Download the 50s film](videos/karmx.mp4)
 
 ## Install
 
@@ -95,7 +93,7 @@ cargo test -p goose --lib local_fusion
 
 ## Film
 
-The 50s motion film lives at [`videos/karmx.mp4`](videos/karmx.mp4). Source: [`videos/karmx-remotion`](videos/karmx-remotion).
+The 50s film plays at the top of this README. File: [`videos/karmx.mp4`](videos/karmx.mp4). Source: [`videos/karmx-remotion`](videos/karmx-remotion).
 
 ```bash
 cd videos/karmx-remotion
