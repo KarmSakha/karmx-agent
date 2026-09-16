@@ -1,0 +1,12 @@
+Rewrite the following user instruction so it is specific, unambiguous, and actionable. Keep fenced code blocks unchanged. Do not invent requirements the user did not ask for.
+
+Reply in exactly this format:
+
+### BEGIN RESPONSE ###
+<enhanced-prompt>
+the rewritten instruction
+</enhanced-prompt>
+### END RESPONSE ###
+
+User instruction:
+

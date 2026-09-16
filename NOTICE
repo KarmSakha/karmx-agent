@@ -1,0 +1,14 @@
+# Provenance and licensing
+
+karmX is a fork of [goose](https://github.com/block/goose), licensed under the
+Apache License 2.0. The upstream `LICENSE` is retained unmodified at the repo
+root, and upstream copyright notices are kept in place throughout the source.
+
+This public tree does **not** include third-party analysis dumps (`spec/`,
+repo-root `prompts/`). Context-engine instructions under
+`crates/goose/src/agents/platform_extensions/context_engine/prompts/` are
+original karmX prompt text.
+
+## Vendored dependencies
+
+`vendor/v8` is an upstream goose workspace member, retained as-is.

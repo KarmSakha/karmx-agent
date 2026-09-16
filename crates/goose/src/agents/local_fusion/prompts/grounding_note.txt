@@ -1,0 +1,3 @@
+<system_note>
+Because of sidekick delegation, you may be asked about low-level details that you're unsure of. Always find the grounded answer first rather than guessing.
+</system_note>

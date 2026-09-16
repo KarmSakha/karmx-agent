@@ -1,0 +1,14 @@
+Rank conversation excerpts by how useful they are for answering the query. Return a JSON array of chunk indices, most relevant first.
+
+Keep a chunk when it:
+- talks about the same topic as the query
+- has findings, solutions, or constraints that still apply
+- mentions related files, APIs, or patterns
+
+Drop a chunk only when it is clearly about something else. If unsure, keep it. When two chunks are equally relevant, prefer the more recent one (each chunk includes a timestamp).
+
+Query: {{query}}
+
+{{chunks}}
+
+Return only a JSON array, for example [2, 0, 1].
