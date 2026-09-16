@@ -7,5 +7,3 @@ npm i
 npm run dev          # Remotion Studio
 npx remotion render karmx out/karmx.mp4
 ```
-
-The checked-in showcase is [`../karmx.mp4`](../karmx.mp4).

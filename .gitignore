@@ -93,6 +93,9 @@ gooseselftest/
 /crates/goose-sdk/maven/.kotlin/
 /crates/goose-sdk/maven/build/
 
+# Rendered product film — keep local, do not publish
+/videos/karmx.mp4
+
 # Generated goose-sdk Kotlin example build artifacts
 /crates/goose-sdk/examples/uniffi/kotlin/.gradle/
 /crates/goose-sdk/examples/uniffi/kotlin/.kotlin/
