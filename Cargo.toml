@@ -47,7 +47,7 @@ http = { version = "1.1", default-features = false, features = ["std"] }
 ignore = { version = "0.4.12", default-features = false }
 include_dir = { version = "0.7", default-features = false }
 indoc = { version = "2", default-features = false }
-iroh = { version = "=1.1.0", default-features = false }
+iroh = { version = "=1.2.0", default-features = false }
 iroh-relay = { version = "1", default-features = false }
 keyring = { version = "3.6.3", default-features = false, features = ["vendored"] }
 lru = { version = "0.18", default-features = false }
@@ -104,7 +104,7 @@ tree-sitter-typescript = { version = "0.23", default-features = false }
 
 # llama-cpp-2 doesn't pin the version of its sys crate, so we do it here. it also has breaking changes in patch releases, so we use an exact version pin
 llama-cpp-2 = { version = "=0.1.146", default-features = false, features = ["sampler", "mtmd"] }
-llama-cpp-sys-2 = { version = "=0.1.146", default-features = false }
+llama-cpp-sys-2 = { version = "=0.1.156", default-features = false }
 
 [patch.crates-io]
 agent-client-protocol = { git = "https://github.com/agentclientprotocol/rust-sdk", rev = "c97a5203d3392f7f231514d84eea014f9f43e6fb" }
