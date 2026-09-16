@@ -1,0 +1,42 @@
+{
+  "name": "karmx",
+  "version": "0.1.0",
+  "description": "karmX — terminal coding agent. Installs the native karmx CLI globally.",
+  "license": "Apache-2.0",
+  "author": "KarmSakha",
+  "homepage": "https://karmx.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KarmSakha/karmx-agent.git",
+    "directory": "npm/karmx"
+  },
+  "bugs": {
+    "url": "https://github.com/KarmSakha/karmx-agent/issues"
+  },
+  "keywords": [
+    "karmx",
+    "ai",
+    "agent",
+    "cli",
+    "llm",
+    "openai",
+    "mcp",
+    "terminal"
+  ],
+  "bin": {
+    "karmx": "bin/karmx.js"
+  },
+  "files": [
+    "bin",
+    "scripts",
+    "README.md"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/install.js",
+    "test": "node --test scripts/platform.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "preferGlobal": true
+}

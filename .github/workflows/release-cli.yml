@@ -1,0 +1,100 @@
+name: Release CLI
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-cli-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: karmx (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: macos-13
+            target: x86_64-apple-darwin
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Linux deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libssl-dev libdbus-1-dev libxcb1-dev protobuf-compiler cmake clang
+
+      - name: macOS deps
+        if: runner.os == 'macOS'
+        run: brew install protobuf cmake
+
+      - name: Windows deps
+        if: runner.os == 'Windows'
+        run: choco install protoc cmake -y --no-progress
+
+      - name: Build
+        run: cargo build --release --bin karmx --target ${{ matrix.target }}
+
+      - name: Package
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="${{ matrix.target }}"
+          BIN="karmx"
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            BIN="karmx.exe"
+          fi
+          SRC="target/${TARGET}/release/${BIN}"
+          test -f "$SRC"
+          mkdir -p dist
+          if [[ "$BIN" == *.exe ]]; then
+            (cd "$(dirname "$SRC")" && zip -q "${{ github.workspace }}/dist/karmx-${TARGET}.zip" "$BIN")
+          else
+            chmod +x "$SRC"
+            tar -C "$(dirname "$SRC")" -czf "dist/karmx-${TARGET}.tar.gz" "$BIN"
+          fi
+          ls -lh dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: karmx-${{ matrix.target }}
+          path: dist/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" dist/* \
+            --title "karmx ${{ github.ref_name }}" \
+            --generate-notes \
+            --verify-tag

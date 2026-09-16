@@ -16,6 +16,26 @@ https://github.com/KarmSakha/karmx-agent/raw/main/videos/karmx.mp4
 
 [Download the 50s film](videos/karmx.mp4)
 
+## Install
+
+```bash
+npm install -g karmx
+karmx --version
+karmx configure
+```
+
+On npm 10+, allow the installer once if prompted:
+
+```bash
+npm install -g karmx --allow-scripts=karmx
+```
+
+That installs the native `karmx` CLI globally. Prebuilt binaries come from GitHub Releases when available; otherwise the installer compiles from source (needs [Rust](https://rustup.rs)). From a checkout:
+
+```bash
+KARMX_REPO="$PWD" npm install -g ./npm/karmx
+```
+
 ## What this fork adds
 
 | module | tools | what it does |

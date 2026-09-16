@@ -116,6 +116,21 @@ KARMX_SIDEKICK_MODEL: your-fast-model
 fallbacks), if set, take priority over these — that is the existing delegate
 resolution order, unchanged.
 
+## Install
+
+```bash
+npm install -g karmx
+karmx configure
+```
+
+On npm 10+, allow the installer if prompted: `npm install -g karmx --allow-scripts=karmx`.
+
+From this checkout, reuse the local binary:
+
+```bash
+KARMX_REPO="$PWD" npm install -g ./npm/karmx
+```
+
 ## Build
 
 ```bash
