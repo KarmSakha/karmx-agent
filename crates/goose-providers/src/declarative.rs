@@ -193,6 +193,10 @@ pub struct DeclarativeProviderConfig {
     /// Enables Z.AI's `clear_thinking` field, which Anthropic does not support.
     #[serde(default)]
     pub emit_clear_thinking: bool,
+    /// Prompt profile this provider prefers, e.g. `"compact"` for small local
+    /// models. An explicit `KARMX_PROMPT_PROFILE` wins over this value.
+    #[serde(default)]
+    pub prompt_profile: Option<String>,
     #[serde(default)]
     pub setup: Option<goose_provider_types::canonical::catalog::ProviderSetupMetadata>,
 }

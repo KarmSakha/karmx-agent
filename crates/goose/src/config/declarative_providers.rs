@@ -232,6 +232,7 @@ pub fn create_custom_provider(
         preserves_thinking,
         emit_clear_thinking: false,
         setup: None,
+        prompt_profile: None,
     };
 
     let custom_providers_dir = custom_providers_dir();
@@ -352,6 +353,7 @@ pub fn update_custom_provider(params: UpdateCustomProviderParams) -> Result<()> 
             preserves_thinking,
             emit_clear_thinking: existing_config.emit_clear_thinking,
             setup: existing_config.setup,
+            prompt_profile: None,
         };
 
         let file_path = custom_provider_file_path(&updated_config.name)?;
@@ -630,6 +632,7 @@ mod tests {
             preserves_thinking: true,
             emit_clear_thinking: false,
             setup: None,
+            prompt_profile: None,
         }
     }
 

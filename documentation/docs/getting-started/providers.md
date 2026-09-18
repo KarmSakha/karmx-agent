@@ -523,6 +523,8 @@ Custom providers must use OpenAI, Anthropic, or Ollama compatible API formats. T
     If you want to store the API key in the `goose` keychain, update the provider in goose Desktop and enter the key. This provides secure, persistent storage and allows goose to connect natively to the provider.
     :::
 
+    A provider config may also set `"prompt_profile": "compact"` to prefer the [compact prompt profile](/docs/guides/environment-variables#prompt-profiles) — the short system prompt and restricted extension set intended for small or heavily quantized local models. An explicit `KARMX_PROMPT_PROFILE` takes precedence over the provider's field.
+
   </TabItem>
 </Tabs>
 

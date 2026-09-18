@@ -38,6 +38,13 @@ pub fn sidekick_model_uid() -> Option<String> {
     setting("KARMX_SIDEKICK_MODEL")
 }
 
+/// Whether a dedicated sidekick provider or model is configured. The compact
+/// profile only offers the `sidekick` tool when this is true — without one it
+/// would just be a second copy of the lead.
+pub fn sidekick_configured() -> bool {
+    sidekick_provider().is_some() || sidekick_model_uid().is_some()
+}
+
 /// Whether the lead's system prompt should carry the sidekick guidance: exactly
 /// when the `sidekick` tool is in this request and tools can actually run.
 pub fn sidekick_offered(tools: &[Tool], goose_mode: GooseMode) -> bool {

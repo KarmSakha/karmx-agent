@@ -24,11 +24,15 @@ async fn proactive_and_manual_compaction_continue_with_replaced_usage() -> Resul
         .reply("continued after compaction");
     api.on("after manual compaction").reply("still working");
 
-    let half_full = format!(
+    // The dummy API counts serialized request chars as tokens, and the system
+    // prompt + tool schemas add ~46K on top of the user text. A quarter fill
+    // lands near 61% usage: past the point where the <compaction> budget note
+    // appears but below the 80% auto-compaction threshold.
+    let quarter_full = format!(
         "fill the context {}",
-        "x".repeat(pipeline.context_limit() / 2)
+        "x".repeat(pipeline.context_limit() / 4)
     );
-    pipeline.run([half_full.as_str()]).await?;
+    pipeline.run([quarter_full.as_str()]).await?;
     let budget = pipeline.run(["check the budget"]).await?;
     budget.assert_message(-1, Agent, "budget checked");
     assert!(api.calls().last().unwrap().input_contains("<compaction>"));

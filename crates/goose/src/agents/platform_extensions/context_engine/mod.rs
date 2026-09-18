@@ -189,7 +189,12 @@ impl McpClientTrait for ContextEngineClient {
         _next_cursor: Option<String>,
         _cancellation_token: CancellationToken,
     ) -> Result<ListToolsResult, Error> {
-        Ok(ListToolsResult::with_all_items(Self::get_tools()))
+        let compact = crate::config::profile::PromptProfile::current().is_compact();
+        let tools = Self::get_tools()
+            .into_iter()
+            .filter(|tool| !compact || tool.name == RETRIEVAL_TOOL)
+            .collect();
+        Ok(ListToolsResult::with_all_items(tools))
     }
 
     async fn call_tool(
@@ -229,7 +234,7 @@ impl McpClientTrait for ContextEngineClient {
                     Err(e) => {
                         return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
                             "workspace index failed: {e}"
-                        ))]))
+                        ))]));
                     }
                 };
 
@@ -255,7 +260,7 @@ impl McpClientTrait for ContextEngineClient {
                     Err(e) => {
                         return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
                             "provider unavailable: {e}"
-                        ))]))
+                        ))]));
                     }
                 };
                 let model_config =
@@ -264,7 +269,7 @@ impl McpClientTrait for ContextEngineClient {
                         Err(e) => {
                             return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
                                 "model config unavailable: {e}"
-                            ))]))
+                            ))]));
                         }
                     };
 
@@ -314,7 +319,7 @@ impl McpClientTrait for ContextEngineClient {
                     Err(e) => {
                         return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
                             "provider unavailable: {e}"
-                        ))]))
+                        ))]));
                     }
                 };
                 let model_config =
@@ -323,7 +328,7 @@ impl McpClientTrait for ContextEngineClient {
                         Err(e) => {
                             return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
                                 "model config unavailable: {e}"
-                            ))]))
+                            ))]));
                         }
                     };
 

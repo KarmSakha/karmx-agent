@@ -1221,7 +1221,7 @@ impl ProviderStream {
                         Err(_) => {
                             return Err(observer.fail(GooseError::Timeout {
                                 details: format!("request timed out after {timeout_ms}ms"),
-                            }))
+                            }));
                         }
                     }
                 } else {

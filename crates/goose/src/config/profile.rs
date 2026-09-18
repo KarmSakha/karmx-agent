@@ -33,6 +33,7 @@ pub const COMPACT_EXTENSIONS: &[&str] = &[
     "todo",
     "browser_preview",
     "analyze",
+    "summon",
 ];
 
 /// Skills listed in the system prompt under the compact profile.
@@ -56,7 +57,8 @@ impl PromptProfile {
         }
     }
 
-    /// The active profile from the environment or config file.
+    /// The active profile: explicit `KARMX_PROMPT_PROFILE` first, then the
+    /// active provider's `prompt_profile`, then the default profile.
     pub fn current() -> Self {
         Self::from_config(Config::global())
     }
@@ -72,8 +74,16 @@ impl PromptProfile {
                 });
                 Self::Default
             }),
-            Err(_) => Self::Default,
+            Err(_) => Self::from_active_provider(config).unwrap_or_default(),
         }
+    }
+
+    /// The profile the active provider declares in its declarative config,
+    /// e.g. `"prompt_profile": "compact"` on a custom local provider.
+    fn from_active_provider(config: &Config) -> Option<Self> {
+        let provider = config.get_param::<String>("GOOSE_PROVIDER").ok()?;
+        let loaded = crate::config::declarative_providers::load_provider(&provider).ok()?;
+        Self::parse(loaded.config.prompt_profile.as_deref()?)
     }
 
     pub fn is_compact(self) -> bool {
@@ -353,5 +363,65 @@ mod tests {
             COMPACT_SKILLS_LIMIT
         );
         assert_eq!(skills_prompt_limit_for(PromptProfile::Compact, Some(3)), 3);
+    }
+
+    #[test]
+    fn compact_allowlist_includes_summon() {
+        let list = extensions_allowlist_for(PromptProfile::Compact, None).unwrap();
+        assert!(list.iter().any(|item| item == "summon"));
+    }
+
+    #[test]
+    fn provider_prompt_profile_is_used_when_no_explicit_profile() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_root = temp_dir.path().display().to_string();
+        let custom = temp_dir.path().join("config").join("custom_providers");
+        std::fs::create_dir_all(&custom).unwrap();
+        std::fs::write(
+            custom.join("compact_prov.json"),
+            r#"{
+                "name": "compact_prov",
+                "engine": "openai",
+                "display_name": "Compact",
+                "base_url": "http://localhost:1",
+                "models": [],
+                "prompt_profile": "compact"
+            }"#,
+        )
+        .unwrap();
+        let _guard = env_lock::lock_env([
+            ("GOOSE_PATH_ROOT", Some(temp_root.as_str())),
+            ("GOOSE_PROVIDER", Some("compact_prov")),
+            ("KARMX_PROMPT_PROFILE", None::<&str>),
+        ]);
+
+        assert_eq!(PromptProfile::current(), PromptProfile::Compact);
+    }
+
+    #[test]
+    fn explicit_profile_beats_provider_prompt_profile() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_root = temp_dir.path().display().to_string();
+        let custom = temp_dir.path().join("config").join("custom_providers");
+        std::fs::create_dir_all(&custom).unwrap();
+        std::fs::write(
+            custom.join("compact_prov.json"),
+            r#"{
+                "name": "compact_prov",
+                "engine": "openai",
+                "display_name": "Compact",
+                "base_url": "http://localhost:1",
+                "models": [],
+                "prompt_profile": "compact"
+            }"#,
+        )
+        .unwrap();
+        let _guard = env_lock::lock_env([
+            ("GOOSE_PATH_ROOT", Some(temp_root.as_str())),
+            ("GOOSE_PROVIDER", Some("compact_prov")),
+            ("KARMX_PROMPT_PROFILE", Some("default")),
+        ]);
+
+        assert_eq!(PromptProfile::current(), PromptProfile::Default);
     }
 }

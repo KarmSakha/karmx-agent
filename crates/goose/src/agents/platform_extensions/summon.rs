@@ -2283,11 +2283,17 @@ impl McpClientTrait for SummonClient {
             .map(|s| s.session_type == SessionType::SubAgent)
             .unwrap_or(false);
 
-        let mut tools = vec![self.create_load_tool()];
-
-        if !is_subagent {
-            tools.push(self.create_delegate_tool());
-            tools.push(self.create_sidekick_tool());
+        let mut tools = Vec::new();
+        if crate::config::profile::PromptProfile::current().is_compact() {
+            if !is_subagent && crate::agents::local_fusion::sidekick_configured() {
+                tools.push(self.create_sidekick_tool());
+            }
+        } else {
+            tools.push(self.create_load_tool());
+            if !is_subagent {
+                tools.push(self.create_delegate_tool());
+                tools.push(self.create_sidekick_tool());
+            }
         }
 
         Ok(ListToolsResult {

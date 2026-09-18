@@ -92,6 +92,22 @@ You can also add a declarative provider with `karmx configure`, or drop a JSON
 file in `~/.config/karmx/custom_providers/` — see `karmx_custom.json.example`.
 `dynamic_models: true` means any model name is accepted.
 
+### Prompt profile
+
+`KARMX_PROMPT_PROFILE` (env var or `config.yaml` key) selects what the model
+receives before the first user word. `compact` renders the short
+`system.compact.md` prompt and restricts sessions to a small built-in
+extension allowlist — meant for small or heavily quantized local models.
+Unset uses the default profile. Precedence: explicit `KARMX_PROMPT_PROFILE` →
+the active provider's `prompt_profile` JSON field → default, so a custom
+provider can declare `"prompt_profile": "compact"` once instead of setting
+the env var. `KARMX_EXTENSIONS_ALLOWLIST` overrides the built-in list, and
+`KARMX_SKILLS_PROMPT_LIMIT` caps the skills listing when `skills` is allowed.
+
+Under compact, `summon` offers only the `sidekick` tool (when a sidekick
+provider or model is configured), `context_engine` offers only
+`codebase_retrieval`, and `skills` is off the list.
+
 ### Sidekick model
 
 The sidekick (Local Fusion) can run on a different provider and model from the

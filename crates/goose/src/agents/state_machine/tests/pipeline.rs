@@ -3,14 +3,13 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use rmcp::model::ElicitationAction;
-use tokio::sync::Mutex as TokioMutex;
 use tokio::sync::mpsc;
+use tokio::sync::Mutex as TokioMutex;
 use tokio_util::sync::CancellationToken;
 
 use super::calculator_extension::CalculatorExtension;
 use super::dummy_api::{DummyApi, ProviderFeatures};
 use crate::action_required_manager::ElicitationOutcome;
-use crate::agents::AgentEvent;
 use crate::agents::extension::ExtensionConfig;
 use crate::agents::extension_manager::{ExtensionManager, ExtensionManagerCapabilities};
 use crate::agents::mcp_client::McpClientTrait;
@@ -23,13 +22,14 @@ use crate::agents::state_machine::{
     SteerOperation, SteerQueue, Step, StopHookOperation, ToolApprovalOperation,
     ToolExecutionOperation, ToolPairCompactionOperation, UnknownToolOperation,
 };
-use crate::config::GooseMode;
+use crate::agents::AgentEvent;
 use crate::config::permission::{PermissionLevel, PermissionManager};
-use crate::conversation::Conversation;
+use crate::config::GooseMode;
 use crate::conversation::message::{ActionRequiredData, Message, MessageContent};
+use crate::conversation::Conversation;
 use crate::hooks::HookManager;
-use crate::permission::Permission;
 use crate::permission::permission_inspector::PermissionInspector;
+use crate::permission::Permission;
 use crate::providers::base::Provider;
 use crate::security::security_inspector::SecurityInspector;
 use crate::session::extension_data::EnabledExtensionsState;
@@ -146,7 +146,10 @@ impl TestPipeline {
             )),
             Arc::new(DoctorOperation),
             Arc::new(ProjectOperation),
-            Arc::new(SkillOperation::new(self.hook_manager.clone())),
+            Arc::new(SkillOperation::new(
+                self.hook_manager.clone(),
+                self.extension_manager.clone(),
+            )),
             Arc::new(RecipeOperation::new(
                 provider.clone(),
                 self.hook_manager.clone(),
@@ -876,6 +879,7 @@ fn default_extensions() -> Vec<ExtensionConfig> {
         ("calculator", "Stateful test calculator"),
         ("extensionmanager", "Extension Manager"),
         ("todo", "Todo"),
+        (crate::skills::EXTENSION_NAME, "Skills"),
         (
             crate::agents::platform_extensions::scheduler::EXTENSION_NAME,
             "Scheduler",
