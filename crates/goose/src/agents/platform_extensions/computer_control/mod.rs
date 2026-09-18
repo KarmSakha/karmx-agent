@@ -75,9 +75,9 @@ impl ComputerControlClient {
              This lane drives Chrome only — native apps (Discord, Slack, Finder) are invisible \
              to it; open those with shell and use their web versions instead.\n\n\
              Requires Chrome running with --remote-debugging-port=<port> (default 9222); pass \
-             launch: true to have it started for you. Coordinates are viewport pixels; a \
-             screenshot is returned afterwards by default so you can see the result of what \
-             you did."
+             launch: true to have it started for you in an isolated profile — never kill the \
+             user's own Chrome. Coordinates are viewport pixels; a screenshot is returned \
+             afterwards by default so you can see the result of what you did."
                     .to_string(),
                 object!({
                     "type": "object",
@@ -177,6 +177,8 @@ impl ComputerControlClient {
              page's interactive elements are resolved for you — by the Jev router \
              when configured, otherwise by text matching; when nothing resolves the \
              element table is returned so you can pick by index or coordinate.\n\n\
+             Instructions target elements inside the page — to open a site, pass its \
+             `url`; the address bar and tabs are Chrome's UI, not page elements.\n\n\
              Actions that look destructive (pay, delete, submit, sign in, send) are \
              refused unless confirm: true is passed.\n\n\
              Requires Chrome running with --remote-debugging-port=<port> (default 9222); \
@@ -268,6 +270,8 @@ impl ComputerControlClient {
 
     /// Starts Chrome with remote debugging in a throwaway profile (not the
     /// user's real session) and waits for the debug endpoint to answer.
+    /// Spawns the binary directly — `open -a` forwards to an already-running
+    /// Chrome instance, which silently drops the debugging-port args.
     async fn launch_browser(port: u16) -> Result<(), String> {
         let profile = std::env::temp_dir().join("karmx-cdp-profile");
         let chrome_args = format!(
@@ -276,9 +280,20 @@ impl ComputerControlClient {
             profile.display()
         );
         #[cfg(target_os = "macos")]
-        let spawned = std::process::Command::new("open")
-            .args(["-na", "Google Chrome", "--args", &chrome_args])
-            .spawn();
+        let spawned = [
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "/Applications/Chromium.app/Contents/MacOS/Chromium",
+        ]
+        .iter()
+        .find_map(|bin| {
+            std::process::Command::new(bin)
+                .args(chrome_args.split_whitespace())
+                .spawn()
+                .ok()
+        })
+        .ok_or_else(|| {
+            "no Chrome binary found in /Applications (Google Chrome or Chromium)".to_string()
+        });
         #[cfg(not(target_os = "macos"))]
         let spawned = ["google-chrome", "chromium", "chromium-browser", "chrome"]
             .iter()

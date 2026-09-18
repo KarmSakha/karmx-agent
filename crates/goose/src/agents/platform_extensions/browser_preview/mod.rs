@@ -19,12 +19,12 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
+use axum::Router;
 use axum::body::Body;
 use axum::extract::{Request, State};
-use axum::http::{header, HeaderMap, HeaderName, HeaderValue, StatusCode};
+use axum::http::{HeaderMap, HeaderName, HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
-use axum::Router;
 use futures::StreamExt;
 use rmcp::model::{
     CallToolResult, ContentBlock, Implementation, InitializeResult, JsonObject, ListToolsResult,
@@ -326,7 +326,9 @@ impl BrowserPreviewClient {
                 "Open a live preview of a web app and read back what it actually renders. \
                  Proxies the target URL, injects a page bridge, then returns the rendered DOM \
                  elements and browser console output. Use this to verify UI changes instead of \
-                 reading HTML source."
+                 reading HTML source.\n\n\
+                 This is a self-contained read-only preview — it does not connect to a Chrome \
+                 debug session; for that lane use computer_control, page_elements, browser_task."
                     .to_string(),
                 object!({
                     "type": "object",
