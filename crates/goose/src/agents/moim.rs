@@ -34,6 +34,12 @@ pub fn system_prompt_block() -> Option<String> {
     }
 }
 
+/// Whether the per-turn block can appear at this context size. When it can't,
+/// the system prompt should not spend tokens describing it.
+pub(crate) fn turn_context_enabled(context_limit: Option<usize>) -> bool {
+    !should_skip_moim(context_limit)
+}
+
 pub(super) async fn compute_compaction_info(
     session_id: &str,
     extension_manager: &ExtensionManager,
@@ -287,13 +293,15 @@ mod tests {
         assert!(event.is_turn_context());
         assert!(!event.is_user_visible());
 
-        assert!(turn_context_event(
-            Path::new("/test/dir"),
-            Some(16_000),
-            vec![],
-            chrono::Local::now(),
-        )
-        .is_none());
+        assert!(
+            turn_context_event(
+                Path::new("/test/dir"),
+                Some(16_000),
+                vec![],
+                chrono::Local::now(),
+            )
+            .is_none()
+        );
     }
 
     #[test]

@@ -1,6 +1,6 @@
-use super::CompletionCache;
 use super::input::{InputResult, ModelCommandOptions};
-use console::{Key, Term, measure_text_width, style};
+use super::CompletionCache;
+use console::{measure_text_width, style, Key, Term};
 use goose::config::Config;
 use goose_providers::model::ModelConfig;
 use goose_providers::thinking::ThinkingEffort;
@@ -690,10 +690,9 @@ mod tests {
             ]
         );
         assert_eq!(rows[0].effort, ThinkingEffort::High);
-        assert!(
-            rows.iter()
-                .any(|row| row.provider == "openai" && row.model == "gpt-4o")
-        );
+        assert!(rows
+            .iter()
+            .any(|row| row.provider == "openai" && row.model == "gpt-4o"));
         assert_eq!(rows.len(), 3);
     }
 }

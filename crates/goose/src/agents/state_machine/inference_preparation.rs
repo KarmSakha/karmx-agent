@@ -9,9 +9,9 @@ use crate::tool_inspection::ToolInspectionManager;
 use anyhow::Result;
 use async_trait::async_trait;
 use goose_agent::inference::{InferenceRequestPreparer, PreparedInferenceRequest};
-use goose_agent::operation::{messages_since_kickoff, InferenceInput};
-use goose_providers::conversation::message::Message;
+use goose_agent::operation::{InferenceInput, messages_since_kickoff};
 use goose_providers::conversation::Conversation;
+use goose_providers::conversation::message::Message;
 #[cfg(feature = "code-mode")]
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -59,6 +59,7 @@ impl InferenceRequestPreparer<Session> for GooseInferenceRequestPreparer<'_> {
             goose_mode,
             enable_subagents,
             self.parallel_tool_calls,
+            crate::agents::moim::turn_context_enabled(Some(self.context_limit)),
         );
         let turn = messages_since_kickoff(conversation)?;
         let turn_start = turn

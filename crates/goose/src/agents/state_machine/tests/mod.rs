@@ -1,11 +1,11 @@
 use anyhow::Result;
 
-use self::calculator_extension::{value, ADD};
+use self::calculator_extension::{ADD, value};
 use self::pipeline::MessageKind::{Agent, ToolCall};
-use self::pipeline::{test_pipeline, MAX_TURNS};
+use self::pipeline::{MAX_TURNS, test_pipeline};
 use crate::agents::state_machine;
-use crate::agents::state_machine::ops_retry::NUDGED;
 use crate::agents::state_machine::Emitter;
+use crate::agents::state_machine::ops_retry::NUDGED;
 
 mod agent_reply;
 mod calculator_extension;
@@ -29,7 +29,7 @@ async fn capture_state_machine_trace_fields(
     use tracing_futures::Instrument;
 
     use crate::agents::gen_ai_telemetry::{
-        test_support::SpanFieldCapture, CAPTURE_MESSAGE_CONTENT_ENV,
+        CAPTURE_MESSAGE_CONTENT_ENV, test_support::SpanFieldCapture,
     };
     use crate::conversation::message::Message;
 
@@ -85,7 +85,7 @@ async fn state_machine_trace_omits_content_without_capture() -> Result<()> {
         assert!(!fields.contains_key("trace_input"));
         assert!(!fields.contains_key("trace_output"));
         assert!(!fields.contains_key("gen_ai.output.messages"));
-        assert_eq!(fields["gen_ai.agent.name"], "goose");
+        assert_eq!(fields["gen_ai.agent.name"], "karmx");
     }
     Ok(())
 }
@@ -95,10 +95,12 @@ async fn state_machine_trace_retains_content_with_capture() -> Result<()> {
     let fields = capture_state_machine_trace_fields(Some("true")).await?;
     assert_eq!(fields["trace_input"], "input-super-secret-token");
     assert_eq!(fields["trace_output"], "output-super-secret-token");
-    assert!(fields["gen_ai.output.messages"]
-        .as_str()
-        .unwrap()
-        .contains("output-super-secret-token"));
+    assert!(
+        fields["gen_ai.output.messages"]
+            .as_str()
+            .unwrap()
+            .contains("output-super-secret-token")
+    );
     Ok(())
 }
 
@@ -153,10 +155,11 @@ async fn turn_context_is_persisted_once_per_turn_and_reused_across_inferences() 
         "one turn-context event per turn; the turn's second inference reuses it"
     );
     assert!(events.iter().all(|event| !event.is_user_visible()));
-    assert!(api
-        .calls()
-        .iter()
-        .all(|call| call.input_contains("<turn-context>")));
+    assert!(
+        api.calls()
+            .iter()
+            .all(|call| call.input_contains("<turn-context>"))
+    );
 
     Ok(())
 }
@@ -240,11 +243,13 @@ async fn slash_commands_yield_or_fall_through_to_inference() -> Result<()> {
     let status = pipeline.run(["/status"]).await?;
     assert_eq!(api.call_count(), 0);
     status.assert_message(-1, Agent, "Provider:");
-    assert!(status
-        .conversation()
-        .messages()
-        .iter()
-        .all(|message| message.is_user_visible() && !message.is_agent_visible()));
+    assert!(
+        status
+            .conversation()
+            .messages()
+            .iter()
+            .all(|message| message.is_user_visible() && !message.is_agent_visible())
+    );
 
     api.on("/not-a-command").reply("saw it");
     let unknown = pipeline.run(["/not-a-command"]).await?;

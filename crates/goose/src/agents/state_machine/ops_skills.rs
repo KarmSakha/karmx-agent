@@ -2,27 +2,27 @@
 
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use async_trait::async_trait;
 use goose_sdk_types::custom_requests::{SourceEntry, SourceType};
 use rmcp::model::{CallToolResult, ContentBlock, ErrorData, JsonObject, Tool};
-use schemars::{schema_for, JsonSchema};
+use schemars::{JsonSchema, schema_for};
 use serde::Deserialize;
 use serde_json::Value;
 use tracing_futures::Instrument;
 
 use crate::agents::state_machine::ops_toolcalling::{
-    emit_post_tool_use, pending_advertised_tool_requests, run_pre_tool_hooks, tool_span,
-    ToolDisposition,
+    ToolDisposition, emit_post_tool_use, pending_advertised_tool_requests, run_pre_tool_hooks,
+    tool_span,
 };
 use crate::agents::state_machine::{
-    applied, messages_since_kickoff, not_applicable, yielded_with, ConversationEffect, Emitter,
-    GooseEffect, Operation, OperationResult, SlashCommand,
+    ConversationEffect, Emitter, GooseEffect, Operation, OperationResult, SlashCommand, applied,
+    messages_since_kickoff, not_applicable, yielded_with,
 };
 use crate::agents::tool_execution::{CHAT_MODE_TOOL_SKIPPED_RESPONSE, DECLINED_RESPONSE};
 use crate::config::GooseMode;
-use crate::conversation::message::Message;
 use crate::conversation::Conversation;
+use crate::conversation::message::Message;
 use crate::hooks::HookManager;
 use crate::session::Session;
 
@@ -35,7 +35,11 @@ pub struct SkillOperation {
 #[derive(Deserialize, JsonSchema)]
 struct LoadSkillParams {
     /// Name of the skill to load. Use "skill-name/path" to load a supporting file.
-    name: String,
+    #[serde(default)]
+    name: Option<String>,
+    /// Search installed skills and return the best matches instead of loading one.
+    #[serde(default)]
+    query: Option<String>,
     /// Optional arguments to provide when loading the skill.
     #[serde(default)]
     args: Option<String>,
@@ -51,7 +55,8 @@ fn skill_tool() -> Result<Tool> {
         LOAD_SKILL_TOOL_NAME,
         "Load a skill's full content into your context so you can follow its instructions.\n\n\
          Skills are listed in your system instructions. When you need to use one, \
-         load it first to get the detailed instructions.",
+         load it first to get the detailed instructions. Pass `query` instead of \
+         `name` to search installed skills and get the best matches.",
         schema,
     ))
 }
@@ -70,24 +75,13 @@ fn skill_instructions(working_dir: &Path) -> Option<String> {
     if skills.is_empty() {
         return None;
     }
-    let (skills, hidden) = crate::skills::client::select_skills_for_prompt(
-        &skills,
-        crate::config::profile::skills_prompt_limit(),
-    );
-
-    let mut instructions = String::from(
-        "# Skills\n\nYou have these skills at your disposal. Load one when it can help with the task or when the user asks for it:",
-    );
-    for skill in skills {
-        instructions.push_str(&format!("\n- {}: {}", skill.name, skill.description));
-    }
-    if hidden > 0 {
-        instructions.push_str(&format!(
-            "\n- {}",
-            crate::skills::client::hidden_skills_note(hidden)
-        ));
-    }
-    Some(instructions)
+    Some(format!(
+        "# Skills{}",
+        crate::skills::client::format_skills_listing(
+            &skills,
+            crate::config::profile::skills_prompt_limit()
+        )
+    ))
 }
 
 fn execute_skill(working_dir: &Path, arguments: Option<JsonObject>) -> CallToolResult {
@@ -102,9 +96,22 @@ fn execute_skill(working_dir: &Path, arguments: Option<JsonObject>) -> CallToolR
         Ok(params) => params,
         Err(error) => return CallToolResult::error(vec![ContentBlock::text(error)]),
     };
-    let skill_name = params.name.as_str();
-    let args = params.args.as_deref();
+    let skill_name = params.name.as_deref().unwrap_or("");
     let skills = crate::skills::discover_skills(Some(working_dir));
+
+    if let Some(query) = params.query.as_deref().filter(|query| !query.is_empty()) {
+        let skills: Vec<&SourceEntry> = skills.iter().collect();
+        return CallToolResult::success(vec![ContentBlock::text(
+            crate::skills::client::search_skills(&skills, query),
+        )]);
+    }
+
+    if skill_name.is_empty() {
+        return CallToolResult::error(vec![ContentBlock::text(
+            "Missing required parameter: name or query",
+        )]);
+    }
+    let args = params.args.as_deref();
 
     if let Some(skill) = skills.iter().find(|skill| skill.name == skill_name) {
         return match crate::skills::loaded_skill_context_with_args(skill, args) {

@@ -11,7 +11,7 @@ use rmcp::model::{
     InitializeResult, JsonObject, ListPromptsResult, ListResourcesResult, ListToolsResult,
     ReadResourceResult, ServerCapabilities, ServerNotification, Tool, ToolAnnotations,
 };
-use schemars::{schema_for, JsonSchema};
+use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
@@ -77,26 +77,13 @@ pub struct ExtensionManagerClient {
 
 impl ExtensionManagerClient {
     pub fn new(context: PlatformExtensionContext) -> Result<Self> {
-        let info = InitializeResult::new(
-            ServerCapabilities::builder().enable_tools().build(),
-        )
-        .with_server_info(Implementation::new(EXTENSION_NAME, "1.0.0").with_title(EXTENSION_NAME))
-        .with_instructions(indoc! {r#"
-            Extension Management
-
-            Use these tools to discover, enable, and disable extensions, as well as review resources.
-
-            Available tools:
-            - search_available_extensions: Find extensions available to enable/disable
-            - manage_extensions: Enable or disable extensions
-            - list_resources: List resources from extensions
-            - read_resource: Read specific resources from extensions
-
-            When you lack the tools needed to complete a task, use search_available_extensions first
-            to discover what extensions can help.
-
-            Use manage_extensions to enable or disable specific extensions by name.
-            Use list_resources and read_resource to work with extension data and resources.
+        let info = InitializeResult::new(ServerCapabilities::builder().enable_tools().build())
+            .with_server_info(
+                Implementation::new(EXTENSION_NAME, "1.0.0").with_title(EXTENSION_NAME),
+            )
+            .with_instructions(indoc! {r#"
+            Discover, enable, and disable extensions, and read their resources.
+            When you lack the tools for a task, search for an extension that can help.
         "#});
 
         Ok(Self { info, context })
@@ -618,24 +605,30 @@ mod tests {
             .list_tools(&user_id, None, CancellationToken::default())
             .await
             .unwrap();
-        assert!(user_tools
-            .tools
-            .iter()
-            .any(|tool| tool.name == MANAGE_EXTENSIONS_TOOL_NAME));
+        assert!(
+            user_tools
+                .tools
+                .iter()
+                .any(|tool| tool.name == MANAGE_EXTENSIONS_TOOL_NAME)
+        );
 
         for session_id in [&subagent_id, "missing-session"] {
             let tools = client
                 .list_tools(session_id, None, CancellationToken::default())
                 .await
                 .unwrap();
-            assert!(tools
-                .tools
-                .iter()
-                .any(|tool| tool.name == SEARCH_AVAILABLE_EXTENSIONS_TOOL_NAME));
-            assert!(tools
-                .tools
-                .iter()
-                .all(|tool| tool.name != MANAGE_EXTENSIONS_TOOL_NAME));
+            assert!(
+                tools
+                    .tools
+                    .iter()
+                    .any(|tool| tool.name == SEARCH_AVAILABLE_EXTENSIONS_TOOL_NAME)
+            );
+            assert!(
+                tools
+                    .tools
+                    .iter()
+                    .all(|tool| tool.name != MANAGE_EXTENSIONS_TOOL_NAME)
+            );
         }
 
         let unknown_enable = manage(&client, "missing-session", "enable").await;

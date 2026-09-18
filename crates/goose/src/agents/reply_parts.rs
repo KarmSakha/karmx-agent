@@ -5,7 +5,7 @@ use std::{collections::HashSet, sync::Arc};
 
 use async_stream::try_stream;
 use futures::stream::StreamExt;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use tracing::debug;
 
 use super::super::agents::Agent;
@@ -15,7 +15,7 @@ use crate::agents::extension_manager::{get_tool_owner, recover_mangled_tool_name
 use crate::agents::platform_extensions::code_execution;
 use crate::config::{Config, GooseMode};
 use crate::conversation::message::{Message, MessageContent, MessageUsage, ToolRequest};
-use crate::conversation::{fix_conversation, merge_consecutive_messages_for_request, Conversation};
+use crate::conversation::{Conversation, fix_conversation, merge_consecutive_messages_for_request};
 #[cfg(test)]
 use crate::providers::base::stream_from_single_message;
 use crate::providers::base::{MessageStream, Provider};
@@ -71,10 +71,10 @@ fn coerce_value(s: &str, schema: &Value) -> Value {
                 if let Value::String(type_name) = t {
                     match type_name.as_str() {
                         "number" | "integer" if s.parse::<f64>().is_ok() => {
-                            return try_coerce_number(s)
+                            return try_coerce_number(s);
                         }
                         "boolean" if matches!(s.to_lowercase().as_str(), "true" | "false") => {
-                            return try_coerce_boolean(s)
+                            return try_coerce_boolean(s);
                         }
                         _ => continue,
                     }
@@ -228,11 +228,20 @@ impl Agent {
         // Resolve this before taking the prompt_manager lock: it calls
         // self.provider(), and nesting an await on another agent lock inside a
         // held lock is how deadlocks get written.
-        let parallel_tool_calls = {
-            let provider_name = self.provider().await?.get_name().to_string();
-            crate::model_config::resolved_parallel_tool_calls(
-                &provider_name,
+        let (parallel_tool_calls, context_limit) = {
+            let provider = self.provider().await?;
+            let context_limit = crate::context_limit::get_context_limit(
+                provider.as_ref(),
                 &model_config.model_name,
+            )
+            .await
+            .ok();
+            (
+                crate::model_config::resolved_parallel_tool_calls(
+                    provider.get_name(),
+                    &model_config.model_name,
+                ),
+                context_limit,
             )
         };
 
@@ -247,12 +256,35 @@ impl Agent {
             .with_goose_mode(goose_mode)
             .with_enable_subagents(enable_subagents)
             .with_parallel_tool_calls(parallel_tool_calls)
+            .with_turn_context(crate::agents::moim::turn_context_enabled(context_limit))
             .build();
 
         let (tools, toolshim_tools, system_prompt) =
             prepare_tools_for_provider(tools, system_prompt, &model_config);
 
         Ok((tools, toolshim_tools, system_prompt, model_config))
+    }
+}
+
+/// Drops schemars noise (`$schema`, `title`, `default: null`) from a tool
+/// schema, recursively. Across the built-in tool list this is ~1.4K chars the
+/// model would otherwise read on every request.
+pub(crate) fn compact_tool_schema(schema: &mut serde_json::Map<String, Value>) {
+    schema.retain(|key, value| {
+        if key == "$schema" || key == "title" {
+            return false;
+        }
+        !(key == "default" && value.is_null())
+    });
+    for value in schema.values_mut() {
+        match value {
+            Value::Object(object) => compact_tool_schema(object),
+            Value::Array(items) => items
+                .iter_mut()
+                .filter_map(Value::as_object_mut)
+                .for_each(compact_tool_schema),
+            _ => {}
+        }
     }
 }
 
@@ -312,6 +344,10 @@ pub(crate) fn prepare_inference_tools(
     // Filter out tools not visible to the model per MCP Apps visibility spec.
     // Tools with `_meta.ui.visibility` that doesn't include "model" are app-only.
     tools.retain(is_tool_visible_to_model);
+
+    for tool in &mut tools {
+        compact_tool_schema(Arc::make_mut(&mut tool.input_schema));
+    }
 
     // Stable tool ordering is important for multi session prompt caching.
     tools.sort_by(|a, b| a.name.cmp(&b.name));
@@ -1337,9 +1373,11 @@ mod tests {
     #[tokio::test]
     async fn toolshim_provider_stream_preserves_provider_message_id() -> anyhow::Result<()> {
         let provider = Arc::new(ToolshimMessageIdProvider {
-            messages: vec![Message::assistant()
-                .with_id("provider-toolshim-id")
-                .with_text("hello")],
+            messages: vec![
+                Message::assistant()
+                    .with_id("provider-toolshim-id")
+                    .with_text("hello"),
+            ],
         });
         let mut stream = stream_response_from_provider(
             provider,
@@ -1432,10 +1470,12 @@ mod tests {
 
         assert_eq!(response.as_concat_text(), "assistant-only\nuser-visible");
         assert_eq!(filtered_message.as_concat_text(), "user-visible");
-        assert!(filtered_message
-            .content
-            .iter()
-            .any(|content| matches!(content, MessageContent::Thinking(_))));
+        assert!(
+            filtered_message
+                .content
+                .iter()
+                .any(|content| matches!(content, MessageContent::Thinking(_)))
+        );
     }
 
     #[test]
@@ -1494,12 +1534,16 @@ mod tests {
             merged.contains_key("ui"),
             "registry tool meta keys were dropped; merged tool_meta = {merged:?}"
         );
-        assert!(filtered_message.content[1]
-            .as_tool_request()
-            .is_some_and(ToolRequest::was_executed_externally));
-        assert!(filtered_message.content[1]
-            .as_tool_request()
-            .is_some_and(|request| request.tool_call.is_ok()));
+        assert!(
+            filtered_message.content[1]
+                .as_tool_request()
+                .is_some_and(ToolRequest::was_executed_externally)
+        );
+        assert!(
+            filtered_message.content[1]
+                .as_tool_request()
+                .is_some_and(|request| request.tool_call.is_ok())
+        );
     }
 
     #[test]
@@ -1519,9 +1563,11 @@ mod tests {
             agent.categorize_tool_requests(&response, &[], &[], false);
 
         assert_eq!(tool_requests.len(), 2);
-        assert!(tool_requests
-            .iter()
-            .all(|request| request.tool_call.is_err()));
+        assert!(
+            tool_requests
+                .iter()
+                .all(|request| request.tool_call.is_err())
+        );
         assert_eq!(
             filtered_message
                 .content

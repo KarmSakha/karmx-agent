@@ -1,4 +1,4 @@
-use super::base::{Config, ConfigError, env_var};
+use super::base::{env_var, Config, ConfigError};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_yaml::Mapping;

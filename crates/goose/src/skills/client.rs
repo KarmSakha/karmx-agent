@@ -1,8 +1,8 @@
 use super::discover_skills_with_config;
 use super::loaded_skill_context_with_args;
+use crate::agents::ToolCallContext;
 use crate::agents::extension::PlatformExtensionContext;
 use crate::agents::mcp_client::{Error, McpClientTrait};
-use crate::agents::ToolCallContext;
 use crate::config::Config;
 use async_trait::async_trait;
 use goose_sdk_types::custom_requests::{SourceEntry, SourceType};
@@ -84,12 +84,17 @@ fn skill_source_rank(skill: &SourceEntry) -> u8 {
 }
 
 /// Orders skills by install scope then name and applies the prompt cap (`0` =
-/// unlimited). Returns the skills to list and how many were left out.
+/// unlimited). Returns the skills to list and how many were left out. Skills
+/// with `disable-model-invocation` are never listed.
 pub(crate) fn select_skills_for_prompt<'a>(
     skills: &[&'a SourceEntry],
     limit: usize,
 ) -> (Vec<&'a SourceEntry>, usize) {
-    let mut ordered: Vec<&SourceEntry> = skills.to_vec();
+    let mut ordered: Vec<&SourceEntry> = skills
+        .iter()
+        .copied()
+        .filter(|skill| super::router::model_invocable(skill))
+        .collect();
     ordered.sort_by(|a, b| {
         (skill_source_rank(a), &a.name, &a.path).cmp(&(skill_source_rank(b), &b.name, &b.path))
     });
@@ -105,25 +110,55 @@ pub(crate) fn select_skills_for_prompt<'a>(
 
 /// One line telling the model that `hidden` installed skills were not listed.
 pub(crate) fn hidden_skills_note(hidden: usize) -> String {
-    format!("({hidden} more skills are installed but not listed; if the user names one, load it by that name.)")
+    format!(
+        "({hidden} more skills are installed but not listed; if the user names one, load it by that name.)"
+    )
 }
+
+/// Descriptions longer than this are truncated in the prompt listing; the
+/// full text is still in the skill body that `load_skill` returns.
+const SKILL_DESCRIPTION_BUDGET: usize = 120;
 
 /// Renders the skills section of the system prompt. `limit` caps the number of
 /// listed skills (`0` = unlimited); when the cap cuts the list, the most
 /// deliberately installed skills are kept and the rest are summarized so the
-/// model can still ask for one by name.
+/// model can still ask for one by name. Shared by the legacy loop
+/// (`get_instructions`) and the state machine (`SkillOperation::prompt_parts`).
 pub(crate) fn format_skills_listing(skills: &[&SourceEntry], limit: usize) -> String {
     let (shown, hidden) = select_skills_for_prompt(skills, limit);
     let mut instructions = String::from(
         "\n\nYou have these skills at your disposal, when it is clear they can help you solve a problem or you are asked to use them:",
     );
     for skill in &shown {
-        instructions.push_str(&format!("\n• {} - {}", skill.name, skill.description));
+        instructions.push_str(&format!(
+            "\n• {} - {}",
+            skill.name,
+            crate::utils::safe_truncate(&skill.description, SKILL_DESCRIPTION_BUDGET)
+        ));
     }
     if hidden > 0 {
         instructions.push_str(&format!("\n• {}", hidden_skills_note(hidden)));
     }
     instructions
+}
+
+/// Answers a `load_skill` search: the best installed skills for `query`
+/// as a compact name/description list the model can pick from.
+pub(crate) fn search_skills(skills: &[&SourceEntry], query: &str) -> String {
+    let ranked = super::router::rank_skills(query, skills, super::router::QUERY_SUGGESTIONS);
+    if ranked.is_empty() {
+        return format!("No skills match '{query}'.");
+    }
+    let mut text = String::from("Matching skills:");
+    for hit in &ranked {
+        text.push_str(&format!(
+            "\n• {} - {}",
+            hit.skill.name,
+            crate::utils::safe_truncate(&hit.skill.description, SKILL_DESCRIPTION_BUDGET)
+        ));
+    }
+    text.push_str("\nLoad one with load_skill(name: ...).");
+    text
 }
 
 #[async_trait]
@@ -136,11 +171,14 @@ impl McpClientTrait for SkillsClient {
     ) -> Result<ListToolsResult, Error> {
         let schema = serde_json::json!({
             "type": "object",
-            "required": ["name"],
             "properties": {
                 "name": {
                     "type": "string",
                     "description": "Name of the skill to load. Use \"skill-name/path\" to load a supporting file."
+                },
+                "query": {
+                    "type": "string",
+                    "description": "Search installed skills and return the best matches instead of loading one."
                 },
                 "args": {
                     "type": "string",
@@ -157,7 +195,8 @@ impl McpClientTrait for SkillsClient {
              Examples:\n\
              - load_skill(name: \"gdrive\") → Loads the gdrive skill instructions\n\
              - load_skill(name: \"my-skill\", args: \"the arguments for the skill\") → Loads a skill with arguments\n\
-             - load_skill(name: \"my-skill/template.md\") → Loads a supporting file"
+             - load_skill(name: \"my-skill/template.md\") → Loads a supporting file\n\
+             - load_skill(query: \"spreadsheet\") → Returns the best matching skills"
                 .to_string(),
             schema.as_object().unwrap().clone(),
         );
@@ -189,18 +228,30 @@ impl McpClientTrait for SkillsClient {
             .and_then(|args| args.get("name"))
             .and_then(|v| v.as_str())
             .unwrap_or("");
+        let query = arguments
+            .as_ref()
+            .and_then(|args| args.get("query"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+
+        let skills = self.discover_skills();
+
+        if !query.is_empty() {
+            let refs: Vec<&SourceEntry> = skills.iter().collect();
+            return Ok(CallToolResult::success(vec![ContentBlock::text(
+                search_skills(&refs, query),
+            )]));
+        }
 
         if skill_name.is_empty() {
             return Ok(CallToolResult::error(vec![ContentBlock::text(
-                "Missing required parameter: name",
+                "Missing required parameter: name or query",
             )]));
         }
         let args = arguments
             .as_ref()
             .and_then(|args| args.get("args"))
             .and_then(|v| v.as_str());
-
-        let skills = self.discover_skills();
 
         if let Some(skill) = skills.iter().find(|s| s.name == skill_name) {
             return match loaded_skill_context_with_args(skill, args) {
@@ -459,9 +510,11 @@ mod tests {
         );
         let client = test_client(project.path(), "disabled-plugin", false);
 
-        assert!(client
-            .get_instructions()
-            .is_none_or(|instructions| !instructions.contains("disabled-plugin-skill")));
+        assert!(
+            client
+                .get_instructions()
+                .is_none_or(|instructions| !instructions.contains("disabled-plugin-skill"))
+        );
 
         let ctx = ToolCallContext::new("test".to_string(), None, None);
         let args = serde_json::from_value(serde_json::json!({
@@ -584,10 +637,12 @@ mod tests {
         .unwrap()
         .with_builtin_skills(false);
 
-        assert!(client
-            .discover_skills()
-            .iter()
-            .all(|skill| skill.source_type != SourceType::BuiltinSkill));
+        assert!(
+            client
+                .discover_skills()
+                .iter()
+                .all(|skill| skill.source_type != SourceType::BuiltinSkill)
+        );
 
         let ctx = ToolCallContext::new("test".to_string(), None, None);
         let args: JsonObject =

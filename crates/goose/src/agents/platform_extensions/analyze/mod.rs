@@ -16,7 +16,7 @@ use rmcp::model::{
     CallToolResult, ContentBlock, Implementation, InitializeResult, JsonObject, ListToolsResult,
     ServerCapabilities, Tool, ToolAnnotations,
 };
-use schemars::{schema_for, JsonSchema};
+use schemars::{JsonSchema, schema_for};
 use serde::Deserialize;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
@@ -58,16 +58,7 @@ impl AnalyzeClient {
         let info = InitializeResult::new(ServerCapabilities::builder().enable_tools().build())
             .with_server_info(Implementation::new(EXTENSION_NAME, "1.0.0").with_title("Analyze"))
             .with_instructions(indoc! {"
-            Index code structure via tree-sitter. Use to navigate or summarize an unfamiliar
-            and large codebase. Returns one of three views:
-
-              1) Directory path → file tree with LOC, function, and class counts
-                 (depth-limited).
-              2) File path → list of functions (with signatures), classes, imports,
-                 and call counts. Functions called >3x are marked •N.
-              3) Any path + `focus` → incoming/outgoing call graph for a symbol
-                 (case-sensitive).
-
+            Tree-sitter code structure for navigating an unfamiliar, large codebase.
             For large codebases, delegate analysis to a subagent and retain only the summary.
         "});
 

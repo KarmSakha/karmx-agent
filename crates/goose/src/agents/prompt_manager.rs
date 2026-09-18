@@ -6,7 +6,7 @@ use serde::Serialize;
 
 use crate::agents::{extension::ExtensionInfo, moim};
 use crate::hints::load_hints::build_gitignore;
-use crate::hints::{get_context_filenames, load_hint_files, SubdirectoryHintTracker};
+use crate::hints::{SubdirectoryHintTracker, get_context_filenames, load_hint_files};
 use crate::{
     config::{Config, GooseMode},
     prompt_template,
@@ -54,6 +54,7 @@ pub struct SystemPromptBuilder<'a, M> {
     include_extensions: bool,
     goose_mode: Option<GooseMode>,
     parallel_tool_calls: bool,
+    turn_context_enabled: bool,
 }
 
 impl<'a> SystemPromptBuilder<'a, PromptManager> {
@@ -110,6 +111,13 @@ impl<'a> SystemPromptBuilder<'a, PromptManager> {
         self
     }
 
+    /// Whether the turn-context block can appear for this model; the system
+    /// prompt only describes it when it can.
+    pub fn with_turn_context(mut self, enabled: bool) -> Self {
+        self.turn_context_enabled = enabled;
+        self
+    }
+
     pub fn with_goose_mode(mut self, mode: GooseMode) -> Self {
         self.goose_mode = Some(mode);
         self
@@ -142,7 +150,11 @@ impl<'a> SystemPromptBuilder<'a, PromptManager> {
             code_execution_mode: self.code_execution_mode,
             include_extensions: self.include_extensions,
             parallel_tool_calls: self.parallel_tool_calls,
-            moim_system_prompt_block: moim::system_prompt_block(),
+            moim_system_prompt_block: if self.turn_context_enabled {
+                moim::system_prompt_block()
+            } else {
+                None
+            },
         };
 
         let base_prompt = if let Some(override_prompt) = &self.manager.system_prompt_override {
@@ -243,6 +255,7 @@ impl PromptManager {
         goose_mode: GooseMode,
         enable_subagents: bool,
         parallel_tool_calls: bool,
+        turn_context_enabled: bool,
     ) -> String {
         self.load_subdirectory_hints(working_dir);
         self.builder()
@@ -251,6 +264,7 @@ impl PromptManager {
             .with_goose_mode(goose_mode)
             .with_enable_subagents(enable_subagents)
             .with_parallel_tool_calls(parallel_tool_calls)
+            .with_turn_context(turn_context_enabled)
             .without_extensions()
             .build()
     }
@@ -278,6 +292,7 @@ impl PromptManager {
             // Conservative until the caller says otherwise: an unknown model is
             // not assumed to support batched tool calls.
             parallel_tool_calls: false,
+            turn_context_enabled: true,
         }
     }
 }
@@ -357,6 +372,7 @@ mod tests {
             GooseMode::Auto,
             false,
             false,
+            true,
         );
 
         assert!(prompt.contains("## developer"));
@@ -368,10 +384,22 @@ mod tests {
         let mut manager = PromptManager::new();
         let working_dir = tempfile::tempdir().unwrap();
 
-        let with =
-            manager.build_system_prompt(working_dir.path(), vec![], GooseMode::Auto, true, false);
-        let without =
-            manager.build_system_prompt(working_dir.path(), vec![], GooseMode::Auto, false, false);
+        let with = manager.build_system_prompt(
+            working_dir.path(),
+            vec![],
+            GooseMode::Auto,
+            true,
+            false,
+            true,
+        );
+        let without = manager.build_system_prompt(
+            working_dir.path(),
+            vec![],
+            GooseMode::Auto,
+            false,
+            false,
+            true,
+        );
 
         assert!(with.contains("`sidekick`"));
         assert!(!without.contains("`sidekick`"));
@@ -551,7 +579,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_all_platform_extensions() {
-        use crate::agents::platform_extensions::{PlatformExtensionContext, PLATFORM_EXTENSIONS};
+        use crate::agents::platform_extensions::{PLATFORM_EXTENSIONS, PlatformExtensionContext};
         use crate::config::GooseMode;
         use crate::session::SessionManager;
         use std::sync::Arc;

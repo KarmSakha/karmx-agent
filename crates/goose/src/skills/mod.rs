@@ -5,14 +5,15 @@
 mod arguments;
 mod builtin;
 pub mod client;
+pub(crate) mod router;
 mod supporting_files;
 
-pub use client::{SkillsClient, EXTENSION_NAME};
+pub use client::{EXTENSION_NAME, SkillsClient};
 pub(crate) use supporting_files::{
     create_source_file, load_supporting_file, read_source_file, write_source_file,
 };
 
-use crate::config::{paths::Paths, Config};
+use crate::config::{Config, paths::Paths};
 use crate::plugins::discovery::PluginScope;
 use crate::plugins::{
     configured_project_plugin_skill_dirs, enabled_plugin_skill_dirs_with_config,
@@ -35,6 +36,13 @@ pub struct SkillFrontmatter {
     pub name: Option<String>,
     #[serde(default)]
     pub description: String,
+    /// Optional trigger text used by the skill router; not part of the
+    /// required agentskills.io frontmatter but present on many skills.
+    #[serde(default)]
+    pub when_to_use: String,
+    /// Opt out of listing and routing; the skill stays loadable by name.
+    #[serde(rename = "disable-model-invocation", default)]
+    pub disable_model_invocation: bool,
     /// Free-form bag for caller-defined fields. Per the agentskills.io spec
     /// (<https://agentskills.io/specification#frontmatter>), arbitrary
     /// metadata lives in this nested mapping so it doesn't collide with
@@ -473,6 +481,17 @@ fn parse_skill_content(
         return None;
     }
 
+    let mut properties = metadata.metadata;
+    if !metadata.when_to_use.is_empty() {
+        properties.insert(
+            "when_to_use".to_string(),
+            Value::String(metadata.when_to_use),
+        );
+    }
+    if metadata.disable_model_invocation {
+        properties.insert("disable-model-invocation".to_string(), Value::Bool(true));
+    }
+
     Some(SourceEntry {
         source_type: SourceType::Skill,
         name,
@@ -482,7 +501,7 @@ fn parse_skill_content(
         global,
         writable,
         supporting_files: Vec::new(),
-        properties: metadata.metadata,
+        properties,
     })
 }
 

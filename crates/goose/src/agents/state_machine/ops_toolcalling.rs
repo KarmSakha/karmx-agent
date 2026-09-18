@@ -2,26 +2,26 @@
 
 use std::collections::{HashMap, HashSet};
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use async_trait::async_trait;
 use futures::{FutureExt, StreamExt};
 use rmcp::model::{CallToolRequestParams, CallToolResult, ContentBlock, ErrorData, Role, Tool};
 
+use crate::agents::AgentEvent;
 use crate::agents::extension_manager::ExtensionManager;
 use crate::agents::platform_extensions::MANAGE_EXTENSIONS_TOOL_NAME_COMPLETE;
 use crate::agents::state_machine::ops_llm::{ADVERTISED_TOOLS_NOTE, LLM_OPERATION_NAME};
 use crate::agents::state_machine::ops_tool_approval::request_executable;
 use crate::agents::state_machine::{
-    applied, messages_since_kickoff, not_applicable, yielded_with, ConversationEffect, Emitter,
-    GooseEffect, Operation, OperationResult, SlashCommand,
+    ConversationEffect, Emitter, GooseEffect, Operation, OperationResult, SlashCommand, applied,
+    messages_since_kickoff, not_applicable, yielded_with,
 };
 use crate::agents::tool_execution::{
-    tool_stream, ToolCallResult, ToolStreamItem, CHAT_MODE_TOOL_SKIPPED_RESPONSE, DECLINED_RESPONSE,
+    CHAT_MODE_TOOL_SKIPPED_RESPONSE, DECLINED_RESPONSE, ToolCallResult, ToolStreamItem, tool_stream,
 };
-use crate::agents::AgentEvent;
 use crate::config::GooseMode;
-use crate::conversation::message::{ActionRequiredData, Message, MessageContent, ToolRequest};
 use crate::conversation::Conversation;
+use crate::conversation::message::{ActionRequiredData, Message, MessageContent, ToolRequest};
 use crate::hints::load_hints::SubdirectoryHintTracker;
 use crate::hooks::{HookChainOutcome, HookContext, HookEvent, HookManager};
 use crate::session::{EnabledExtensionsState, ExtensionState, Session};
@@ -581,12 +581,14 @@ impl<'a> ToolExecutionOperation<'a> {
             .id
             .clone()
             .ok_or_else(|| anyhow!("Persisted slash command message has no id"))?;
-        let mut effects = vec![ConversationEffect::SetMessageVisibility {
-            message_id,
-            user_visible: true,
-            agent_visible: false,
-        }
-        .into()];
+        let mut effects = vec![
+            ConversationEffect::SetMessageVisibility {
+                message_id,
+                user_visible: true,
+                agent_visible: false,
+            }
+            .into(),
+        ];
         for (index, prompt_message) in result.messages.into_iter().enumerate() {
             let message = Message::from(prompt_message);
             let expected_role = if index % 2 == 0 {
@@ -754,11 +756,16 @@ impl Operation<Session, GooseEffect> for ToolExecutionOperation<'_> {
     }
 
     async fn inference_tools(&self, session: &Session) -> Result<Vec<Tool>> {
-        let tools = self
+        let mut tools = self
             .extension_manager
             .get_prefixed_tools_excluding(&session.id, crate::skills::EXTENSION_NAME)
             .await
             .unwrap_or_default();
+        for tool in &mut tools {
+            crate::agents::reply_parts::compact_tool_schema(std::sync::Arc::make_mut(
+                &mut tool.input_schema,
+            ));
+        }
         Ok(tools)
     }
 

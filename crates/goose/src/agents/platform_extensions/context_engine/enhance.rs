@@ -242,7 +242,7 @@ mod tests {
     #[test]
     fn builds_request_with_prompt_appended() {
         let r = build_request("fix the bug");
-        assert!(r.starts_with("Here is an instruction"));
+        assert!(r.starts_with("Rewrite the following user instruction"));
         assert!(r.ends_with("fix the bug"));
     }
 
