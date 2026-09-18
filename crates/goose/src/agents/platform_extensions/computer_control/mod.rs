@@ -10,6 +10,7 @@
 
 pub mod actions;
 pub mod cdp;
+pub mod elements;
 
 use std::sync::Arc;
 
@@ -31,6 +32,8 @@ use cdp::{CdpClient, CdpTarget};
 
 pub static EXTENSION_NAME: &str = "computer_control";
 pub const CONTROL_TOOL: &str = "computer_control";
+pub const ELEMENTS_TOOL: &str = "page_elements";
+pub const TASK_TOOL: &str = "browser_task";
 
 /// Default debug port for a locally launched Chrome.
 const DEFAULT_DEBUG_PORT: u16 = 9222;
@@ -61,9 +64,10 @@ impl ComputerControlClient {
     }
 
     fn get_tools() -> Vec<Tool> {
-        vec![Tool::new(
-            CONTROL_TOOL.to_string(),
-            "Drive a real browser: click, double-click, right-click, move, type, press a key, \
+        vec![
+            Tool::new(
+                CONTROL_TOOL.to_string(),
+                "Drive a real browser: click, double-click, right-click, move, type, press a key, \
              scroll, drag, capture a screenshot, or wait. Provide one or more actions; they run \
              in order.\n\n\
              This is actuation, not inspection: use it to operate a page. To read what a page \
@@ -71,68 +75,133 @@ impl ComputerControlClient {
              Requires Chrome running with --remote-debugging-port=<port> (default 9222). \
              Coordinates are viewport pixels; a screenshot is returned afterwards by default so \
              you can see the result of what you did."
-                .to_string(),
-            object!({
-                "type": "object",
-                "properties": {
-                    "actions": {
-                        "type": "array",
-                        "minItems": 1,
-                        "description": "Actions to perform, in order.",
-                        "items": {
-                            "type": "object",
-                            "required": ["action_type"],
-                            "properties": {
-                                "action_type": {
-                                    "type": "string",
-                                    "enum": ["click","double_click","right_click","move","type","key","scroll","drag","screenshot","wait"]
-                                },
-                                "coordinate": {
-                                    "type": "object",
-                                    "description": "Target position {x,y} for pointer actions.",
-                                    "properties": {"x":{"type":"integer"},"y":{"type":"integer"}},
-                                    "required": ["x","y"]
-                                },
-                                "start_coordinate": {
-                                    "type": "object",
-                                    "description": "Drag origin {x,y}.",
-                                    "properties": {"x":{"type":"integer"},"y":{"type":"integer"}},
-                                    "required": ["x","y"]
-                                },
-                                "key": { "type": "string", "description": "Key name for `key`, e.g. Enter, Tab, Escape." },
-                                "text": { "type": "string", "description": "Text to insert for `type`." },
-                                "scroll_amount": { "type": "integer", "description": "Scroll magnitude." },
-                                "scroll_direction": { "type": "string", "enum": ["up","down","left","right"] },
-                                "region": {
-                                    "type": "object",
-                                    "description": "Crop for `screenshot`.",
-                                    "properties": {
-                                        "x":{"type":"integer"},"y":{"type":"integer"},
-                                        "width":{"type":"integer"},"height":{"type":"integer"}
+                    .to_string(),
+                object!({
+                    "type": "object",
+                    "properties": {
+                        "actions": {
+                            "type": "array",
+                            "minItems": 1,
+                            "description": "Actions to perform, in order.",
+                            "items": {
+                                "type": "object",
+                                "required": ["action_type"],
+                                "properties": {
+                                    "action_type": {
+                                        "type": "string",
+                                        "enum": ["click","double_click","right_click","move","type","key","scroll","drag","screenshot","wait"]
                                     },
-                                    "required": ["x","y","width","height"]
-                                },
-                                "duration": { "type": "integer", "description": "Milliseconds for `wait`." }
+                                    "coordinate": {
+                                        "type": "object",
+                                        "description": "Target position {x,y} for pointer actions.",
+                                        "properties": {"x":{"type":"integer"},"y":{"type":"integer"}},
+                                        "required": ["x","y"]
+                                    },
+                                    "start_coordinate": {
+                                        "type": "object",
+                                        "description": "Drag origin {x,y}.",
+                                        "properties": {"x":{"type":"integer"},"y":{"type":"integer"}},
+                                        "required": ["x","y"]
+                                    },
+                                    "key": { "type": "string", "description": "Key name for `key`, e.g. Enter, Tab, Escape." },
+                                    "text": { "type": "string", "description": "Text to insert for `type`." },
+                                    "scroll_amount": { "type": "integer", "description": "Scroll magnitude." },
+                                    "scroll_direction": { "type": "string", "enum": ["up","down","left","right"] },
+                                    "region": {
+                                        "type": "object",
+                                        "description": "Crop for `screenshot`.",
+                                        "properties": {
+                                            "x":{"type":"integer"},"y":{"type":"integer"},
+                                            "width":{"type":"integer"},"height":{"type":"integer"}
+                                        },
+                                        "required": ["x","y","width","height"]
+                                    },
+                                    "duration": { "type": "integer", "description": "Milliseconds for `wait`." }
+                                }
                             }
+                        },
+                        "url": {
+                            "type": "string",
+                            "description": "Navigate here before running the actions."
+                        },
+                        "port": {
+                            "type": "integer",
+                            "description": "Chrome remote-debugging port (default 9222)."
+                        },
+                        "screenshot": {
+                            "type": "boolean",
+                            "default": true,
+                            "description": "Capture a screenshot after the actions (default true)."
                         }
                     },
-                    "url": {
-                        "type": "string",
-                        "description": "Navigate here before running the actions."
-                    },
-                    "port": {
-                        "type": "integer",
-                        "description": "Chrome remote-debugging port (default 9222)."
-                    },
-                    "screenshot": {
-                        "type": "boolean",
-                        "default": true,
-                        "description": "Capture a screenshot after the actions (default true)."
+                    "required": ["actions"]
+                }),
+            ),
+            Tool::new(
+                ELEMENTS_TOOL.to_string(),
+                "List the interactive elements of the current page as a compact table: \
+             index, tag, kind, text, center coordinates, in-viewport. Use it to act \
+             on 'the login button' instead of guessing coordinates.\n\n\
+             Requires Chrome running with --remote-debugging-port=<port> (default 9222)."
+                    .to_string(),
+                object!({
+                    "type": "object",
+                    "properties": {
+                        "port": {
+                            "type": "integer",
+                            "description": "Chrome remote-debugging port (default 9222)."
+                        },
+                        "url": {
+                            "type": "string",
+                            "description": "Navigate here before listing elements."
+                        }
                     }
-                },
-                "required": ["actions"]
-            }),
-        )]
+                }),
+            ),
+            Tool::new(
+                TASK_TOOL.to_string(),
+                "Complete one browser action described in words: 'click the login button', \
+             'open the pricing link', 'type rusty@dev.io into the email field'. The \
+             page's interactive elements are resolved for you — by the Jev router \
+             when configured, otherwise by text matching; when nothing resolves the \
+             element table is returned so you can pick by index or coordinate.\n\n\
+             Actions that look destructive (pay, delete, submit, sign in, send) are \
+             refused unless confirm: true is passed.\n\n\
+             Requires Chrome running with --remote-debugging-port=<port> (default 9222)."
+                    .to_string(),
+                object!({
+                    "type": "object",
+                    "properties": {
+                        "instruction": {
+                            "type": "string",
+                            "description": "What to do, in words, e.g. \"click the sign-in button\"."
+                        },
+                        "text": {
+                            "type": "string",
+                            "description": "Text to insert when the instruction is to type."
+                        },
+                        "confirm": {
+                            "type": "boolean",
+                            "description": "Proceed past the risk gate for destructive-looking actions."
+                        },
+                        "port": {
+                            "type": "integer",
+                            "description": "Chrome remote-debugging port (default 9222)."
+                        },
+                        "url": {
+                            "type": "string",
+                            "description": "Navigate here before running the task."
+                        },
+                        "screenshot": {
+                            "type": "boolean",
+                            "default": true,
+                            "description": "Capture a screenshot after the action (default true)."
+                        }
+                    },
+                    "required": ["instruction"]
+                }),
+            ),
+        ]
     }
 
     /// Reuse the cached session, or attach to `port`.
@@ -193,27 +262,38 @@ impl McpClientTrait for ComputerControlClient {
         arguments: Option<JsonObject>,
         _cancellation_token: CancellationToken,
     ) -> Result<CallToolResult, Error> {
-        if name != CONTROL_TOOL {
-            return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
-                "Unknown tool: {name}"
-            ))]));
-        }
         let args = serde_json::Value::Object(arguments.unwrap_or_default());
+        match name {
+            CONTROL_TOOL => Ok(self.run_control(&args).await),
+            ELEMENTS_TOOL => Ok(self.run_page_elements(&args).await),
+            TASK_TOOL => Ok(self.run_browser_task(&args).await),
+            _ => Ok(CallToolResult::error(vec![ContentBlock::text(format!(
+                "Unknown tool: {name}"
+            ))])),
+        }
+    }
 
+    fn get_info(&self) -> Option<&InitializeResult> {
+        Some(&self.info)
+    }
+}
+
+impl ComputerControlClient {
+    async fn run_control(&self, args: &serde_json::Value) -> CallToolResult {
         let actions =
             match Self::parse_actions(args.get("actions").unwrap_or(&serde_json::Value::Null)) {
                 Ok(a) => a,
-                Err(e) => return Ok(CallToolResult::error(vec![ContentBlock::text(e)])),
+                Err(e) => return CallToolResult::error(vec![ContentBlock::text(e)]),
             };
 
         // validate everything before touching the browser, so a bad third action
         // cannot leave the page half-driven
         for (i, a) in actions.iter().enumerate() {
             if let Err(e) = a.validate() {
-                return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
+                return CallToolResult::error(vec![ContentBlock::text(format!(
                     "action {i} ({}) is invalid: {e}",
                     a.action_type
-                ))]));
+                ))]);
             }
         }
 
@@ -226,10 +306,10 @@ impl McpClientTrait for ComputerControlClient {
         let client = match self.ensure_session(port).await {
             Ok(c) => c,
             Err(e) => {
-                return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
+                return CallToolResult::error(vec![ContentBlock::text(format!(
                     "Could not attach to a browser on port {port}: {e}\n\n\
                      Start Chrome with: --remote-debugging-port={port}"
-                ))]))
+                ))]);
             }
         };
 
@@ -238,9 +318,9 @@ impl McpClientTrait for ComputerControlClient {
                 .call("Page.navigate", serde_json::json!({ "url": url }))
                 .await
             {
-                return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
+                return CallToolResult::error(vec![ContentBlock::text(format!(
                     "navigation to {url} failed: {e}"
-                ))]));
+                ))]);
             }
         }
 
@@ -264,16 +344,16 @@ impl McpClientTrait for ComputerControlClient {
             let cmds = match a.to_cdp() {
                 Ok(c) => c,
                 Err(e) => {
-                    return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
+                    return CallToolResult::error(vec![ContentBlock::text(format!(
                         "action {t} could not be lowered: {e}"
-                    ))]))
+                    ))]);
                 }
             };
             for (method, params) in cmds {
                 if let Err(e) = client.call(&method, params).await {
-                    return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
+                    return CallToolResult::error(vec![ContentBlock::text(format!(
                         "action {t} failed at {method}: {e}"
-                    ))]));
+                    ))]);
                 }
             }
             log.push(match a.coordinate {
@@ -312,11 +392,185 @@ impl McpClientTrait for ComputerControlClient {
             }
         }
 
-        Ok(CallToolResult::success(vec![ContentBlock::text(out)]))
+        CallToolResult::success(vec![ContentBlock::text(out)])
     }
 
-    fn get_info(&self) -> Option<&InitializeResult> {
-        Some(&self.info)
+    async fn run_page_elements(&self, args: &serde_json::Value) -> CallToolResult {
+        let port = args
+            .get("port")
+            .and_then(|v| v.as_u64())
+            .map(|v| v as u16)
+            .unwrap_or(DEFAULT_DEBUG_PORT);
+        let client = match self.ensure_session(port).await {
+            Ok(client) => client,
+            Err(e) => {
+                return CallToolResult::error(vec![ContentBlock::text(format!(
+                    "Could not attach to a browser on port {port}: {e}\n\n\
+                     Start Chrome with: --remote-debugging-port={port}"
+                ))]);
+            }
+        };
+        if let Some(url) = args.get("url").and_then(|v| v.as_str()) {
+            if let Err(e) = client
+                .call("Page.navigate", serde_json::json!({ "url": url }))
+                .await
+            {
+                return CallToolResult::error(vec![ContentBlock::text(format!(
+                    "navigation to {url} failed: {e}"
+                ))]);
+            }
+        }
+        match elements::get_page_elements(&client).await {
+            Ok(elements) if elements.is_empty() => {
+                CallToolResult::success(vec![ContentBlock::text(
+                    "no interactive elements found on the page".to_string(),
+                )])
+            }
+            Ok(elements) => {
+                CallToolResult::success(vec![ContentBlock::text(elements::format_table(&elements))])
+            }
+            Err(e) => CallToolResult::error(vec![ContentBlock::text(format!(
+                "could not read page elements: {e}"
+            ))]),
+        }
+    }
+
+    async fn run_browser_task(&self, args: &serde_json::Value) -> CallToolResult {
+        let instruction = args
+            .get("instruction")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .trim();
+        if instruction.is_empty() {
+            return CallToolResult::error(vec![ContentBlock::text(
+                "`instruction` is required".to_string(),
+            )]);
+        }
+        let text = args.get("text").and_then(|v| v.as_str());
+        let confirm = args
+            .get("confirm")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        let port = args
+            .get("port")
+            .and_then(|v| v.as_u64())
+            .map(|v| v as u16)
+            .unwrap_or(DEFAULT_DEBUG_PORT);
+
+        let client = match self.ensure_session(port).await {
+            Ok(client) => client,
+            Err(e) => {
+                return CallToolResult::error(vec![ContentBlock::text(format!(
+                    "Could not attach to a browser on port {port}: {e}\n\n\
+                     Start Chrome with: --remote-debugging-port={port}"
+                ))]);
+            }
+        };
+        if let Some(url) = args.get("url").and_then(|v| v.as_str()) {
+            if let Err(e) = client
+                .call("Page.navigate", serde_json::json!({ "url": url }))
+                .await
+            {
+                return CallToolResult::error(vec![ContentBlock::text(format!(
+                    "navigation to {url} failed: {e}"
+                ))]);
+            }
+        }
+
+        let page_elements = match elements::get_page_elements(&client).await {
+            Ok(list) => list,
+            Err(e) => {
+                return CallToolResult::error(vec![ContentBlock::text(format!(
+                    "could not read page elements: {e}"
+                ))]);
+            }
+        };
+        if page_elements.is_empty() {
+            return CallToolResult::success(vec![ContentBlock::text(
+                "no interactive elements found on the page".to_string(),
+            )]);
+        }
+
+        let target = match text {
+            Some(text) => format!("{instruction} (text: {text})"),
+            None => instruction.to_string(),
+        };
+        let Some(element) = elements::resolve_target(&target, &page_elements).await else {
+            return CallToolResult::success(vec![ContentBlock::text(format!(
+                "could not resolve \"{instruction}\" to a page element — pick an index \
+                 or coordinates from the table and call computer_control:\n\n{}",
+                elements::format_table(&page_elements)
+            ))]);
+        };
+
+        let typing = matches!(element.tag.as_str(), "input" | "textarea") && text.is_some();
+        let action = if typing { "type" } else { "click" };
+        if elements::is_risky(element, action, text) && !confirm {
+            return CallToolResult::success(vec![ContentBlock::text(format!(
+                "refusing to {action} element {} ({} \"{}\") — it looks destructive or \
+                 sensitive. Re-run with confirm: true if you are sure.",
+                element.index, element.tag, element.text
+            ))]);
+        }
+
+        let (x, y) = match elements::scroll_into_view(&client, element.index).await {
+            Ok(point) => point,
+            Err(e) => return CallToolResult::error(vec![ContentBlock::text(e)]),
+        };
+
+        let mut steps = Vec::new();
+        let mut click = ComputerAction::new("click");
+        click.coordinate = Some(Point {
+            x: x as i32,
+            y: y as i32,
+        });
+        steps.push(click);
+        if typing {
+            let mut insert = ComputerAction::new("type");
+            insert.text = text.map(str::to_string);
+            steps.push(insert);
+        }
+
+        for action in &steps {
+            let cmds = match action.to_cdp() {
+                Ok(cmds) => cmds,
+                Err(e) => {
+                    return CallToolResult::error(vec![ContentBlock::text(format!(
+                        "action could not be lowered: {e}"
+                    ))]);
+                }
+            };
+            for (method, params) in cmds {
+                if let Err(e) = client.call(&method, params).await {
+                    return CallToolResult::error(vec![ContentBlock::text(format!(
+                        "{action_type} failed at {method}: {e}",
+                        action_type = action.action_type
+                    ))]);
+                }
+            }
+        }
+
+        let info = client.page_info().await.unwrap_or_default();
+        let url = info.get("url").cloned().unwrap_or_default();
+        let title = info.get("title").cloned().unwrap_or_default();
+        let mut out = format!(
+            "{action} element {} ({} \"{}\") at ({x},{y})\n\npage: {title}\nurl: {url}",
+            element.index, element.tag, element.text
+        );
+        if args
+            .get("screenshot")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true)
+        {
+            match client
+                .screenshot(serde_json::json!({ "format": "png" }))
+                .await
+            {
+                Ok(png) => out.push_str(&format!("\n\nscreenshot: {} bytes (png)", png.len())),
+                Err(e) => out.push_str(&format!("\n\nscreenshot failed: {e}")),
+            }
+        }
+        CallToolResult::success(vec![ContentBlock::text(out)])
     }
 }
 
@@ -327,8 +581,10 @@ mod tests {
     #[test]
     fn exposes_the_control_tool() {
         let tools = ComputerControlClient::get_tools();
-        assert_eq!(tools.len(), 1);
+        assert_eq!(tools.len(), 3);
         assert_eq!(tools[0].name.as_ref(), CONTROL_TOOL);
+        assert_eq!(tools[1].name.as_ref(), ELEMENTS_TOOL);
+        assert_eq!(tools[2].name.as_ref(), TASK_TOOL);
     }
 
     #[test]
