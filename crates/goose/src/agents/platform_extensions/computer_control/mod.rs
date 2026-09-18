@@ -72,9 +72,12 @@ impl ComputerControlClient {
              in order.\n\n\
              This is actuation, not inspection: use it to operate a page. To read what a page \
              renders without interacting, use browser_preview instead.\n\n\
-             Requires Chrome running with --remote-debugging-port=<port> (default 9222). \
-             Coordinates are viewport pixels; a screenshot is returned afterwards by default so \
-             you can see the result of what you did."
+             This lane drives Chrome only — native apps (Discord, Slack, Finder) are invisible \
+             to it; open those with shell and use their web versions instead.\n\n\
+             Requires Chrome running with --remote-debugging-port=<port> (default 9222); pass \
+             launch: true to have it started for you. Coordinates are viewport pixels; a \
+             screenshot is returned afterwards by default so you can see the result of what \
+             you did."
                     .to_string(),
                 object!({
                     "type": "object",
@@ -128,6 +131,10 @@ impl ComputerControlClient {
                             "type": "integer",
                             "description": "Chrome remote-debugging port (default 9222)."
                         },
+                        "launch": {
+                            "type": "boolean",
+                            "description": "Start Chrome with remote debugging if none is listening on port."
+                        },
                         "screenshot": {
                             "type": "boolean",
                             "default": true,
@@ -142,7 +149,8 @@ impl ComputerControlClient {
                 "List the interactive elements of the current page as a compact table: \
              index, tag, kind, text, center coordinates, in-viewport. Use it to act \
              on 'the login button' instead of guessing coordinates.\n\n\
-             Requires Chrome running with --remote-debugging-port=<port> (default 9222)."
+             Requires Chrome running with --remote-debugging-port=<port> (default 9222); \
+             pass launch: true to have it started for you."
                     .to_string(),
                 object!({
                     "type": "object",
@@ -150,6 +158,10 @@ impl ComputerControlClient {
                         "port": {
                             "type": "integer",
                             "description": "Chrome remote-debugging port (default 9222)."
+                        },
+                        "launch": {
+                            "type": "boolean",
+                            "description": "Start Chrome with remote debugging if none is listening on port."
                         },
                         "url": {
                             "type": "string",
@@ -167,7 +179,8 @@ impl ComputerControlClient {
              element table is returned so you can pick by index or coordinate.\n\n\
              Actions that look destructive (pay, delete, submit, sign in, send) are \
              refused unless confirm: true is passed.\n\n\
-             Requires Chrome running with --remote-debugging-port=<port> (default 9222)."
+             Requires Chrome running with --remote-debugging-port=<port> (default 9222); \
+             pass launch: true to have it started for you."
                     .to_string(),
                 object!({
                     "type": "object",
@@ -188,6 +201,10 @@ impl ComputerControlClient {
                             "type": "integer",
                             "description": "Chrome remote-debugging port (default 9222)."
                         },
+                        "launch": {
+                            "type": "boolean",
+                            "description": "Start Chrome with remote debugging if none is listening on port."
+                        },
                         "url": {
                             "type": "string",
                             "description": "Navigate here before running the task."
@@ -202,6 +219,28 @@ impl ComputerControlClient {
                 }),
             ),
         ]
+    }
+
+    /// Reuse the cached session, or attach to `port`. When `launch` is set and
+    /// nothing is listening, Chrome is started with remote debugging in a
+    /// throwaway profile before attaching.
+    async fn session_for(&self, port: u16, launch: bool) -> Result<Arc<CdpClient>, String> {
+        match self.ensure_session(port).await {
+            Ok(client) => Ok(client),
+            Err(e) => {
+                if !launch {
+                    return Err(format!(
+                        "Could not attach to a browser on port {port}: {e}\n\n\
+                         Retry with launch: true to have this tool start Chrome, or start it \
+                         yourself with --remote-debugging-port={port}"
+                    ));
+                }
+                Self::launch_browser(port).await?;
+                self.ensure_session(port).await.map_err(|e| {
+                    format!("Chrome launched but attaching to port {port} still failed: {e}")
+                })
+            }
+        }
     }
 
     /// Reuse the cached session, or attach to `port`.
@@ -225,6 +264,46 @@ impl ComputerControlClient {
             port,
         });
         Ok(client)
+    }
+
+    /// Starts Chrome with remote debugging in a throwaway profile (not the
+    /// user's real session) and waits for the debug endpoint to answer.
+    async fn launch_browser(port: u16) -> Result<(), String> {
+        let profile = std::env::temp_dir().join("karmx-cdp-profile");
+        let chrome_args = format!(
+            "--remote-debugging-port={port} --user-data-dir={} --no-first-run \
+             --no-default-browser-check",
+            profile.display()
+        );
+        #[cfg(target_os = "macos")]
+        let spawned = std::process::Command::new("open")
+            .args(["-na", "Google Chrome", "--args", &chrome_args])
+            .spawn();
+        #[cfg(not(target_os = "macos"))]
+        let spawned = ["google-chrome", "chromium", "chromium-browser", "chrome"]
+            .iter()
+            .find_map(|bin| {
+                std::process::Command::new(bin)
+                    .args(chrome_args.split_whitespace())
+                    .spawn()
+                    .ok()
+            })
+            .ok_or_else(|| {
+                "no Chrome binary found (tried google-chrome, chromium, chromium-browser, chrome)"
+                    .to_string()
+            });
+        spawned.map_err(|e| format!("could not start Chrome: {e}"))?;
+
+        let url = format!("http://127.0.0.1:{port}/json/version");
+        for _ in 0..20 {
+            tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+            if reqwest::get(&url).await.is_ok() {
+                return Ok(());
+            }
+        }
+        Err(format!(
+            "Chrome was started but is not answering on port {port}"
+        ))
     }
 
     fn parse_actions(v: &serde_json::Value) -> Result<Vec<ComputerAction>, String> {
@@ -302,14 +381,15 @@ impl ComputerControlClient {
             .and_then(|v| v.as_u64())
             .map(|v| v as u16)
             .unwrap_or(DEFAULT_DEBUG_PORT);
+        let launch = args
+            .get("launch")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
 
-        let client = match self.ensure_session(port).await {
+        let client = match self.session_for(port, launch).await {
             Ok(c) => c,
             Err(e) => {
-                return CallToolResult::error(vec![ContentBlock::text(format!(
-                    "Could not attach to a browser on port {port}: {e}\n\n\
-                     Start Chrome with: --remote-debugging-port={port}"
-                ))]);
+                return CallToolResult::error(vec![ContentBlock::text(e)]);
             }
         };
 
@@ -401,13 +481,14 @@ impl ComputerControlClient {
             .and_then(|v| v.as_u64())
             .map(|v| v as u16)
             .unwrap_or(DEFAULT_DEBUG_PORT);
-        let client = match self.ensure_session(port).await {
+        let launch = args
+            .get("launch")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        let client = match self.session_for(port, launch).await {
             Ok(client) => client,
             Err(e) => {
-                return CallToolResult::error(vec![ContentBlock::text(format!(
-                    "Could not attach to a browser on port {port}: {e}\n\n\
-                     Start Chrome with: --remote-debugging-port={port}"
-                ))]);
+                return CallToolResult::error(vec![ContentBlock::text(e)]);
             }
         };
         if let Some(url) = args.get("url").and_then(|v| v.as_str()) {
@@ -456,14 +537,15 @@ impl ComputerControlClient {
             .and_then(|v| v.as_u64())
             .map(|v| v as u16)
             .unwrap_or(DEFAULT_DEBUG_PORT);
+        let launch = args
+            .get("launch")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
 
-        let client = match self.ensure_session(port).await {
+        let client = match self.session_for(port, launch).await {
             Ok(client) => client,
             Err(e) => {
-                return CallToolResult::error(vec![ContentBlock::text(format!(
-                    "Could not attach to a browser on port {port}: {e}\n\n\
-                     Start Chrome with: --remote-debugging-port={port}"
-                ))]);
+                return CallToolResult::error(vec![ContentBlock::text(e)]);
             }
         };
         if let Some(url) = args.get("url").and_then(|v| v.as_str()) {

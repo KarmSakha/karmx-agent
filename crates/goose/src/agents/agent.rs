@@ -825,7 +825,11 @@ impl Agent {
         )));
 
         // Add repetition inspector (lower priority - basic repetition checking)
-        tool_inspection_manager.add_inspector(Box::new(RepetitionInspector::new(None)));
+        let max_repetitions = Config::global()
+            .get_param::<u32>("GOOSE_MAX_TOOL_REPETITIONS")
+            .ok()
+            .or(Some(3));
+        tool_inspection_manager.add_inspector(Box::new(RepetitionInspector::new(max_repetitions)));
 
         tool_inspection_manager
     }

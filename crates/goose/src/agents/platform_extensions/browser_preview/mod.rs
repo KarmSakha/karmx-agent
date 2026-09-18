@@ -193,7 +193,7 @@ async fn proxy(State(state): State<Arc<PreviewState>>, req: Request) -> Response
                 StatusCode::BAD_GATEWAY,
                 format!("preview target unreachable at {url}: {e}"),
             )
-                .into_response()
+                .into_response();
         }
     };
 
@@ -229,7 +229,7 @@ async fn proxy(State(state): State<Arc<PreviewState>>, req: Request) -> Response
         let bytes = match upstream.bytes().await {
             Ok(b) => b,
             Err(e) => {
-                return (StatusCode::BAD_GATEWAY, format!("read upstream: {e}")).into_response()
+                return (StatusCode::BAD_GATEWAY, format!("read upstream: {e}")).into_response();
             }
         };
         let html = String::from_utf8_lossy(&bytes).into_owned();
@@ -335,9 +335,9 @@ impl BrowserPreviewClient {
                             "type": "string",
                             "description": "URL of the running app to preview, e.g. http://localhost:3000"
                         },
-                        "port": {
+                        "proxy_port": {
                             "type": "integer",
-                            "description": "Local port for the proxy. Omit to pick a free one."
+                            "description": "Local port for the preview proxy — NOT the Chrome remote-debugging port. Omit to pick a free one."
                         }
                     },
                     "required": ["url"]
@@ -415,7 +415,11 @@ impl McpClientTrait for BrowserPreviewClient {
                         "url is required",
                     )]));
                 };
-                let port = args.get("port").and_then(|v| v.as_u64()).unwrap_or(0) as u16;
+                let port = args
+                    .get("proxy_port")
+                    .or_else(|| args.get("port"))
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(0) as u16;
 
                 match self.start_preview(url, port).await {
                     Ok((id, state)) => {
