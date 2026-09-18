@@ -2,10 +2,10 @@ use anyhow::Result;
 use rmcp::model::ElicitationAction;
 use serde_json::json;
 
-use super::calculator_extension::{value, ADD, REQUEST_VALUE};
+use super::calculator_extension::{ADD, REQUEST_VALUE, value};
 use super::dummy_api::ProviderFeatures;
-use super::pipeline::test_pipeline_with;
 use super::pipeline::MessageKind::{Agent, ToolCall, ToolResponse};
+use super::pipeline::test_pipeline_with;
 use crate::agents::final_output_tool::FINAL_OUTPUT_TOOL_NAME;
 use crate::agents::platform_extensions::MANAGE_EXTENSIONS_TOOL_NAME_COMPLETE;
 use crate::agents::tool_execution::CHAT_MODE_TOOL_SKIPPED_RESPONSE;
@@ -173,9 +173,11 @@ async fn reconstruction_and_session_isolation() -> Result<()> {
     let restored = pipeline.session().await?;
     assert_eq!(restored.usage.cache_read_input_tokens, Some(11));
     assert_eq!(restored.usage.cache_write_input_tokens, Some(7));
-    assert!(restored
-        .accumulated_cost
-        .is_some_and(|cost| cost > first_cost));
+    assert!(
+        restored
+            .accumulated_cost
+            .is_some_and(|cost| cost > first_cost)
+    );
     assert!(pipeline.tool_contexts().iter().all(|context| {
         context.session_id == pipeline.session_id
             && context.working_dir.as_deref() == Some(pipeline.working_dir())

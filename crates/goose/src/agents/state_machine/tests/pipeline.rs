@@ -3,13 +3,14 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use rmcp::model::ElicitationAction;
-use tokio::sync::mpsc;
 use tokio::sync::Mutex as TokioMutex;
+use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 
 use super::calculator_extension::CalculatorExtension;
 use super::dummy_api::{DummyApi, ProviderFeatures};
 use crate::action_required_manager::ElicitationOutcome;
+use crate::agents::AgentEvent;
 use crate::agents::extension::ExtensionConfig;
 use crate::agents::extension_manager::{ExtensionManager, ExtensionManagerCapabilities};
 use crate::agents::mcp_client::McpClientTrait;
@@ -22,14 +23,13 @@ use crate::agents::state_machine::{
     SteerOperation, SteerQueue, Step, StopHookOperation, ToolApprovalOperation,
     ToolExecutionOperation, ToolPairCompactionOperation, UnknownToolOperation,
 };
-use crate::agents::AgentEvent;
-use crate::config::permission::{PermissionLevel, PermissionManager};
 use crate::config::GooseMode;
-use crate::conversation::message::{ActionRequiredData, Message, MessageContent};
+use crate::config::permission::{PermissionLevel, PermissionManager};
 use crate::conversation::Conversation;
+use crate::conversation::message::{ActionRequiredData, Message, MessageContent};
 use crate::hooks::HookManager;
-use crate::permission::permission_inspector::PermissionInspector;
 use crate::permission::Permission;
+use crate::permission::permission_inspector::PermissionInspector;
 use crate::providers::base::Provider;
 use crate::security::security_inspector::SecurityInspector;
 use crate::session::extension_data::EnabledExtensionsState;

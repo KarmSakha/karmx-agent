@@ -2,15 +2,15 @@ use anyhow::Result;
 use rmcp::model::{Annotations, Role, TextContent};
 use serde_json::Value;
 
-use super::calculator_extension::{value, ADD};
-use super::pipeline::{test_pipeline, MessageKind::Agent, MessageKind::ToolResponse, MAX_TURNS};
+use super::calculator_extension::{ADD, value};
+use super::pipeline::{MAX_TURNS, MessageKind::Agent, MessageKind::ToolResponse, test_pipeline};
 use crate::agents::final_output_tool::FINAL_OUTPUT_TOOL_NAME;
 use crate::agents::platform_extensions::MANAGE_EXTENSIONS_TOOL_NAME_COMPLETE;
 use crate::agents::state_machine::ops_stop_hook::DENIED;
 use crate::agents::state_machine::ops_unknown_tool::UNCLAIMED_TOOL_ERROR;
 use crate::agents::tool_execution::{CHAT_MODE_TOOL_SKIPPED_RESPONSE, DECLINED_RESPONSE};
-use crate::config::permission::PermissionLevel;
 use crate::config::GooseMode;
+use crate::config::permission::PermissionLevel;
 use crate::conversation::message::{Message, MessageContent, SystemNotificationType};
 use crate::permission::Permission;
 
@@ -395,24 +395,16 @@ impl RecordingHookEnv {
     }
 }
 
-const RECORD_PRE_SCRIPT: &str =
-    "#!/bin/sh\ncat >> \"$PLUGIN_ROOT/pre.log\"\nprintf '\\n' >> \"$PLUGIN_ROOT/pre.log\"\nexit 0\n";
-const RECORD_RESULT_SCRIPT: &str =
-    "#!/bin/sh\ncat >> \"$PLUGIN_ROOT/result.log\"\nprintf '\\n' >> \"$PLUGIN_ROOT/result.log\"\nexit 0\n";
-const RECORD_POST_SCRIPT: &str =
-    "#!/bin/sh\ncat >> \"$PLUGIN_ROOT/post.log\"\nprintf '\\n' >> \"$PLUGIN_ROOT/post.log\"\nexit 0\n";
-const RECORD_POST_FAILURE_SCRIPT: &str =
-    "#!/bin/sh\ncat >> \"$PLUGIN_ROOT/postfail.log\"\nprintf '\\n' >> \"$PLUGIN_ROOT/postfail.log\"\nexit 0\n";
-const RECORD_EXTENDED_SCRIPT: &str =
-    "#!/bin/sh\ncat >> \"$PLUGIN_ROOT/extended.log\"\nprintf '\\n' >> \"$PLUGIN_ROOT/extended.log\"\nexit 0\n";
-const DENY_AND_RECORD_SCRIPT: &str =
-    "#!/bin/sh\ncat >> \"$PLUGIN_ROOT/pre.log\"\nprintf '\\n' >> \"$PLUGIN_ROOT/pre.log\"\necho \"blocked by test policy\" >&2\nexit 2\n";
+const RECORD_PRE_SCRIPT: &str = "#!/bin/sh\ncat >> \"$PLUGIN_ROOT/pre.log\"\nprintf '\\n' >> \"$PLUGIN_ROOT/pre.log\"\nexit 0\n";
+const RECORD_RESULT_SCRIPT: &str = "#!/bin/sh\ncat >> \"$PLUGIN_ROOT/result.log\"\nprintf '\\n' >> \"$PLUGIN_ROOT/result.log\"\nexit 0\n";
+const RECORD_POST_SCRIPT: &str = "#!/bin/sh\ncat >> \"$PLUGIN_ROOT/post.log\"\nprintf '\\n' >> \"$PLUGIN_ROOT/post.log\"\nexit 0\n";
+const RECORD_POST_FAILURE_SCRIPT: &str = "#!/bin/sh\ncat >> \"$PLUGIN_ROOT/postfail.log\"\nprintf '\\n' >> \"$PLUGIN_ROOT/postfail.log\"\nexit 0\n";
+const RECORD_EXTENDED_SCRIPT: &str = "#!/bin/sh\ncat >> \"$PLUGIN_ROOT/extended.log\"\nprintf '\\n' >> \"$PLUGIN_ROOT/extended.log\"\nexit 0\n";
+const DENY_AND_RECORD_SCRIPT: &str = "#!/bin/sh\ncat >> \"$PLUGIN_ROOT/pre.log\"\nprintf '\\n' >> \"$PLUGIN_ROOT/pre.log\"\necho \"blocked by test policy\" >&2\nexit 2\n";
 /// Logs its stdin like the others, writes nothing to stdout, and exits
 /// non-zero. That is a hook that ran but never returned a decision.
-const ABNORMAL_EXIT_AND_RECORD_SCRIPT: &str =
-    "#!/bin/sh\ncat >> \"$PLUGIN_ROOT/pre.log\"\nprintf '\\n' >> \"$PLUGIN_ROOT/pre.log\"\necho boom >&2\nexit 3\n";
-const HOOK_FAILURE_REFUSAL: &str =
-    "Tool call blocked because policy hook `test-plugin` could not complete: \
+const ABNORMAL_EXIT_AND_RECORD_SCRIPT: &str = "#!/bin/sh\ncat >> \"$PLUGIN_ROOT/pre.log\"\nprintf '\\n' >> \"$PLUGIN_ROOT/pre.log\"\necho boom >&2\nexit 3\n";
+const HOOK_FAILURE_REFUSAL: &str = "Tool call blocked because policy hook `test-plugin` could not complete: \
      the hook exited with status 3 and no usable decision. \
      That hook is configured to block on failure.";
 
@@ -455,9 +447,11 @@ async fn pre_tool_use_result_observes_denial_that_post_hooks_never_see() -> Resu
     assert_eq!(results[0]["policy_evaluated"], true);
     assert_eq!(results[0]["blocked_by"], "test-plugin");
     assert_eq!(results[0]["reason"], "blocked by test policy");
-    assert!(results[0]["tool_call_id"]
-        .as_str()
-        .is_some_and(|id| !id.is_empty()));
+    assert!(
+        results[0]["tool_call_id"]
+            .as_str()
+            .is_some_and(|id| !id.is_empty())
+    );
     Ok(())
 }
 
@@ -555,8 +549,8 @@ async fn pre_tool_use_result_reports_allow_and_unevaluated_when_no_hook_matches(
 /// stdout and exits non-zero, so it never returned a decision. Execution stays
 /// fail-open and the event reports allow with policy_evaluated false.
 #[tokio::test]
-async fn pre_tool_use_result_reports_unevaluated_when_the_only_hook_exits_without_a_decision(
-) -> Result<()> {
+async fn pre_tool_use_result_reports_unevaluated_when_the_only_hook_exits_without_a_decision()
+-> Result<()> {
     let env = RecordingHookEnv::new(&[
         ("PreToolUse", "", "pre.sh", ABNORMAL_EXIT_AND_RECORD_SCRIPT),
         ("PreToolUseResult", "", "result.sh", RECORD_RESULT_SCRIPT),
@@ -646,9 +640,11 @@ async fn recipe_final_output_emits_pre_tool_use_and_result_with_matching_id() ->
         pres[0]["tool_call_id"], results[0]["tool_call_id"],
         "PreToolUse and PreToolUseResult must carry the same tool_call_id"
     );
-    assert!(pres[0]["tool_call_id"]
-        .as_str()
-        .is_some_and(|id| !id.is_empty()));
+    assert!(
+        pres[0]["tool_call_id"]
+            .as_str()
+            .is_some_and(|id| !id.is_empty())
+    );
     Ok(())
 }
 
@@ -904,9 +900,11 @@ async fn load_skill_emits_pre_tool_use_and_result_with_matching_id() -> Result<(
         pres[0]["tool_call_id"], results[0]["tool_call_id"],
         "PreToolUse and PreToolUseResult must carry the same tool_call_id"
     );
-    assert!(pres[0]["tool_call_id"]
-        .as_str()
-        .is_some_and(|id| !id.is_empty()));
+    assert!(
+        pres[0]["tool_call_id"]
+            .as_str()
+            .is_some_and(|id| !id.is_empty())
+    );
     Ok(())
 }
 

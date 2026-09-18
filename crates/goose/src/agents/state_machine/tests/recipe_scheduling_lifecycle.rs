@@ -3,20 +3,20 @@ use serde_json::json;
 
 use super::dummy_api::ProviderFeatures;
 use super::pipeline::{
-    test_pipeline, test_pipeline_with, test_pipeline_with_scheduler, MessageKind::Agent,
-    MessageKind::Error, MessageKind::ToolResponse,
+    MessageKind::Agent, MessageKind::Error, MessageKind::ToolResponse, test_pipeline,
+    test_pipeline_with, test_pipeline_with_scheduler,
 };
 use crate::agents::extension::ExtensionConfig;
 use crate::agents::final_output_tool::{FINAL_OUTPUT_CONTINUATION_MESSAGE, FINAL_OUTPUT_TOOL_NAME};
 use crate::agents::platform_extensions::scheduler::MANAGE_SCHEDULE_TOOL_NAME_COMPLETE;
+use crate::agents::state_machine::MAX_TURNS_MESSAGE;
 #[cfg(feature = "code-mode")]
 use crate::agents::state_machine::ops_tool_approval::TOOL_EXECUTABLE_KEY;
-use crate::agents::state_machine::MAX_TURNS_MESSAGE;
 use crate::agents::tool_execution::CHAT_MODE_TOOL_SKIPPED_RESPONSE;
 use crate::agents::types::{RetryConfig, SuccessCheck};
+use crate::config::GooseMode;
 #[cfg(feature = "code-mode")]
 use crate::config::permission::PermissionLevel;
-use crate::config::GooseMode;
 #[cfg(feature = "code-mode")]
 use crate::conversation::message::MessageContent;
 use crate::recipe::build_recipe::build_recipe_from_template;
@@ -288,11 +288,13 @@ async fn unadvertised_final_output_is_neither_approved_nor_executed() -> Result<
                 .is_ok_and(|tool_call| tool_call.name == FINAL_OUTPUT_TOOL_NAME)
         })
         .expect("final_output request");
-    assert!(request
-        .tool_meta
-        .as_ref()
-        .and_then(|metadata| metadata.get(TOOL_EXECUTABLE_KEY))
-        .is_none());
+    assert!(
+        request
+            .tool_meta
+            .as_ref()
+            .and_then(|metadata| metadata.get(TOOL_EXECUTABLE_KEY))
+            .is_none()
+    );
 
     Ok(())
 }

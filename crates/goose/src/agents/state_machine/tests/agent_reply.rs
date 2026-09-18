@@ -13,14 +13,14 @@ use anyhow::Result;
 use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
 
-use super::calculator_extension::{value, CalculatorExtension, ADD};
+use super::calculator_extension::{ADD, CalculatorExtension, value};
 use super::dummy_api::{DummyApi, ProviderFeatures};
 use crate::acp::server::GooseAcpAgent;
 use crate::agents::extension::ExtensionConfig;
 use crate::agents::mcp_client::McpClientTrait;
 use crate::agents::{Agent, AgentConfig, AgentEvent, GoosePlatform, SessionConfig};
-use crate::config::permission::PermissionManager;
 use crate::config::GooseMode;
+use crate::config::permission::PermissionManager;
 use crate::conversation::message::{ActionRequiredData, Message, MessageContent};
 use crate::permission::Permission;
 use crate::providers::base::Provider;
@@ -171,14 +171,16 @@ async fn state_machine_confirmation_through_agent_resumes_tool_call() -> Result<
             .session_manager
             .get_session(&session_config.id, true)
             .await?;
-        assert!(confirmation_ids(
-            session
-                .conversation
-                .as_ref()
-                .expect("session conversation")
-                .messages()
-        )
-        .contains(&confirmation_id));
+        assert!(
+            confirmation_ids(
+                session
+                    .conversation
+                    .as_ref()
+                    .expect("session conversation")
+                    .messages()
+            )
+            .contains(&confirmation_id)
+        );
     }
 
     agent
@@ -213,32 +215,40 @@ async fn state_machine_confirmation_through_agent_resumes_tool_call() -> Result<
     agent
         .submit_tool_confirmation(&session_config.id, &confirmation_id, Permission::AllowOnce)
         .await?;
-    assert!(agent
-        .submit_tool_confirmation(&session_config.id, &confirmation_id, Permission::DenyOnce)
-        .await
-        .is_err());
+    assert!(
+        agent
+            .submit_tool_confirmation(&session_config.id, &confirmation_id, Permission::DenyOnce)
+            .await
+            .is_err()
+    );
     drop(stream);
     let stream = agent
         .resume_state_machine_turn(session_config.clone(), CancellationToken::new())
         .await?
         .expect("persisted confirmation response should resume the state-machine turn");
     messages.extend(stream_messages(stream).await?);
-    assert!(messages.iter().any(|message| message
-        .get_tool_response_ids()
-        .contains(&confirmation_id.as_str())));
+    assert!(messages.iter().any(|message| {
+        message
+            .get_tool_response_ids()
+            .contains(&confirmation_id.as_str())
+    }));
     assert_eq!(calculator.total(), 1);
     assert_eq!(api.call_count(), 2);
 
-    assert!(agent
-        .submit_tool_confirmation(&session_config.id, &confirmation_id, Permission::AllowOnce)
-        .await
-        .is_err());
+    assert!(
+        agent
+            .submit_tool_confirmation(&session_config.id, &confirmation_id, Permission::AllowOnce)
+            .await
+            .is_err()
+    );
     assert_eq!(calculator.total(), 1);
 
-    assert!(agent
-        .submit_tool_confirmation(&session_config.id, "stale-request", Permission::AllowOnce)
-        .await
-        .is_err());
+    assert!(
+        agent
+            .submit_tool_confirmation(&session_config.id, "stale-request", Permission::AllowOnce)
+            .await
+            .is_err()
+    );
 
     let session = agent
         .config
