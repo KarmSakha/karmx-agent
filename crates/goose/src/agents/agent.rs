@@ -2658,6 +2658,12 @@ impl Agent {
                 super::moim::compute_compaction_info(&session_config.id, &self.extension_manager)
                     .await;
 
+            let skill_query = conversation
+                .messages()
+                .iter()
+                .rev()
+                .find(|message| message.role == rmcp::model::Role::User && message.is_user_visible())
+                .map(|message| message.as_concat_text());
             if let Some(turn_context) = super::moim::turn_context_message(
                 &session_config.id,
                 &self.extension_manager,
@@ -2665,6 +2671,7 @@ impl Agent {
                 max_turns,
                 turn_start,
                 turn_start_compaction_info,
+                skill_query.as_deref(),
             )
             .await
             {

@@ -54,4 +54,5 @@ mod tool_call_labels;
 pub mod tool_inspection;
 pub mod tool_monitor;
 pub mod tracing;
+pub mod typesafe;
 pub mod utils;

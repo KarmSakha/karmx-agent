@@ -1,6 +1,7 @@
 use crate::agents::extension_manager::ExtensionManager;
 use crate::conversation::message::{Message, MessageMetadata};
 use crate::conversation::{CURRENT_TIME_TAG, TURN_CONTEXT_TAG, WORKING_DIRECTORY_TAG};
+use goose_sdk_types::custom_requests::{SourceEntry, SourceType};
 use std::path::{Path, PathBuf};
 
 const MIN_CONTEXT_FOR_MOIM: usize = 32_000;
@@ -75,6 +76,35 @@ pub(super) async fn compute_compaction_info(
     compaction_remaining_line(total_tokens, context_limit, compaction_threshold)
 }
 
+/// A `<skill-suggestion>` moim part for the turn: the best-matching installed
+/// skill for `query`, when the skills extension is enabled. The ranked
+/// suggestion is deadline-bounded and silently absent when nothing scores.
+pub(super) async fn skill_suggestion_part(
+    extension_manager: &ExtensionManager,
+    working_dir: &Path,
+    query: Option<&str>,
+) -> Option<String> {
+    let query = query.map(str::trim).filter(|q| !q.is_empty())?;
+    if !extension_manager
+        .is_extension_enabled(crate::skills::EXTENSION_NAME)
+        .await
+    {
+        return None;
+    }
+    let sources = crate::skills::discover_skills(Some(working_dir));
+    let skills: Vec<&SourceEntry> = sources
+        .iter()
+        .filter(|source| {
+            matches!(
+                source.source_type,
+                SourceType::Skill | SourceType::BuiltinSkill
+            )
+        })
+        .collect();
+    let suggestion = crate::skills::router::suggest(query, &skills).await?;
+    Some(tag("skill-suggestion", &suggestion))
+}
+
 /// The turn's context block: composed once per turn, persisted as an
 /// agent-only user message, never moved or edited afterwards.
 pub async fn turn_context_message(
@@ -84,6 +114,7 @@ pub async fn turn_context_message(
     max_turns: u32,
     turn_start: chrono::DateTime<chrono::Local>,
     compaction_info: Option<String>,
+    skill_query: Option<&str>,
 ) -> Option<Message> {
     if SKIP.with(|f| f.get()) {
         return None;
@@ -120,6 +151,7 @@ pub async fn turn_context_message(
         .map(|session| session.working_dir.clone())
         .unwrap_or_else(|| PathBuf::from("."));
     let mut parts = extension_manager.collect_moim_parts(session_id).await;
+    parts.extend(skill_suggestion_part(extension_manager, &working_dir, skill_query).await);
     parts.extend(compaction_info.map(|value| tag("compaction", &value)));
     parts.extend(turn_budget_part(turns_taken, max_turns));
     turn_context_event(&working_dir, context_limit, parts, turn_start)
@@ -249,9 +281,10 @@ mod tests {
     async fn turn_context_message_is_an_agent_only_user_message() {
         let (session_id, em, _tmp) = session_and_manager().await;
 
-        let message = turn_context_message(&session_id, &em, 0, 100, chrono::Local::now(), None)
-            .await
-            .expect("turn context should be produced");
+        let message =
+            turn_context_message(&session_id, &em, 0, 100, chrono::Local::now(), None, None)
+                .await
+                .expect("turn context should be produced");
 
         assert_eq!(message.role, rmcp::model::Role::User);
         assert!(message.is_agent_visible());
@@ -267,10 +300,10 @@ mod tests {
         let (session_id, em, _tmp) = session_and_manager().await;
         let turn_start = chrono::Local::now();
 
-        let first = turn_context_message(&session_id, &em, 0, 100, turn_start, None)
+        let first = turn_context_message(&session_id, &em, 0, 100, turn_start, None, None)
             .await
             .unwrap();
-        let second = turn_context_message(&session_id, &em, 0, 100, turn_start, None)
+        let second = turn_context_message(&session_id, &em, 0, 100, turn_start, None, None)
             .await
             .unwrap();
 
@@ -293,15 +326,13 @@ mod tests {
         assert!(event.is_turn_context());
         assert!(!event.is_user_visible());
 
-        assert!(
-            turn_context_event(
-                Path::new("/test/dir"),
-                Some(16_000),
-                vec![],
-                chrono::Local::now(),
-            )
-            .is_none()
-        );
+        assert!(turn_context_event(
+            Path::new("/test/dir"),
+            Some(16_000),
+            vec![],
+            chrono::Local::now(),
+        )
+        .is_none());
     }
 
     #[test]

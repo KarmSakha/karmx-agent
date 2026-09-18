@@ -5,7 +5,8 @@
 
 use goose_sdk_types::custom_requests::SourceEntry;
 use serde_json::Value;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
+use std::time::{Duration, Instant};
 
 /// Frontmatter `disable-model-invocation: true` keeps a skill out of the
 /// listing and out of routing; it stays loadable through `/skill` or an
@@ -117,6 +118,56 @@ pub(crate) fn rank_skills<'a>(
     }
     scored.truncate(max);
     scored
+}
+
+/// How many BM25 candidates Jev is asked to choose between (plus "none").
+const JEV_CANDIDATES: usize = 5;
+/// Total budget for the Jev rerank; a suggestion must never stall a turn.
+const JEV_BUDGET: Duration = Duration::from_millis(1500);
+const JEV_INSTRUCTIONS: &str =
+    "Pick the installed skill that best matches the user's request, or 'none'.";
+
+/// The best skill to suggest for `query`: BM25 ranking, reranked by TypeSafe
+/// Jev over the top candidates when a key is configured. Returns
+/// `"name — description"`; `None` when nothing is worth suggesting.
+pub(crate) async fn suggest(query: &str, skills: &[&SourceEntry]) -> Option<String> {
+    let ranked = rank_skills(query, skills, JEV_CANDIDATES);
+    let best = ranked.first()?;
+    if let Some(jev) = crate::typesafe::JevClient::shared() {
+        let options: BTreeMap<String, String> = ranked
+            .iter()
+            .map(|hit| {
+                (
+                    hit.skill.name.clone(),
+                    hit.skill.description.chars().take(200).collect(),
+                )
+            })
+            .chain(std::iter::once((
+                "none".to_string(),
+                "No installed skill is relevant".to_string(),
+            )))
+            .collect();
+        let state = serde_json::json!({ "request": query });
+        let deadline = Instant::now() + JEV_BUDGET;
+        if let Some(choice) = jev
+            .decision(JEV_INSTRUCTIONS, &state, &options, deadline)
+            .await
+        {
+            if choice == "none" {
+                return None;
+            }
+            if let Some(hit) = ranked.iter().find(|hit| hit.skill.name == choice) {
+                return Some(format_skill(hit.skill));
+            }
+            // Jev named something outside the candidate set: keep the BM25 best.
+        }
+    }
+    Some(format_skill(best.skill))
+}
+
+fn format_skill(skill: &SourceEntry) -> String {
+    let description = skill.description.chars().take(120).collect::<String>();
+    format!("{} — {}", skill.name, description)
 }
 
 #[cfg(test)]
