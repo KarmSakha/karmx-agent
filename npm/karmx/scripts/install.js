@@ -65,6 +65,8 @@ function extractArchive(archive, outDir) {
 
 function finishBinary(source) {
   mkdirSync(vendorDir, { recursive: true });
+  // Copying over a running binary makes macOS SIGKILL it (Code Signature Invalid); unlink first.
+  rmSync(dest, { force: true });
   copyFileSync(source, dest);
   if (process.platform !== 'win32') {
     chmodSync(dest, 0o755);
