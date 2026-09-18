@@ -23,6 +23,7 @@ pub struct GooseInferenceRequestPreparer<'a> {
     pub(crate) prompt_manager: &'a Mutex<PromptManager>,
     pub(crate) tool_inspection_manager: &'a ToolInspectionManager,
     pub(crate) context_limit: usize,
+    pub(crate) parallel_tool_calls: bool,
 }
 
 #[async_trait]
@@ -48,12 +49,16 @@ impl InferenceRequestPreparer<Session> for GooseInferenceRequestPreparer<'_> {
             self.tool_inspection_manager
                 .apply_tool_annotations(&input.tools);
         }
+        let enable_subagents =
+            crate::agents::local_fusion::sidekick_offered(&input.tools, goose_mode);
         let tools =
             crate::agents::reply_parts::prepare_inference_tools(input.tools, code_execution_mode);
         let system_prompt = self.prompt_manager.lock().await.build_system_prompt(
             &session.working_dir,
             input.prompt_parts,
             goose_mode,
+            enable_subagents,
+            self.parallel_tool_calls,
         );
         let turn = messages_since_kickoff(conversation)?;
         let turn_start = turn

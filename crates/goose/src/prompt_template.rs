@@ -319,8 +319,11 @@ mod tests {
         let resources = rendered.find("apps supports resources.").unwrap();
         let instructions = rendered.find("Create apps.").unwrap();
         assert!(resources < instructions);
+        let between = rendered
+            .get(resources..instructions)
+            .expect("needle positions are char boundaries");
         assert!(
-            rendered[resources..instructions].contains('\n'),
+            between.contains('\n'),
             "resources line and instructions must be separate lines"
         );
     }

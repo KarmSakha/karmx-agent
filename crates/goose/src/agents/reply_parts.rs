@@ -236,6 +236,8 @@ impl Agent {
             )
         };
 
+        let enable_subagents = crate::agents::local_fusion::sidekick_offered(&tools, goose_mode);
+
         let prompt_manager = self.prompt_manager.lock().await;
         let system_prompt = prompt_manager
             .builder()
@@ -243,6 +245,7 @@ impl Agent {
             .with_code_execution_mode(code_execution_active)
             .with_hints(working_dir)
             .with_goose_mode(goose_mode)
+            .with_enable_subagents(enable_subagents)
             .with_parallel_tool_calls(parallel_tool_calls)
             .build();
 

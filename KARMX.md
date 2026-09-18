@@ -101,8 +101,10 @@ lead. Each setting works as an env var or as a key in
 - `KARMX_SIDEKICK_PROVIDER` — provider name for the sidekick, e.g. a custom
   provider from `custom_providers/`; unset = the lead's provider.
 - `KARMX_SIDEKICK_MODEL` — model uid for the sidekick; unset = the lead's model.
-- `KARMX_SIDEKICK_COMPACTION_THRESHOLDS` — compaction thresholds for the
-  sidekick chain, format `<spawn>,[<apply>,]<hard>`; unset = inherit the lead's.
+
+The lead's system prompt carries the sidekick guidance only in requests that
+offer the `sidekick` tool (main sessions with the summon extension, outside
+chat mode).
 
 ```yaml
 # ~/.config/karmx/config.yaml

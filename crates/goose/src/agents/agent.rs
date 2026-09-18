@@ -1753,6 +1753,10 @@ impl Agent {
             prompt_manager: &self.prompt_manager,
             tool_inspection_manager: &self.tool_inspection_manager,
             context_limit,
+            parallel_tool_calls: crate::model_config::resolved_parallel_tool_calls(
+                provider.get_name(),
+                &model_config.model_name,
+            ),
         };
         let status_operation =
             Arc::new(StatusOperation::new(provider.clone(), model_config.clone()));

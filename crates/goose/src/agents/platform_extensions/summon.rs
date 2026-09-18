@@ -1,17 +1,17 @@
-use crate::agents::AgentConfig;
 use crate::agents::extension::PlatformExtensionContext;
 use crate::agents::mcp_client::{Error, McpClientTrait};
-use crate::agents::subagent_handler::{OnMessageCallback, SubagentRunParams, run_subagent_task};
-use crate::agents::subagent_task_config::{DEFAULT_SUBAGENT_MAX_TURNS, TaskConfig};
+use crate::agents::subagent_handler::{run_subagent_task, OnMessageCallback, SubagentRunParams};
+use crate::agents::subagent_task_config::{TaskConfig, DEFAULT_SUBAGENT_MAX_TURNS};
 use crate::agents::tool_execution::{ToolCallContext, ToolCallNotificationEmitter};
+use crate::agents::AgentConfig;
 use crate::config::paths::Paths;
 use crate::config::{Config, GooseMode};
 use crate::providers;
 use crate::recipe::build_recipe::build_recipe_from_template;
 use crate::recipe::local_recipes::load_local_recipe_file;
-use crate::recipe::{RECIPE_FILE_EXTENSIONS, Recipe, RecipeParameter, Settings};
-use crate::session::SessionType;
+use crate::recipe::{Recipe, RecipeParameter, Settings, RECIPE_FILE_EXTENSIONS};
 use crate::session::extension_data::EnabledExtensionsState;
+use crate::session::SessionType;
 use crate::sources::parse_frontmatter;
 use crate::utils::safe_truncate;
 use anyhow::Result;
@@ -26,8 +26,8 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::future::Future;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
 
@@ -833,12 +833,11 @@ impl SummonClient {
 
         Tool::new(
             "sidekick",
-            "Hand work to your sidekick: a persistent peer that works alongside you on the same machine (shared filesystem and repos; its shell sessions are separate from yours).\n\n\
-             The user interacts with one agent: you. Do not mention the sidekick or distinguish its work from yours - describe the combined result in the first person as your own.\n\n\
-             Delegate the hands-on work: exploration, implementation, environment setup, builds, linters, type-checks, test suites. Keep judgement and authority for yourself: planning and design, data analysis and measurement, eval harnesses, pipeline configuration, complex interactive browser work, reviewing the diff before it lands, and anything requiring user authority.\n\n\
-             Brief it well: give context and done-criteria, then let it work. Name the narrowest verification commands that cover the change - it treats your list as mandatory, so \"run everything\" re-gates unchanged work on every handoff. Reserve a full-suite pass for one final gate.\n\n\
-             Its report is a claim; the artifacts it references are the evidence. Review the diff and test output rather than re-running the work.\n\n\
-             For long jobs: blocking: false parks it, then call again with a follow-up to steer or to collect. If you would relay the result as soon as it is ready rather than at your wrap-up, say so in the brief."
+            "Hand hands-on work (exploring, implementing, builds and tests) to your sidekick, a persistent helper on this machine with shared files and separate shell sessions. \
+             Brief it with the context, the exact task, the done-criteria and the narrowest verification commands; it works independently and reports back. \
+             Its report is a claim: check the diff and test output it cites. \
+             blocking: false parks it so you can keep working; call again to steer or collect. \
+             Never mention the sidekick to the user; present its work as your own."
                 .to_string(),
             schema.as_object().unwrap().clone(),
         )
@@ -3527,11 +3526,9 @@ You review code."#;
             )
             .unwrap_err();
 
-        assert!(
-            error
-                .to_string()
-                .contains("No model configured for provider 'lmstudio'")
-        );
+        assert!(error
+            .to_string()
+            .contains("No model configured for provider 'lmstudio'"));
     }
 
     fn test_tool_notification(request_id: &str, subagent_id: &str) -> ServerNotification {
@@ -3642,7 +3639,7 @@ You review code."#;
 
     #[tokio::test]
     async fn test_live_notifications_precede_delegate_result() {
-        use crate::agents::tool_execution::{ToolStreamItem, tool_stream};
+        use crate::agents::tool_execution::{tool_stream, ToolStreamItem};
         use tokio_stream::wrappers::ReceiverStream;
 
         for _ in 0..32 {
@@ -3696,7 +3693,7 @@ You review code."#;
 
     #[tokio::test]
     async fn test_async_completion_before_load_replays_notifications() {
-        use crate::agents::tool_execution::{ToolStreamItem, tool_stream};
+        use crate::agents::tool_execution::{tool_stream, ToolStreamItem};
         use tokio_stream::wrappers::ReceiverStream;
 
         let client = Arc::new(SummonClient::new(create_test_context()).unwrap());
@@ -3967,13 +3964,11 @@ You review code."#;
         assert_eq!(result.status, "completed");
         assert_eq!(result.turns, Some(5));
 
-        assert!(
-            !client
-                .completed_tasks
-                .lock()
-                .await
-                .contains_key("20260204_2")
-        );
+        assert!(!client
+            .completed_tasks
+            .lock()
+            .await
+            .contains_key("20260204_2"));
 
         let result = client
             .handle_load_task_result("20260204_3", false, false, None)
@@ -4514,13 +4509,11 @@ You review code."#;
         assert!(text.contains("final output"));
 
         // Peek must be non-destructive: the result is still retrievable afterwards.
-        assert!(
-            client
-                .completed_tasks
-                .lock()
-                .await
-                .contains_key("20260204_1")
-        );
+        assert!(client
+            .completed_tasks
+            .lock()
+            .await
+            .contains_key("20260204_1"));
         let result = client
             .handle_load_task_result("20260204_1", false, false, None)
             .await

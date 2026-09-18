@@ -151,9 +151,7 @@ impl<'a> SystemPromptBuilder<'a, PromptManager> {
         } else {
             prompt_template::render_template("system.md", &context)
         }
-        .unwrap_or_else(|_| {
-            "You are a general-purpose AI agent called goose, created by Block".to_string()
-        });
+        .unwrap_or_else(|_| "You are a general-purpose AI agent called karmX.".to_string());
 
         let mut system_prompt_extras = self.manager.system_prompt_extras.clone();
         system_prompt_extras.extend(self.prompt_extras);
@@ -243,12 +241,16 @@ impl PromptManager {
         working_dir: &Path,
         prompt_parts: Vec<(String, String)>,
         goose_mode: GooseMode,
+        enable_subagents: bool,
+        parallel_tool_calls: bool,
     ) -> String {
         self.load_subdirectory_hints(working_dir);
         self.builder()
             .with_prompt_extras(prompt_parts)
             .with_hints(working_dir)
             .with_goose_mode(goose_mode)
+            .with_enable_subagents(enable_subagents)
+            .with_parallel_tool_calls(parallel_tool_calls)
             .without_extensions()
             .build()
     }
@@ -353,10 +355,35 @@ mod tests {
                 "# Extensions\n\n## developer".to_string(),
             )],
             GooseMode::Auto,
+            false,
+            false,
         );
 
         assert!(prompt.contains("## developer"));
         assert!(!prompt.contains("No extensions are defined"));
+    }
+
+    #[test]
+    fn composed_prompt_carries_sidekick_guidance_only_when_offered() {
+        let mut manager = PromptManager::new();
+        let working_dir = tempfile::tempdir().unwrap();
+
+        let with =
+            manager.build_system_prompt(working_dir.path(), vec![], GooseMode::Auto, true, false);
+        let without =
+            manager.build_system_prompt(working_dir.path(), vec![], GooseMode::Auto, false, false);
+
+        assert!(with.contains("`sidekick`"));
+        assert!(!without.contains("`sidekick`"));
+    }
+
+    #[test]
+    fn test_sidekick_guidance() {
+        let manager = PromptManager::with_timestamp(DateTime::<Utc>::from_timestamp(0, 0).unwrap());
+
+        let system_prompt = manager.builder().with_enable_subagents(true).build();
+
+        assert_snapshot!(system_prompt)
     }
 
     #[test]

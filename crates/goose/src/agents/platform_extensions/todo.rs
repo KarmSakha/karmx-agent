@@ -189,14 +189,62 @@ impl McpClientTrait for TodoClient {
             .await
             .ok()?;
 
-        match extension_data::TodoState::from_extension_data(&metadata.extension_data) {
-            Some(state) if !state.content.trim().is_empty() => {
-                Some(format!("Current tasks and notes:\n{}\n", state.content))
-            }
-            _ => Some(
-                "Current tasks and notes:\nOnce given a task, immediately update your todo with all explicit and implicit requirements\n"
-                    .to_string(),
-            ),
-        }
+        // An empty list adds nothing: a standing "once given a task" nudge on every
+        // turn led small models to invent a task from a bare greeting.
+        extension_data::TodoState::from_extension_data(&metadata.extension_data)
+            .filter(|state| !state.content.trim().is_empty())
+            .map(|state| format!("Current tasks and notes:\n{}\n", state.content))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::GooseMode;
+    use crate::session::{SessionManager, SessionType};
+    use std::sync::Arc;
+
+    async fn client_with_session() -> (TodoClient, String, tempfile::TempDir) {
+        let dir = tempfile::tempdir().unwrap();
+        let session_manager = Arc::new(SessionManager::new(dir.path().to_path_buf()));
+        let session = session_manager
+            .create_session(
+                dir.path().to_path_buf(),
+                "todo".to_owned(),
+                SessionType::Hidden,
+                GooseMode::default(),
+            )
+            .await
+            .unwrap();
+        let context = PlatformExtensionContext {
+            extension_manager: None,
+            session_manager,
+            scheduler: None,
+            session: None,
+            use_login_shell_path: false,
+        };
+        (TodoClient::new(context).unwrap(), session.id, dir)
+    }
+
+    #[tokio::test]
+    async fn empty_todo_adds_no_turn_context() {
+        let (client, session_id, _dir) = client_with_session().await;
+
+        assert_eq!(client.get_moim(&session_id).await, None);
+    }
+
+    #[tokio::test]
+    async fn written_todo_is_carried_into_turn_context() {
+        let (client, session_id, _dir) = client_with_session().await;
+        let mut arguments = JsonObject::new();
+        arguments.insert("content".to_string(), "- [ ] ship it".into());
+        client
+            .handle_write_todo(&session_id, Some(arguments))
+            .await
+            .unwrap();
+
+        let moim = client.get_moim(&session_id).await.unwrap();
+
+        assert!(moim.contains("- [ ] ship it"));
     }
 }
