@@ -225,6 +225,6 @@ Install a Rust toolchain (https://rustup.rs) and retry, or build from a checkout
 }
 
 main().catch((error) => {
-  console.error(error);
+  console.error(`[karmx] ${error.message}`);
   process.exit(1);
 });
