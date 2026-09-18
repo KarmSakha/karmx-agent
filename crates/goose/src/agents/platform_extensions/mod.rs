@@ -10,6 +10,7 @@ pub mod developer;
 pub mod ext_manager;
 pub mod orchestrator;
 pub mod scheduler;
+pub mod screen_task;
 pub mod summarize;
 pub mod summon;
 pub mod todo;
@@ -256,6 +257,21 @@ pub static PLATFORM_EXTENSIONS: Lazy<HashMap<&'static str, PlatformExtensionDef>
                     Some(Box::new(
                         computer_control::ComputerControlClient::new(ctx).unwrap(),
                     ))
+                },
+            },
+        );
+
+        map.insert(
+            screen_task::EXTENSION_NAME,
+            PlatformExtensionDef {
+                name: screen_task::EXTENSION_NAME,
+                display_name: "Screen Task",
+                description: "Drive the whole screen toward a goal — OCR + AX + Jev, any macOS app",
+                default_enabled: true,
+                unprefixed_tools: true,
+                hidden: false,
+                client_factory: |ctx| {
+                    Some(Box::new(screen_task::ScreenTaskClient::new(ctx).unwrap()))
                 },
             },
         );

@@ -10,7 +10,7 @@
 //! `<state dir>/logs/typesafe.log` so routing can be audited.
 
 use reqwest::Client;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use std::collections::{BTreeMap, HashMap};
 use std::io::Write;
 use std::sync::{Mutex, OnceLock};
@@ -51,6 +51,48 @@ impl JevClient {
     /// the decision cache persists across call sites.
     pub fn shared() -> Option<&'static Self> {
         CLIENT.get_or_init(Self::from_env).as_ref()
+    }
+
+    /// Asks Jev several Choice questions in one request — answers arrive in the
+    /// same parallel pass, so a decision made of multiple picks costs one call.
+    /// Returns question_id -> answer on 200; `None` on transport failure.
+    pub async fn decide_all(
+        &self,
+        state: &Value,
+        questions: &BTreeMap<String, Question>,
+        deadline: Instant,
+    ) -> Option<BTreeMap<String, Answer>> {
+        if questions.is_empty() {
+            return None;
+        }
+        let questions_json = questions
+            .iter()
+            .map(|(id, q)| {
+                (
+                    id.clone(),
+                    json!({"type": "choice", "instructions": q.instructions, "criteria": q.criteria}),
+                )
+            })
+            .collect::<serde_json::Map<String, Value>>();
+        let body = json!({
+            "state": state,
+            "model": MODEL,
+            "questions": Value::Object(questions_json),
+        });
+        let started = Instant::now();
+        let (answers, failure) = self.call_with_retry_all(&body, deadline).await;
+        if answers.is_empty() {
+            log_decision("batch", &failure, started.elapsed());
+        } else {
+            for (id, answer) in &answers {
+                log_decision(
+                    id,
+                    &Outcome::ok(200, answer.choice.clone()),
+                    started.elapsed(),
+                );
+            }
+        }
+        (!answers.is_empty()).then_some(answers)
     }
 
     /// Asks Jev to pick one of `options` (option -> rubric) for `state` under
@@ -126,6 +168,45 @@ impl JevClient {
         }
     }
 
+    /// Same retry policy as `call_with_retry`, but returns the whole answers
+    /// map (question_id -> choice+confidence) for a multi-question request,
+    /// plus the failure that produced an empty map so callers can log it.
+    async fn call_with_retry_all(
+        &self,
+        body: &Value,
+        deadline: Instant,
+    ) -> (BTreeMap<String, Answer>, Outcome) {
+        let mut retried = false;
+        loop {
+            let Some(remaining) = deadline.checked_duration_since(Instant::now()) else {
+                return (BTreeMap::new(), Outcome::error("deadline"));
+            };
+            match tokio::time::timeout(remaining, self.post(body)).await {
+                Err(_) => return (BTreeMap::new(), Outcome::error("timeout")),
+                Ok(Err(error)) => {
+                    return (BTreeMap::new(), Outcome::error(error.to_string()));
+                }
+                Ok(Ok((status, payload))) => {
+                    if (status == 429 || status >= 500) && !retried {
+                        retried = true;
+                        if backoff(deadline).await {
+                            continue;
+                        }
+                        return (BTreeMap::new(), Outcome::status(status));
+                    }
+                    if status != 200 {
+                        return (BTreeMap::new(), Outcome::status(status));
+                    }
+                    let answers = extract_answers(&payload);
+                    if answers.is_empty() {
+                        return (answers, Outcome::error("no answers"));
+                    }
+                    return (answers, Outcome::ok(status, String::new()));
+                }
+            }
+        }
+    }
+
     async fn post(&self, body: &Value) -> Result<(u16, Value), reqwest::Error> {
         let response = self
             .http
@@ -138,6 +219,18 @@ impl JevClient {
         let payload = response.json::<Value>().await.unwrap_or_default();
         Ok((status, payload))
     }
+}
+
+/// One Choice question in a `decide_all` request.
+pub struct Question {
+    pub instructions: String,
+    pub criteria: BTreeMap<String, String>,
+}
+
+/// A single answered Choice: the option picked and Jev's calibrated confidence.
+pub struct Answer {
+    pub choice: String,
+    pub confidence: f64,
 }
 
 struct Outcome {
@@ -232,6 +325,39 @@ fn extract_choice(payload: &Value) -> Option<String> {
         .get("choice")?
         .as_str()
         .map(str::to_string)
+}
+
+/// `answers` is {question_id: {choice, confidence}} — pull each answered Choice
+/// out; a question with no choice is skipped rather than failing the batch.
+fn extract_answers(payload: &Value) -> BTreeMap<String, Answer> {
+    let mut out = BTreeMap::new();
+    let Some(answers) = payload.get("answers").and_then(|a| a.as_object()) else {
+        return out;
+    };
+    for (id, value) in answers {
+        let Some(choice) = value.get("choice").and_then(|c| c.as_str()) else {
+            continue;
+        };
+        let confidence = value
+            .get("confidence")
+            .or_else(|| value.get("probability"))
+            .and_then(|c| c.as_f64())
+            .or_else(|| {
+                value
+                    .get("probabilities")
+                    .and_then(|p| p.get(choice))
+                    .and_then(|c| c.as_f64())
+            })
+            .unwrap_or(0.0);
+        out.insert(
+            id.clone(),
+            Answer {
+                choice: choice.to_string(),
+                confidence,
+            },
+        );
+    }
+    out
 }
 
 fn api_key() -> Option<String> {

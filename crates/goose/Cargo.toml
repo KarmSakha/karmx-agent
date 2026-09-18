@@ -243,9 +243,18 @@ ntapi = { version = "0.4.3", default-features = false }
 
 # Platform-specific GPU acceleration for Whisper and local inference
 [target.'cfg(target_os = "macos")'.dependencies]
+accessibility = "0.2"
+accessibility-sys = "0.2"
 candle-core = { workspace = true, features = ["metal"], optional = true }
 candle-nn = { workspace = true, features = ["metal"], optional = true }
+core-foundation = "0.10"
+core-graphics = { version = "0.24", features = ["highsierra"] }
+core-graphics-types = "0.2"
 keyring = { workspace = true, features = ["apple-native"], optional = true }
+objc2 = "0.6"
+objc2-app-kit = "0.3"
+objc2-foundation = "0.3"
+objc2-vision = "0.3"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 keyring = { workspace = true, features = ["sync-secret-service"], optional = true }

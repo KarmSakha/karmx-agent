@@ -32,6 +32,8 @@ pub const COMPACT_EXTENSIONS: &[&str] = &[
     "context_engine",
     "todo",
     "browser_preview",
+    "computer_control",
+    "screen_task",
     "analyze",
     "summon",
 ];
