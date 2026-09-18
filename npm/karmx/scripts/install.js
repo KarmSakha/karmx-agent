@@ -110,6 +110,12 @@ function repoRoot() {
   return process.env.KARMX_REPO || process.env.npm_config_karmx_repo || '';
 }
 
+// `npm link` / `npm install -g ./npm/karmx` run this script from inside a checkout.
+function enclosingCheckout() {
+  const root = join(__dirname, '..', '..', '..');
+  return existsSync(join(root, 'crates', 'goose-cli', 'Cargo.toml')) ? root : '';
+}
+
 function installFromRepo(root) {
   const built = join(root, 'target', 'release', binaryName());
   if (existsSync(built)) {
@@ -118,7 +124,7 @@ function installFromRepo(root) {
     return;
   }
   if (!commandExists('cargo')) {
-    throw new Error(`KARMX_REPO is set (${root}) but cargo is not on PATH`);
+    throw new Error(`cargo is not on PATH (needed to build ${root})`);
   }
   log(`building karmx from ${root}`);
   const result = spawnSync(
@@ -148,6 +154,8 @@ function installFromCargoGit() {
         'install',
         '--git',
         GIT_URL,
+        '--locked',
+        'goose-cli',
         '--bin',
         'karmx',
         '--root',
@@ -189,6 +197,12 @@ async function main() {
     log(`prebuilt binary unavailable (${error.message})`);
   }
 
+  const checkout = enclosingCheckout();
+  if (checkout) {
+    installFromRepo(checkout);
+    return;
+  }
+
   try {
     installFromCargoGit();
   } catch (error) {
@@ -197,7 +211,7 @@ karmx could not install the native CLI.
 
 Tried:
   1. GitHub release from ${REPO}
-  2. cargo install --git ${GIT_URL}
+  2. cargo install --git ${GIT_URL} --locked goose-cli --bin karmx
 
 ${error.message}
 

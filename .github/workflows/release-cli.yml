@@ -23,7 +23,7 @@ jobs:
         include:
           - os: macos-latest
             target: aarch64-apple-darwin
-          - os: macos-13
+          - os: macos-15-intel
             target: x86_64-apple-darwin
           - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
@@ -68,7 +68,7 @@ jobs:
           test -f "$SRC"
           mkdir -p dist
           if [[ "$BIN" == *.exe ]]; then
-            (cd "$(dirname "$SRC")" && zip -q "${{ github.workspace }}/dist/karmx-${TARGET}.zip" "$BIN")
+            (cd "$(dirname "$SRC")" && 7z a -tzip "${{ github.workspace }}/dist/karmx-${TARGET}.zip" "$BIN")
           else
             chmod +x "$SRC"
             tar -C "$(dirname "$SRC")" -czf "dist/karmx-${TARGET}.tar.gz" "$BIN"
@@ -83,7 +83,8 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    # Publish whichever targets built; a failed platform falls back to a source build in the npm installer.
+    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -93,8 +94,13 @@ jobs:
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
         run: |
-          gh release create "${{ github.ref_name }}" dist/* \
-            --title "karmx ${{ github.ref_name }}" \
-            --generate-notes \
-            --verify-tag
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* \
+              --title "karmx $TAG" \
+              --generate-notes \
+              --verify-tag
+          fi

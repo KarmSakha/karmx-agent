@@ -22,10 +22,14 @@ function resolveBinary() {
   }
   const vendor = vendorPath();
   if (!existsSync(vendor)) {
-    execFileSync(process.execPath, [join(__dirname, '..', 'scripts', 'install.js')], {
-      stdio: 'inherit',
-      env: process.env,
-    });
+    try {
+      execFileSync(process.execPath, [join(__dirname, '..', 'scripts', 'install.js')], {
+        stdio: 'inherit',
+        env: process.env,
+      });
+    } catch (error) {
+      process.exit(error.status ?? 1);
+    }
   }
   if (!existsSync(vendor)) {
     console.error(
