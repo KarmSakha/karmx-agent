@@ -5,6 +5,7 @@ pub mod extensions;
 mod migrations;
 pub mod paths;
 pub mod permission;
+pub mod profile;
 pub mod providers;
 pub mod search_path;
 pub mod signup_openrouter;
@@ -22,6 +23,7 @@ pub use extensions::{
 };
 pub use goose_providers::goose_mode::GooseMode;
 pub use permission::PermissionManager;
+pub use profile::PromptProfile;
 pub use signup_openrouter::configure_openrouter;
 pub use signup_tetrate::configure_tetrate;
 

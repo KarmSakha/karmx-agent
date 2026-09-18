@@ -210,6 +210,19 @@ impl ExtensionManagerClient {
             }
         };
 
+        if !crate::config::extensions::permitted_by_allowlist(&config) {
+            return Err(ErrorData::new(
+                ErrorCode::INVALID_REQUEST,
+                format!(
+                    "Extension '{}' is not on the extension allowlist ({} / {}) for this session.",
+                    extension_name,
+                    crate::config::profile::EXTENSIONS_ALLOWLIST_KEY,
+                    crate::config::profile::PROMPT_PROFILE_KEY
+                ),
+                None,
+            ));
+        }
+
         extension_manager
             .add_extension(config, None, None, None)
             .await

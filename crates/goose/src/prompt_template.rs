@@ -1,4 +1,5 @@
 use crate::config::paths::Paths;
+use crate::config::profile::PromptProfile;
 use include_dir::{include_dir, Dir};
 use minijinja::{Environment, Error as MiniJinjaError, Value as MJValue};
 use serde::Serialize;
@@ -10,6 +11,10 @@ static TEMPLATE_REGISTRY: &[(&str, &str)] = &[
     (
         "system.md",
         "Main system prompt that defines goose's personality and behavior",
+    ),
+    (
+        "system.compact.md",
+        "Compact system prompt used when KARMX_PROMPT_PROFILE=compact (small local models)",
     ),
     (
         "compaction.md",
@@ -107,6 +112,17 @@ pub fn render_string<T: Serialize>(
     Ok(rendered.trim().to_string())
 }
 
+/// Applies the active prompt profile: under `KARMX_PROMPT_PROFILE=compact` a
+/// registered template `x.md` resolves to `x.compact.md` when a user or builtin
+/// version of it exists and the user has not overridden `x.md` itself.
+fn resolve_profile_name(name: &str) -> String {
+    PromptProfile::current().resolve_template_name(
+        name,
+        |candidate| user_prompts_dir().join(candidate).exists(),
+        |candidate| builtin_content(candidate).is_some(),
+    )
+}
+
 pub fn render_template<T: Serialize>(name: &str, context: &T) -> Result<String, MiniJinjaError> {
     if !is_registered(name) {
         return Err(MiniJinjaError::new(
@@ -115,6 +131,7 @@ pub fn render_template<T: Serialize>(name: &str, context: &T) -> Result<String, 
         ));
     }
 
+    let name = &resolve_profile_name(name);
     let user_path = user_prompts_dir().join(name);
     let template_str = if user_path.exists() {
         std::fs::read_to_string(&user_path).map_err(|e| {
@@ -136,6 +153,7 @@ pub fn render_template<T: Serialize>(name: &str, context: &T) -> Result<String, 
 }
 
 pub fn template_source(name: &str) -> Result<String, MiniJinjaError> {
+    let name = &resolve_profile_name(name);
     let user_path = user_prompts_dir().join(name);
     if user_path.exists() {
         return std::fs::read_to_string(&user_path).map_err(|e| {
@@ -256,6 +274,63 @@ mod tests {
         let result = render_template("system.md", &context);
         assert!(result.is_ok(), "Should be able to render system.md");
         assert!(!result.unwrap().is_empty());
+    }
+
+    #[test]
+    fn compact_system_template_renders_with_the_prompt_manager_context() {
+        let source = template_source("system.compact.md").unwrap();
+        let context = serde_json::json!({
+            "extensions": [
+                {"name": "developer", "instructions": "Use the developer tools.", "has_resources": false},
+                {"name": "apps", "instructions": "", "has_resources": true}
+            ],
+            "include_extensions": true,
+            "code_execution_mode": false,
+            "enable_subagents": true,
+            "parallel_tool_calls": true,
+            "moim_system_prompt_block": "# Turn Context\n\nblock"
+        });
+        let rendered = render_string(&source, &context).unwrap();
+        assert!(rendered.starts_with("You are karmX"));
+        assert!(rendered.contains("# Turn Context"));
+        assert!(rendered.contains("## developer"));
+        assert!(rendered.contains("Use the developer tools."));
+        assert!(rendered.contains("apps supports resources."));
+        assert!(rendered
+            .contains("Independent tool calls (reads, searches, checks) may share one turn."));
+        assert!(!rendered.contains("{%"));
+    }
+
+    #[test]
+    fn compact_system_template_gates_batched_tool_calls_and_separates_extension_lines() {
+        let source = template_source("system.compact.md").unwrap();
+        let context = serde_json::json!({
+            "extensions": [
+                {"name": "apps", "instructions": "Create apps.", "has_resources": true}
+            ],
+            "include_extensions": true,
+            "code_execution_mode": false,
+            "enable_subagents": false,
+            "parallel_tool_calls": false
+        });
+        let rendered = render_string(&source, &context).unwrap();
+        assert!(!rendered.contains("may share one turn"));
+        assert!(!rendered.contains("Sidekick"));
+        let resources = rendered.find("apps supports resources.").unwrap();
+        let instructions = rendered.find("Create apps.").unwrap();
+        assert!(resources < instructions);
+        assert!(
+            rendered[resources..instructions].contains('\n'),
+            "resources line and instructions must be separate lines"
+        );
+    }
+
+    #[test]
+    fn compact_system_template_is_registered_and_much_shorter() {
+        let full = template_source("system.md").unwrap();
+        let compact = template_source("system.compact.md").unwrap();
+        assert!(is_registered("system.compact.md"));
+        assert!(compact.len() * 3 < full.len());
     }
 
     #[test]

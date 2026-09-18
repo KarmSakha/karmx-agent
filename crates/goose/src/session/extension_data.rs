@@ -117,6 +117,14 @@ impl EnabledExtensionsState {
     pub fn from_extension_data(extension_data: &ExtensionData) -> Option<Self> {
         let mut state = <Self as ExtensionState>::from_extension_data(extension_data)?;
         state.extensions.retain(is_extension_available);
+        // A persisted session keeps the extensions it was started with; the profile's
+        // allowlist still applies when it is resumed under a different profile.
+        let allowlist = crate::config::profile::extensions_allowlist();
+        state.extensions = crate::config::extensions::apply_allowlist(
+            &allowlist,
+            std::mem::take(&mut state.extensions),
+            "persisted session extensions",
+        );
         Some(state)
     }
 

@@ -65,6 +65,67 @@ impl SkillsClient {
     }
 }
 
+/// Where a skill comes from, ordered by how deliberately the user installed it:
+/// project-local, then the global `~/.agents/skills`, then plugins, then skills
+/// imported from other agents' directories and builtins.
+fn skill_source_rank(skill: &SourceEntry) -> u8 {
+    let path = skill.path.replace('\\', "/");
+    if skill.source_type == SourceType::BuiltinSkill {
+        4
+    } else if !skill.global {
+        0
+    } else if path.contains("/.agents/plugins/") {
+        2
+    } else if path.contains("/.agents/skills/") {
+        1
+    } else {
+        3
+    }
+}
+
+/// Orders skills by install scope then name and applies the prompt cap (`0` =
+/// unlimited). Returns the skills to list and how many were left out.
+pub(crate) fn select_skills_for_prompt<'a>(
+    skills: &[&'a SourceEntry],
+    limit: usize,
+) -> (Vec<&'a SourceEntry>, usize) {
+    let mut ordered: Vec<&SourceEntry> = skills.to_vec();
+    ordered.sort_by(|a, b| {
+        (skill_source_rank(a), &a.name, &a.path).cmp(&(skill_source_rank(b), &b.name, &b.path))
+    });
+    let shown = if limit > 0 && ordered.len() > limit {
+        limit
+    } else {
+        ordered.len()
+    };
+    let hidden = ordered.len() - shown;
+    ordered.truncate(shown);
+    (ordered, hidden)
+}
+
+/// One line telling the model that `hidden` installed skills were not listed.
+pub(crate) fn hidden_skills_note(hidden: usize) -> String {
+    format!("({hidden} more skills are installed but not listed; if the user names one, load it by that name.)")
+}
+
+/// Renders the skills section of the system prompt. `limit` caps the number of
+/// listed skills (`0` = unlimited); when the cap cuts the list, the most
+/// deliberately installed skills are kept and the rest are summarized so the
+/// model can still ask for one by name.
+pub(crate) fn format_skills_listing(skills: &[&SourceEntry], limit: usize) -> String {
+    let (shown, hidden) = select_skills_for_prompt(skills, limit);
+    let mut instructions = String::from(
+        "\n\nYou have these skills at your disposal, when it is clear they can help you solve a problem or you are asked to use them:",
+    );
+    for skill in &shown {
+        instructions.push_str(&format!("\n• {} - {}", skill.name, skill.description));
+    }
+    if hidden > 0 {
+        instructions.push_str(&format!("\n• {}", hidden_skills_note(hidden)));
+    }
+    instructions
+}
+
 #[async_trait]
 impl McpClientTrait for SkillsClient {
     async fn list_tools(
@@ -245,25 +306,21 @@ impl McpClientTrait for SkillsClient {
 
     fn get_instructions(&self) -> Option<String> {
         let sources = self.discover_skills();
-        let mut skills: Vec<&SourceEntry> = sources
+        let skills: Vec<&SourceEntry> = sources
             .iter()
             .filter(|s| {
                 s.source_type == SourceType::Skill || s.source_type == SourceType::BuiltinSkill
             })
             .collect();
-        skills.sort_by(|a, b| (&a.name, &a.path).cmp(&(&b.name, &b.path)));
 
         if skills.is_empty() {
             return None;
         }
 
-        let mut instructions = String::from(
-            "\n\nYou have these skills at your disposal, when it is clear they can help you solve a problem or you are asked to use them:",
-        );
-        for skill in &skills {
-            instructions.push_str(&format!("\n• {} - {}", skill.name, skill.description));
-        }
-        Some(instructions)
+        Some(format_skills_listing(
+            &skills,
+            crate::config::profile::skills_prompt_limit(),
+        ))
     }
 
     async fn subscribe(&self) -> mpsc::Receiver<ServerNotification> {
@@ -280,6 +337,46 @@ mod tests {
     use std::fs;
     use std::sync::Arc;
     use tempfile::TempDir;
+
+    fn entry(name: &str, path: &str, global: bool) -> SourceEntry {
+        SourceEntry {
+            source_type: SourceType::Skill,
+            name: name.to_string(),
+            description: format!("{name} description"),
+            path: path.to_string(),
+            global,
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn listing_is_unlimited_by_default_and_sorted_by_name() {
+        let b = entry("bravo", "/p/.agents/skills/bravo", false);
+        let a = entry("alpha", "/p/.agents/skills/alpha", false);
+        let text = format_skills_listing(&[&b, &a], 0);
+        let alpha = text.find("• alpha").unwrap();
+        let bravo = text.find("• bravo").unwrap();
+        assert!(alpha < bravo);
+        assert!(!text.contains("more skills"));
+    }
+
+    #[test]
+    fn listing_cap_keeps_curated_skills_and_summarizes_the_rest() {
+        let project = entry("zed-project", "/p/.agents/skills/zed-project", false);
+        let global = entry("mid-global", "/home/u/.agents/skills/mid-global", true);
+        let plugin = entry(
+            "plugin-skill",
+            "/home/u/.agents/plugins/x/skills/plugin-skill",
+            true,
+        );
+        let imported = entry("aaa-imported", "/home/u/.claude/skills/aaa-imported", true);
+        let text = format_skills_listing(&[&imported, &plugin, &global, &project], 2);
+        assert!(text.contains("• zed-project"));
+        assert!(text.contains("• mid-global"));
+        assert!(!text.contains("• plugin-skill"));
+        assert!(!text.contains("• aaa-imported"));
+        assert!(text.contains("2 more skills are installed but not listed"));
+    }
 
     fn write_plugin_skill(
         project: &Path,

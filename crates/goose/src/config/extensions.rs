@@ -208,7 +208,52 @@ pub fn get_all_extension_names() -> Vec<String> {
 
 pub fn is_extension_enabled(key: &str) -> bool {
     let extensions = get_extensions_map();
-    extensions.get(key).map(|e| e.enabled).unwrap_or(false)
+    let allowlist = crate::config::profile::extensions_allowlist();
+    extensions
+        .get(key)
+        .map(|e| e.enabled && allowlist_permits_config(&allowlist, &e.config))
+        .unwrap_or(false)
+}
+
+/// Whether `allowlist` (see [`crate::config::profile::extensions_allowlist`]) lets
+/// this extension run. Compute the allowlist once per batch and reuse it here.
+pub fn allowlist_permits_config(allowlist: &Option<Vec<String>>, config: &ExtensionConfig) -> bool {
+    crate::config::profile::allowlist_permits(allowlist, &config.key(), &config.name())
+}
+
+/// Whether the active profile's extension allowlist (`KARMX_EXTENSIONS_ALLOWLIST`,
+/// or the compact profile's built-in list) lets this extension run. Reads the
+/// configuration; prefer [`allowlist_permits_config`] inside loops.
+pub fn permitted_by_allowlist(config: &ExtensionConfig) -> bool {
+    allowlist_permits_config(&crate::config::profile::extensions_allowlist(), config)
+}
+
+/// Drops the extensions the allowlist excludes, logging their names once per call so a
+/// user can see why an extension that is enabled in config has no tools in the session.
+pub fn apply_allowlist(
+    allowlist: &Option<Vec<String>>,
+    extensions: Vec<ExtensionConfig>,
+    context: &str,
+) -> Vec<ExtensionConfig> {
+    if allowlist.is_none() {
+        return extensions;
+    }
+    let (kept, dropped): (Vec<_>, Vec<_>) = extensions
+        .into_iter()
+        .partition(|ext| allowlist_permits_config(allowlist, ext));
+    if !dropped.is_empty() {
+        info!(
+            "{} not on the extension allowlist ({}): {}",
+            context,
+            crate::config::profile::EXTENSIONS_ALLOWLIST_KEY,
+            dropped
+                .iter()
+                .map(|e| e.name())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+    }
+    kept
 }
 
 /// Returns the configured enabled state for an extension, or `None` when it has no entry.
@@ -223,19 +268,23 @@ pub fn configured_enabled_state(config: &Config, name: &str) -> Option<bool> {
 }
 
 pub fn get_enabled_extensions() -> Vec<ExtensionConfig> {
-    get_all_extensions()
+    let allowlist = crate::config::profile::extensions_allowlist();
+    let enabled = get_all_extensions()
         .into_iter()
         .filter(|ext| ext.enabled)
         .map(|ext| ext.config)
-        .collect()
+        .collect();
+    apply_allowlist(&allowlist, enabled, "enabled extensions")
 }
 
 pub fn get_enabled_extensions_with_config(config: &Config) -> Vec<ExtensionConfig> {
-    get_extensions_map_with_config(config)
+    let allowlist = crate::config::profile::extensions_allowlist_with_config(config);
+    let enabled = get_extensions_map_with_config(config)
         .into_values()
         .filter(|ext| ext.enabled)
         .map(|ext| ext.config)
-        .collect()
+        .collect();
+    apply_allowlist(&allowlist, enabled, "enabled extensions")
 }
 
 pub fn get_available_extensions() -> Vec<ExtensionConfig> {
@@ -302,18 +351,20 @@ pub fn resolve_extensions_for_new_session(
     recipe_extensions: Option<&[ExtensionConfig]>,
     override_extensions: Option<Vec<ExtensionConfig>>,
 ) -> Vec<ExtensionConfig> {
-    let extensions = if let Some(exts) = recipe_extensions {
-        exts.to_vec()
+    let (extensions, context) = if let Some(exts) = recipe_extensions {
+        (exts.to_vec(), "recipe extensions")
     } else if let Some(exts) = override_extensions {
-        exts
+        (exts, "session extensions")
     } else {
-        get_enabled_extensions()
+        (get_enabled_extensions(), "enabled extensions")
     };
 
-    extensions
+    let allowlist = crate::config::profile::extensions_allowlist();
+    let available = extensions
         .into_iter()
         .filter(is_extension_available)
-        .collect()
+        .collect();
+    apply_allowlist(&allowlist, available, context)
 }
 
 #[cfg(test)]

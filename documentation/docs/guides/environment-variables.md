@@ -317,6 +317,33 @@ You only ever set `GOOSE_SHELL` to a shell executable path or name. goose inject
 - On Unix the default shell (`bash`, falling back to `sh`) is invoked as `<shell> -c`
 :::
 
+## Prompt Profiles
+
+These variables shape what the model receives before the first user word: the system prompt, the tool schemas of the enabled extensions, and the skills listing. With a full extension set and a large skills directory the default profile can send more than 20K tokens per request; the compact profile cuts that to about 3K, which matters for small or heavily quantized local models.
+
+| Variable | Purpose | Values | Default |
+|----------|---------|---------|---------|
+| `KARMX_PROMPT_PROFILE` | Selects the prompt profile. `compact` renders `system.compact.md` (a short, imperative system prompt) and restricts sessions to the compact extension allowlist. The `skills` extension is not on that list, so a plain compact session lists no skills and has no `load_skill` tool | "default" (alias "full"), "compact" (alias "small") | "default" |
+| `KARMX_EXTENSIONS_ALLOWLIST` | Restricts which of the extensions enabled in config may run in a session: an extension must be both enabled in config and listed here. Setting it replaces the compact profile's built-in list rather than extending it; a blank value counts as unset. Also applies to resumed sessions, recipe extensions and the `manage_extensions` tool (dropped extensions are logged at session start) | Comma-separated `extensions:` map keys from config.yaml, for example `developer,context_engine,todo` (matching ignores case, `_`, `-` and spaces) | Unset: all enabled extensions (default profile) or `developer,context_engine,todo,browser_preview,analyze` (compact profile) |
+| `KARMX_SKILLS_PROMPT_LIMIT` | Maximum number of skills listed in the system prompt when the `skills` extension runs. Project-local and `~/.agents/skills` entries are listed first, then plugin skills, then skills imported from other agents' directories; the rest are summarized in one line | Positive integer, or 0 for unlimited | 0 (default profile), 24 (compact profile) |
+
+All three keys can also be set in `<config dir>/config.yaml`; an environment variable takes precedence over the file. A user template at `<config dir>/prompts/system.md` still overrides both profiles; a user template at `<config dir>/prompts/system.compact.md` overrides only the compact prompt.
+
+**Examples**
+
+```bash
+# Run a small local model with the compact prompt and tool set
+export KARMX_PROMPT_PROFILE=compact
+
+# Compact prompt, and also allow the skills listing (capped at 24) and the scheduler;
+# both must already be enabled in config, and this list replaces the built-in one
+export KARMX_PROMPT_PROFILE=compact
+export KARMX_EXTENSIONS_ALLOWLIST=developer,context_engine,todo,browser_preview,analyze,skills,scheduler
+
+# Default prompt, but never list more than 30 skills
+export KARMX_SKILLS_PROMPT_LIMIT=30
+```
+
 ## Security and Privacy
 
 These variables control security features, credential storage, and anonymous usage data collection.

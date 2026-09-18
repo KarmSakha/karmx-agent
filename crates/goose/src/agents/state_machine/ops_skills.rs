@@ -58,7 +58,7 @@ fn skill_tool() -> Result<Tool> {
 
 fn skill_instructions(working_dir: &Path) -> Option<String> {
     let sources = crate::skills::discover_skills(Some(working_dir));
-    let mut skills: Vec<&SourceEntry> = sources
+    let skills: Vec<&SourceEntry> = sources
         .iter()
         .filter(|source| {
             matches!(
@@ -67,16 +67,25 @@ fn skill_instructions(working_dir: &Path) -> Option<String> {
             )
         })
         .collect();
-    skills.sort_by(|a, b| (&a.name, &a.path).cmp(&(&b.name, &b.path)));
     if skills.is_empty() {
         return None;
     }
+    let (skills, hidden) = crate::skills::client::select_skills_for_prompt(
+        &skills,
+        crate::config::profile::skills_prompt_limit(),
+    );
 
     let mut instructions = String::from(
         "# Skills\n\nYou have these skills at your disposal. Load one when it can help with the task or when the user asks for it:",
     );
     for skill in skills {
         instructions.push_str(&format!("\n- {}: {}", skill.name, skill.description));
+    }
+    if hidden > 0 {
+        instructions.push_str(&format!(
+            "\n- {}",
+            crate::skills::client::hidden_skills_note(hidden)
+        ));
     }
     Some(instructions)
 }

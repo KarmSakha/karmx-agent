@@ -614,6 +614,14 @@ fn initial_session_extensions(
         }
         add_mcp_servers(&mut extensions, mcp_servers)?;
     }
+    {
+        let allowlist = crate::config::profile::extensions_allowlist_with_config(config);
+        extensions = crate::config::extensions::apply_allowlist(
+            &allowlist,
+            extensions,
+            "ACP session extensions",
+        );
+    }
 
     Ok(extensions)
 }
