@@ -1,6 +1,6 @@
 version: 1.0.0
-title: Goose Self-Testing Integration Suite
-description: A comprehensive meta-testing recipe where goose tests its own capabilities using its own tools - true first-person integration testing
+title: KarmX Self-Testing Integration Suite
+description: A comprehensive meta-testing recipe where karmx tests its own capabilities using its own tools - true first-person integration testing
 author:
   contact: goose-self-test
 
@@ -36,7 +36,7 @@ parameters:
   - key: workspace_dir
     input_type: string
     requirement: optional
-    default: "./gooseselftest"
+    default: "./karmxselftest"
     description: "Directory for test artifacts and results"
 
   - key: parallel_tests
@@ -52,11 +52,11 @@ parameters:
     description: "Clean up test artifacts after completion"
 
 instructions: |
-  You are testing yourself - a running goose instance validating its own capabilities through meta-testing.
+  You are testing yourself - a running karmx instance validating its own capabilities through meta-testing.
   This is true first-person integration testing where you use your own tools to test your own functionality.
 
   ## Understanding First-Person Integration Testing
-  This is a crucial distinction - as a running goose instance, you are testing yourself using your own capabilities.
+  This is a crucial distinction - as a running karmx instance, you are testing yourself using your own capabilities.
   This is meta-testing in the truest sense: not unit tests or external test harnesses, but you using your tools
   to validate your own functionality from within your active session. You can only test what you can observe and
   control from inside your running instance - your tools, your behaviors, your error handling, your consistency.
@@ -129,7 +129,7 @@ extensions:
     name: skills
 
 prompt: |
-  Execute the Goose Self-Testing Integration Suite in {{ workspace_dir }}.
+  Execute the KarmX Self-Testing Integration Suite in {{ workspace_dir }}.
   Test phases: {{ test_phases }}, Depth: {{ test_depth }}, Parallel: {{ parallel_tests }}
 
   ## 🚀 INITIALIZATION
@@ -164,7 +164,7 @@ prompt: |
   5. Verify LOC, function, and class counting
 
   ### Azure AI Foundry Provider Validation
-  When running from a goose source checkout:
+  When running from a karmx source checkout:
   1. Run the goose-providers Azure Foundry test module.
   2. Verify project deployments route Responses-compatible OpenAI models to Responses, Anthropic models to Messages, and partner or older OpenAI models to Chat Completions.
   3. Verify a custom deployment alias remains the wire model while the underlying Azure model controls reasoning capabilities.
@@ -172,12 +172,12 @@ prompt: |
   If the source checkout or Rust toolchain is unavailable, mark this validation as skipped rather than failed.
 
   ### Gondola Provider Validation
-  When running from a goose source checkout:
+  When running from a karmx source checkout:
   1. Run `cargo test -p goose test_gondola_provider_registry_wiring` to verify Gondola is registered with the correct name, default model (`deepseek-v4-flash`), and a secret `GONDOLA_API_KEY` config key.
   If the source checkout or Rust toolchain is unavailable, mark this validation as skipped rather than failed.
 
   ### Databricks AI Gateway Path Validation
-  When running from a goose source checkout:
+  When running from a karmx source checkout:
   1. Run `cargo test -p goose-providers databricks_v2::tests::gateway_path` to verify the configurable gateway path.
   2. Verify that omitting the path keeps the default `ai-gateway` routes byte-identical for the OpenAI Responses, Anthropic Messages, and MLflow chat completions routes.
   3. Verify a configured path applies to all three routes, and that a full route (`ai-gateway/openai/v1/responses`) is accepted and its base reused, since Kotlin callers configure the full route.
@@ -223,6 +223,14 @@ prompt: |
   load_skill(name: "web-search")
   ```
   Verify the skill content is returned and can be read for each. This confirms all builtin skills are accessible.
+
+  ### Load Skill - Query Search
+  load_skill also accepts `query` to search installed skills:
+  ```
+  load_skill(query: "search the web")
+  ```
+  Verify the best-matching skills are returned (web-search should rank at or near the top).
+  Then try a nonsense query and verify it reports no useful matches instead of inventing a skill.
 
   ### Load Tool - Knowledge Injection
   If any other skills or recipes are discovered, test loading one:
@@ -411,7 +419,7 @@ prompt: |
   {% if test_phases == "all" or "acp-effort" in test_phases %}
   ## 🧠 PHASE 3D: ACP Thinking-Effort Testing
 
-  **Prerequisites**: Run this phase from a goose source checkout with the Rust toolchain
+  **Prerequisites**: Run this phase from a karmx source checkout with the Rust toolchain
   available. Skip this phase and record it as SKIPPED otherwise.
 
   ### ACP Effort Integration Test
@@ -429,7 +437,7 @@ prompt: |
   {% if test_phases == "all" or "advanced" in test_phases %}
   ## 🔭 PHASE 3E: GDK Observability Hook Testing
 
-  **Prerequisites**: Run this phase from a goose source checkout with the Rust toolchain
+  **Prerequisites**: Run this phase from a karmx source checkout with the Rust toolchain
   available. Skip this phase and record it as SKIPPED otherwise.
 
   ### Observability Hook Integration Test
@@ -483,7 +491,7 @@ prompt: |
 
   ```
   ========================================
-  GOOSE SELF-TEST SUMMARY
+  KARMX SELF-TEST SUMMARY
   ========================================
 
   ✅ OVERALL RESULT: [PASS/FAIL]
@@ -539,7 +547,7 @@ prompt: |
   - Success means your tools work as expected
   - Failure reveals areas needing attention
   - The ability to complete this test IS itself a test
-  - Document everything - your future self (or another goose) will thank you
+  - Document everything - your future self (or another karmx) will thank you
 
   Use your todo extension to track progress throughout.
   Handle errors gracefully - a failed test shouldn't crash the suite.
