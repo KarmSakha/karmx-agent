@@ -13,7 +13,7 @@ show_usage() {
   echo "  -h, --help               Show this help message"
   echo ""
   echo "Environment:"
-  echo "  OPENROUTER_API_KEY       Required by goose's OpenRouter provider"
+  echo "  OPENROUTER_API_KEY       Required by KarmX's OpenRouter provider"
   echo "  OPENROUTER_HOST          Optional OpenRouter host (default: https://openrouter.ai)"
   echo "  GOOSE_BIN                Optional goose binary path"
   echo "  SKIP_BUILD               Skip cargo build when set"
@@ -91,12 +91,12 @@ fi
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if [[ -z "${SKIP_BUILD:-}" && -z "${GOOSE_BIN:-}" ]]; then
-  echo "Building goose..."
+  echo "Building karmx..."
   (cd "$REPO_ROOT" && cargo build --bin goose)
   echo ""
 fi
 
-GOOSE_BIN="${GOOSE_BIN:-$REPO_ROOT/target/debug/goose}"
+GOOSE_BIN="${GOOSE_BIN:-$REPO_ROOT/target/debug/karmx}"
 if [[ ! -x "$GOOSE_BIN" ]]; then
   echo "Error: goose binary not found or not executable: $GOOSE_BIN"
   exit 1
@@ -251,14 +251,14 @@ for model in "${MODELS[@]}"; do
     fi
   else
     run_status=${PIPESTATUS[0]}
-    echo "✗ Goose run failed for $model"
+    echo "✗ KarmX run failed for $model"
     if [[ "$run_status" -eq 124 ]]; then
       RESULTS+=("✗ $model - run timed out")
     elif error_summary=$(summarize_error "$log_file"); then
       echo "  $error_summary"
       RESULTS+=("✗ $model - $error_summary")
     else
-      RESULTS+=("✗ $model - goose run failed")
+      RESULTS+=("✗ $model - karmx run failed")
     fi
     OVERALL_SUCCESS=false
   fi

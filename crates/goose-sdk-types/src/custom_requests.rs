@@ -2312,3 +2312,23 @@ mod tests {
         assert_eq!(req.format, SessionExportFormat::Markdown);
     }
 }
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
+#[request(method = "_goose/unstable/prompts/enhance", response = EnhancePromptResponse)]
+#[serde(rename_all = "camelCase")]
+pub struct EnhancePromptRequest {
+    pub prompt: String,
+    pub working_dir: String,
+    #[serde(default)]
+    pub session_id: Option<String>,
+    #[serde(default)]
+    pub recent_context: String,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcResponse)]
+#[serde(rename_all = "camelCase")]
+pub struct EnhancePromptResponse {
+    pub prompt: String,
+    pub was_enhanced: bool,
+    pub error_message: Option<String>,
+}

@@ -127,12 +127,12 @@ fi
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if [[ -z "${SKIP_BUILD:-}" && -z "${GOOSE_BIN:-}" ]]; then
-  echo "Building goose..."
+  echo "Building karmx..."
   (cd "$REPO_ROOT" && cargo build -p goose-cli --features local-inference --bin goose)
   echo ""
 fi
 
-GOOSE_BIN="${GOOSE_BIN:-$REPO_ROOT/target/debug/goose}"
+GOOSE_BIN="${GOOSE_BIN:-$REPO_ROOT/target/debug/karmx}"
 if [[ ! -x "$GOOSE_BIN" ]]; then
   echo "Error: goose binary not found or not executable: $GOOSE_BIN"
   exit 1
@@ -420,7 +420,7 @@ for row in "${MODELS[@]}"; do
       record_result "FAIL" "$model_id" "run timed out"
       OVERALL_SUCCESS=false
     elif error_summary=$(summarize_goose_error "$run_log"); then
-      echo "Goose reported an error for $model_id"
+      echo "KarmX reported an error for $model_id"
       echo "  $error_summary"
       record_result "FAIL" "$model_id" "$error_summary"
       OVERALL_SUCCESS=false

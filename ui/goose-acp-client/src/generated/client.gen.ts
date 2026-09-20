@@ -57,6 +57,8 @@ import type {
   DictationTranscribeResponse_unstable,
   EncodeRecipeRequest_unstable,
   EncodeRecipeResponse_unstable,
+  EnhancePromptRequest_unstable,
+  EnhancePromptResponse_unstable,
   ExportSessionRequest_unstable,
   ExportSessionResponse_unstable,
   ExportSourceRequest_unstable,
@@ -207,6 +209,7 @@ import {
   zDictationModelsListResponse_unstable,
   zDictationTranscribeResponse_unstable,
   zEncodeRecipeResponse_unstable,
+  zEnhancePromptResponse_unstable,
   zExportSessionResponse_unstable,
   zExportSourceResponse_unstable,
   zGetConfigExtensionsResponse_unstable,
@@ -695,6 +698,18 @@ export class GooseExtClient {
     params: ProviderSecretDeleteRequest_unstable,
   ): Promise<void> {
     await this.conn.request("_goose/unstable/providers/secrets/delete", params);
+  }
+
+  async promptsEnhance_unstable(
+    params: EnhancePromptRequest_unstable,
+  ): Promise<EnhancePromptResponse_unstable> {
+    const raw = await this.conn.request(
+      "_goose/unstable/prompts/enhance",
+      params,
+    );
+    return zEnhancePromptResponse_unstable.parse(
+      raw,
+    ) as EnhancePromptResponse_unstable;
   }
 
   async providersCanonicalModelInfo_unstable(

@@ -124,6 +124,31 @@ impl rustyline::ConditionalEventHandler for EnhanceDraftHandler {
     }
 }
 
+/// `/` on an empty buffer submits the line immediately so the command picker
+/// opens without requiring Enter — a live dropdown where further letters
+/// filter inside the picker. Mid-line slashes fall through to normal insert.
+struct SlashMenuTrigger {
+    requested: Arc<std::sync::atomic::AtomicBool>,
+}
+
+impl rustyline::ConditionalEventHandler for SlashMenuTrigger {
+    fn handle(
+        &self,
+        _event: &rustyline::Event,
+        _n: u16,
+        _positive: bool,
+        ctx: &rustyline::EventContext,
+    ) -> Option<rustyline::Cmd> {
+        if ctx.line().is_empty() {
+            self.requested
+                .store(true, std::sync::atomic::Ordering::SeqCst);
+            Some(rustyline::Cmd::AcceptLine)
+        } else {
+            None
+        }
+    }
+}
+
 /// Ctrl+V pastes a clipboard image: saves it under the state dir and inserts
 /// an `@path` mention into the buffer. Returns None when the clipboard holds
 /// no image, so ordinary text paste keeps working through bracketed paste.
@@ -357,6 +382,14 @@ pub fn get_input(
         rustyline::EventHandler::Conditional(Box::new(ClipboardImageHandler)),
     );
 
+    let slash_menu_requested = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    editor.bind_sequence(
+        rustyline::KeyEvent(rustyline::KeyCode::Char('/'), rustyline::Modifiers::NONE),
+        rustyline::EventHandler::Conditional(Box::new(SlashMenuTrigger {
+            requested: slash_menu_requested.clone(),
+        })),
+    );
+
     let input = match read_paste_aware_input(editor, paste_state, initial) {
         Ok(text) => text,
         Err(e) => match e {
@@ -368,6 +401,10 @@ pub fn get_input(
 
     if let Some(draft) = enhance_slot.write().ok().and_then(|mut slot| slot.take()) {
         return Ok(InputResult::EnhancePrompt(draft));
+    }
+
+    if slash_menu_requested.swap(false, std::sync::atomic::Ordering::SeqCst) {
+        return Ok(super::slash_menu::run("/", &completion_cache).unwrap_or(InputResult::Retry));
     }
 
     // Add valid input to history (history saving to file is handled in the Session::interactive method)

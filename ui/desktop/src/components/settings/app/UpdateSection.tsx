@@ -12,7 +12,7 @@ const i18n = defineMessages({
   disableAutoDownloadDesc: {
     id: 'updateSection.disableAutoDownloadDesc',
     defaultMessage:
-      'When enabled, Goose will notify you of new versions but will not download them automatically.',
+      'When enabled, KarmX will notify you of new versions but will not download them automatically.',
   },
   autoDownloadDisabledByEnv: {
     id: 'updateSection.autoDownloadDisabledByEnv',
@@ -82,7 +82,7 @@ const i18n = defineMessages({
   autoDownload: {
     id: 'updateSection.autoDownload',
     defaultMessage:
-      'Goose will download the update in the background and install it the next time you quit or restart.',
+      'KarmX will download the update in the background and install it the next time you quit or restart.',
   },
 });
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Experimental, community-contributed RISC-V setup. This configuration is not
-# officially supported by the goose project.
+# officially supported by the karmx fork.
 # This script vendors dependencies and applies necessary patches for V8 152.2.0.
 
 set -euo pipefail
@@ -34,7 +34,7 @@ verify_sha256() {
     fi
 }
 
-echo "=== Setting up goose for RISC-V build ==="
+echo "=== Setting up karmx for RISC-V build ==="
 echo "Repository: $REPO_ROOT"
 echo ""
 
@@ -228,7 +228,7 @@ echo ""
 echo "=== Setup complete! ==="
 echo ""
 echo "To build for RISC-V:"
-echo "  cargo build --release --target riscv64gc-unknown-linux-gnu -p goose-cli --bin goose"
+echo "  cargo build --release --target riscv64gc-unknown-linux-gnu -p goose-cli --bin karmx"
 echo ""
 echo "Output binary:"
-echo "  target/riscv64gc-unknown-linux-gnu/release/goose"
+echo "  target/riscv64gc-unknown-linux-gnu/release/karmx"

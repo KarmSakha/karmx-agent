@@ -227,7 +227,12 @@ export const ModelAndProviderProvider: React.FC<ModelAndProviderProviderProps> =
 
   // Load initial model and provider on mount
   useEffect(() => {
-    refreshCurrentModelAndProvider();
+    void refreshCurrentModelAndProvider();
+    const refresh = () => {
+      void refreshCurrentModelAndProvider();
+    };
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
   }, [refreshCurrentModelAndProvider]);
 
   const contextValue = useMemo(

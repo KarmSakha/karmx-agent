@@ -27,7 +27,7 @@
     "defaultMessage": "\"{name}\"을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
   },
   "appsView.description": {
-    "defaultMessage": "MCP 서버의 애플리케이션과 goose 자체에서 구축한 앱입니다. 채팅 인터페이스를 통해 새 앱을 생성하도록 요청할 수 있으며 여기에 표시됩니다."
+    "defaultMessage": "MCP 서버의 애플리케이션과 karmx 자체에서 구축한 앱입니다. 채팅 인터페이스를 통해 새 앱을 생성하도록 요청할 수 있으며 여기에 표시됩니다."
   },
   "appsView.errorLoading": {
     "defaultMessage": "앱 로딩 오류: {error}"
@@ -45,7 +45,7 @@
     "defaultMessage": "앱 로드 중..."
   },
   "appsView.noAppsDescription": {
-    "defaultMessage": "채팅을 열고 원하는 앱을 goose에 요청하세요. goose가 앱을 만들어 주면 여기에 표시됩니다. 또는 누군가가 앱을 공유한 경우 위 버튼을 사용하여 가져올 수 있습니다."
+    "defaultMessage": "채팅을 열고 원하는 앱을 karmx에 요청하세요. karmx가 앱을 만들어 주면 여기에 표시됩니다. 또는 누군가가 앱을 공유한 경우 위 버튼을 사용하여 가져올 수 있습니다."
   },
   "appsView.noAppsTitle": {
     "defaultMessage": "사용 가능한 앱이 없습니다."
@@ -84,7 +84,7 @@
     "defaultMessage": "자격 증명이 삭제되었습니다."
   },
   "authSettings.description": {
-    "defaultMessage": "goose에 로컬로 저장된 제공업체 자격 증명을 관리합니다."
+    "defaultMessage": "karmx에 로컬로 저장된 제공업체 자격 증명을 관리합니다."
   },
   "authSettings.empty": {
     "defaultMessage": "로컬에 저장된 제공업체 자격 증명을 찾을 수 없습니다."
@@ -171,10 +171,10 @@
     "defaultMessage": "실행"
   },
   "chat.notification.taskComplete.body": {
-    "defaultMessage": "goose에 다시 포커스를 맞추려면 여기를 클릭하세요."
+    "defaultMessage": "karmx에 다시 포커스를 맞추려면 여기를 클릭하세요."
   },
   "chat.notification.taskComplete.title": {
-    "defaultMessage": "goose가 작업을 완료했습니다."
+    "defaultMessage": "karmx가 작업을 완료했습니다."
   },
   "chatInput.contextWindow": {
     "defaultMessage": "컨텍스트 창"
@@ -225,13 +225,13 @@
     "defaultMessage": "이미지 저장을 기다리는 중..."
   },
   "chatSettings.modeDescription": {
-    "defaultMessage": "새 세션에 goose가 사용할 기본 모드를 선택합니다. 기존 세션은 현재 모드를 유지합니다."
+    "defaultMessage": "새 세션에 karmx가 사용할 기본 모드를 선택합니다. 기존 세션은 현재 모드를 유지합니다."
   },
   "chatSettings.modeTitle": {
     "defaultMessage": "기본 모드"
   },
   "chatSettings.responseStylesDescription": {
-    "defaultMessage": "goose가 응답을 구성하고 표시하는 방식을 선택합니다."
+    "defaultMessage": "karmx가 응답을 구성하고 표시하는 방식을 선택합니다."
   },
   "chatSettings.responseStylesTitle": {
     "defaultMessage": "응답 스타일"
@@ -252,10 +252,10 @@
     "defaultMessage": "구성 편집기"
   },
   "configSettings.description": {
-    "defaultMessage": "goose 구성 설정을 편집합니다."
+    "defaultMessage": "karmx 구성 설정을 편집합니다."
   },
   "configSettings.descriptionWithProvider": {
-    "defaultMessage": "goose 구성 설정을 편집합니다 ({provider}의 현재 설정)"
+    "defaultMessage": "karmx 구성 설정을 편집합니다 ({provider}의 현재 설정)"
   },
   "configSettings.done": {
     "defaultMessage": "완료"
@@ -327,7 +327,7 @@
     "defaultMessage": "최대 턴"
   },
   "conversationLimitsDropdown.maxTurnsDescription": {
-    "defaultMessage": "goose가 사용자 입력을 요청하기 전 최대 에이전트 턴 수"
+    "defaultMessage": "karmx가 사용자 입력을 요청하기 전 최대 에이전트 턴 수"
   },
   "costTracker.costUnavailable": {
     "defaultMessage": "{model}({inputTokens} 입력, {outputTokens} 출력 토큰)에 대한 비용 데이터는 제공되지 않습니다."
@@ -783,7 +783,7 @@
     "defaultMessage": "{name} 설정 편집"
   },
   "defaultCardButtons.getStarted": {
-    "defaultMessage": "goose 시작하기!"
+    "defaultMessage": "karmx 시작하기!"
   },
   "defaultProviderSetupForm.apiHostLabel": {
     "defaultMessage": "API 호스트"
@@ -924,7 +924,7 @@
     "defaultMessage": "Enter path"
   },
   "dirSwitcher.enterPathPlaceholder": {
-    "defaultMessage": "Enter an absolute path (e.g. /home/goose/workspace)"
+    "defaultMessage": "Enter an absolute path (e.g. /home/karmx/workspace)"
   },
   "dirSwitcher.enterPathInvalid": {
     "defaultMessage": "Working directory must be an absolute path"
@@ -963,7 +963,7 @@
     "defaultMessage": "정보 요청이 취소되었습니다."
   },
   "elicitationRequest.defaultMessage": {
-    "defaultMessage": "goose에 사용자의 정보가 필요합니다."
+    "defaultMessage": "karmx에 사용자의 정보가 필요합니다."
   },
   "elicitationRequest.expired": {
     "defaultMessage": "이 요청은 만료되었습니다. 익스텐션이 다시 질문해야 합니다."
@@ -1008,7 +1008,7 @@
     "defaultMessage": "오류가 발생했습니다."
   },
   "errorBoundary.errorWithVersion": {
-    "defaultMessage": "goose v{version}에서 오류가 발생했습니다."
+    "defaultMessage": "karmx v{version}에서 오류가 발생했습니다."
   },
   "errorBoundary.heading": {
     "defaultMessage": "꽥!"
@@ -1191,7 +1191,7 @@
     "defaultMessage": "여기에서 켠 익스텐션은 새 채팅의 기본값으로 사용됩니다. 채팅 중에도 익스텐션을 켜거나 끌 수 있습니다."
   },
   "extensionsView.description": {
-    "defaultMessage": "이 익스텐션은 Model Context Protocol(MCP)을 사용합니다. 프롬프트, 리소스, 도구의 세 가지 주요 구성 요소로 goose의 기능을 확장합니다. {searchShortcut}로 검색할 수 있습니다."
+    "defaultMessage": "이 익스텐션은 Model Context Protocol(MCP)을 사용합니다. 프롬프트, 리소스, 도구의 세 가지 주요 구성 요소로 karmx의 기능을 확장합니다. {searchShortcut}로 검색할 수 있습니다."
   },
   "extensionsView.heading": {
     "defaultMessage": "익스텐션"
@@ -1209,13 +1209,13 @@
     "defaultMessage": "AA:BB:CC:... 또는 sha256/base64"
   },
   "externalBackendSection.description": {
-    "defaultMessage": "기본적으로 goose가 로컬 백엔드를 시작합니다. 외부 ACP 호환 백엔드에 연결하려면 이 옵션을 사용하세요."
+    "defaultMessage": "기본적으로 karmx가 로컬 백엔드를 시작합니다. 외부 ACP 호환 백엔드에 연결하려면 이 옵션을 사용하세요."
   },
   "externalBackendSection.fingerprintRequiresHttps": {
     "defaultMessage": "인증서 지문은 https URL이 필요합니다"
   },
   "externalBackendSection.restartNote": {
-    "defaultMessage": "변경 사항은 새 채팅 창에 적용됩니다. 기존 창을 업데이트하려면 goose를 다시 시작하세요."
+    "defaultMessage": "변경 사항은 새 채팅 창에 적용됩니다. 기존 창을 업데이트하려면 karmx를 다시 시작하세요."
   },
   "externalBackendSection.secretKey": {
     "defaultMessage": "비밀 키"
@@ -1230,7 +1230,7 @@
     "defaultMessage": "백엔드 기본 URL"
   },
   "externalBackendSection.serverUrlHelp": {
-    "defaultMessage": "HTTP(S) 기본 URL을 입력하세요. goose는 /status를 확인하고 이 기본 주소 아래의 /acp에 연결합니다."
+    "defaultMessage": "HTTP(S) 기본 URL을 입력하세요. karmx는 /status를 확인하고 이 기본 주소 아래의 /acp에 연결합니다."
   },
   "externalBackendSection.title": {
     "defaultMessage": "외부 백엔드 (ACP)"
@@ -1257,7 +1257,7 @@
     "defaultMessage": "외부 백엔드의 절대 경로입니다. 비워 두면 로컬 작업 디렉터리를 전송합니다."
   },
   "externalBackendSection.workingDirPlaceholder": {
-    "defaultMessage": "/home/goose/workspace"
+    "defaultMessage": "/home/karmx/workspace"
   },
   "goosehintsModal.close": {
     "defaultMessage": "닫기"
@@ -1266,7 +1266,7 @@
     "defaultMessage": "개발자"
   },
   "goosehintsModal.dialogDescription": {
-    "defaultMessage": "goose와의 커뮤니케이션을 개선할 수 있도록 프로젝트에 대한 추가 컨텍스트를 제공하세요."
+    "defaultMessage": "karmx와의 커뮤니케이션을 개선할 수 있도록 프로젝트에 대한 추가 컨텍스트를 제공하세요."
   },
   "goosehintsModal.dialogTitle": {
     "defaultMessage": "프로젝트 힌트 구성(.goosehints)"
@@ -1287,7 +1287,7 @@
     "defaultMessage": ".goosehints 파일 위치: {filePath}"
   },
   "goosehintsModal.helpText1": {
-    "defaultMessage": ".goosehints는 프로젝트에 대한 추가 컨텍스트를 제공하고 goose와의 커뮤니케이션을 개선하는 데 사용되는 텍스트 파일입니다."
+    "defaultMessage": ".goosehints는 프로젝트에 대한 추가 컨텍스트를 제공하고 karmx와의 커뮤니케이션을 개선하는 데 사용되는 텍스트 파일입니다."
   },
   "goosehintsModal.helpText2": {
     "defaultMessage": "익스텐션 페이지에서 {bold} 익스텐션이 활성화되어 있는지 확인하세요. .goosehints를 사용하려면 이 익스텐션이 필요합니다. .goosehints 업데이트를 적용하려면 세션을 다시 시작해야 합니다."
@@ -1314,13 +1314,13 @@
     "defaultMessage": "설정"
   },
   "goosehintsSection.description": {
-    "defaultMessage": "프로젝트의 .goosehints 파일을 설정하여 goose에 추가 컨텍스트를 제공합니다."
+    "defaultMessage": "프로젝트의 .goosehints 파일을 설정하여 karmx에 추가 컨텍스트를 제공합니다."
   },
   "goosehintsSection.title": {
     "defaultMessage": "프로젝트 힌트(.goosehints)"
   },
   "groupedExtensionLoadingToast.askGoose": {
-    "defaultMessage": "goose에게 묻기"
+    "defaultMessage": "karmx에게 묻기"
   },
   "groupedExtensionLoadingToast.collapseDetails": {
     "defaultMessage": "세부정보 접기"
@@ -1440,7 +1440,7 @@
     "defaultMessage": "Hugging Face"
   },
   "imagePreview.altText": {
-    "defaultMessage": "goose 이미지"
+    "defaultMessage": "karmx 이미지"
   },
   "imagePreview.clickToCollapse": {
     "defaultMessage": "접으려면 클릭하세요."
@@ -1488,7 +1488,7 @@
     "defaultMessage": "레시피 파일"
   },
   "importRecipeForm.reviewWarning": {
-    "defaultMessage": "goose 인터페이스에 레시피 파일을 추가하기 전에 레시피 파일의 내용을 검토하세요."
+    "defaultMessage": "karmx 인터페이스에 레시피 파일을 추가하기 전에 레시피 파일의 내용을 검토하세요."
   },
   "importRecipeForm.schemaDescription": {
     "defaultMessage": "YAML 또는 JSON 파일은 이 구조를 따라야 합니다. 필수 필드는 제목, 설명, 지침 또는 프롬프트입니다."
@@ -1599,13 +1599,13 @@
     "defaultMessage": "앱 단축키"
   },
   "keyboardShortcuts.categoryApplicationDescription": {
-    "defaultMessage": "goose가 활성 앱일 때 작동하는 단축키입니다."
+    "defaultMessage": "karmx가 활성 앱일 때 작동하는 단축키입니다."
   },
   "keyboardShortcuts.categoryGlobal": {
     "defaultMessage": "전역 단축키"
   },
   "keyboardShortcuts.categoryGlobalDescription": {
-    "defaultMessage": "goose에 포커스가 맞춰져 있지 않아도 시스템 전체에서 작동하는 단축키입니다."
+    "defaultMessage": "karmx에 포커스가 맞춰져 있지 않아도 시스템 전체에서 작동하는 단축키입니다."
   },
   "keyboardShortcuts.categorySearch": {
     "defaultMessage": "검색 단축키"
@@ -1647,10 +1647,10 @@
     "defaultMessage": "이전 찾기"
   },
   "keyboardShortcuts.focusWindowDescription": {
-    "defaultMessage": "어디서든 goose 창을 앞으로 가져옵니다."
+    "defaultMessage": "어디서든 karmx 창을 앞으로 가져옵니다."
   },
   "keyboardShortcuts.focusWindowLabel": {
-    "defaultMessage": "goose 창 포커스"
+    "defaultMessage": "karmx 창 포커스"
   },
   "keyboardShortcuts.loading": {
     "defaultMessage": "로드 중..."
@@ -1662,7 +1662,7 @@
     "defaultMessage": "새 채팅"
   },
   "keyboardShortcuts.newChatWindowDescription": {
-    "defaultMessage": "새 goose 창을 엽니다."
+    "defaultMessage": "새 karmx 창을 엽니다."
   },
   "keyboardShortcuts.newChatWindowLabel": {
     "defaultMessage": "새 채팅 창"
@@ -1701,7 +1701,7 @@
     "defaultMessage": "기본값으로 재설정"
   },
   "keyboardShortcuts.restartDescription": {
-    "defaultMessage": "애플리케이션 단축키(예: 새 채팅, 설정 등)의 변경 사항을 적용하려면 goose를 다시 시작해야 합니다. 전역 단축키(창 포커스, 빠른 실행기)는 즉시 적용됩니다."
+    "defaultMessage": "애플리케이션 단축키(예: 새 채팅, 설정 등)의 변경 사항을 적용하려면 karmx를 다시 시작해야 합니다. 전역 단축키(창 포커스, 빠른 실행기)는 즉시 적용됩니다."
   },
   "keyboardShortcuts.restartRequired": {
     "defaultMessage": "다시 시작 필요"
@@ -1731,13 +1731,13 @@
     "defaultMessage": "탐색 메뉴 전환"
   },
   "launcher.placeholder": {
-    "defaultMessage": "goose에게 무엇이든 물어보세요..."
+    "defaultMessage": "karmx에게 무엇이든 물어보세요..."
   },
   "loadingGoose.compacting": {
-    "defaultMessage": "goose가 대화를 압축하고 있어요..."
+    "defaultMessage": "karmx가 대화를 압축하고 있어요..."
   },
   "loadingGoose.idle": {
-    "defaultMessage": "goose가 작업 중이에요…"
+    "defaultMessage": "karmx가 작업 중이에요…"
   },
   "loadingGoose.loadingConversation": {
     "defaultMessage": "대화 로드 중..."
@@ -1746,13 +1746,13 @@
     "defaultMessage": "세션 다시 시작 중..."
   },
   "loadingGoose.streaming": {
-    "defaultMessage": "goose가 작업 중이에요…"
+    "defaultMessage": "karmx가 작업 중이에요…"
   },
   "loadingGoose.thinking": {
-    "defaultMessage": "goose가 생각하고 있어요…"
+    "defaultMessage": "karmx가 생각하고 있어요…"
   },
   "loadingGoose.waiting": {
-    "defaultMessage": "goose가 기다리고 있어요…"
+    "defaultMessage": "karmx가 기다리고 있어요…"
   },
   "localInferenceSettings.deleteConfirm": {
     "defaultMessage": "이 모델을 삭제하시겠습니까? 나중에 다시 다운로드할 수 있습니다."
@@ -2388,7 +2388,7 @@
     "defaultMessage": "서버가 시작 중이거나 일시적으로 사용할 수 없습니다."
   },
   "onboardingGuard.checkProviderErrorTitle": {
-    "defaultMessage": "goose 서버에 접속할 수 없습니다"
+    "defaultMessage": "karmx 서버에 접속할 수 없습니다"
   },
   "onboardingGuard.retry": {
     "defaultMessage": "다시 시도"
@@ -2397,10 +2397,10 @@
     "defaultMessage": "로컬 AI 에이전트입니다. 시작하려면 AI 모델 제공업체를 연결하세요."
   },
   "onboardingGuard.welcomeTitle": {
-    "defaultMessage": "goose에 오신 것을 환영합니다"
+    "defaultMessage": "karmx에 오신 것을 환영합니다"
   },
   "onboardingSuccess.allSet": {
-    "defaultMessage": "goose를 사용할 준비가 모두 완료되었습니다."
+    "defaultMessage": "karmx를 사용할 준비가 모두 완료되었습니다."
   },
   "onboardingSuccess.connectedTo": {
     "defaultMessage": "{providerName}에 연결됨"
@@ -2415,7 +2415,7 @@
     "defaultMessage": "로컬 모델 준비됨"
   },
   "onboardingSuccess.privacyDescription": {
-    "defaultMessage": "익명의 사용 데이터는 goose 개선에 도움이 됩니다. 대화, 코드 또는 개인 데이터는 수집하지 않습니다."
+    "defaultMessage": "익명의 사용 데이터는 karmx 개선에 도움이 됩니다. 대화, 코드 또는 개인 데이터는 수집하지 않습니다."
   },
   "onboardingSuccess.privacyTitle": {
     "defaultMessage": "개인정보 보호"
@@ -2583,10 +2583,10 @@
     "defaultMessage": "세션 지표(기간, 상호 작용 횟수, 토큰 사용량)"
   },
   "privacyInfoModal.collectVersion": {
-    "defaultMessage": "goose 버전 및 설치 방법"
+    "defaultMessage": "karmx 버전 및 설치 방법"
   },
   "privacyInfoModal.description": {
-    "defaultMessage": "익명의 사용 데이터는 goose가 어떻게 사용되는지 이해하고 개선이 필요한 부분을 파악하는 데 도움이 됩니다."
+    "defaultMessage": "익명의 사용 데이터는 karmx가 어떻게 사용되는지 이해하고 개선이 필요한 부분을 파악하는 데 도움이 됩니다."
   },
   "privacyInfoModal.neverCollect": {
     "defaultMessage": "대화, 코드, 도구 인수, 오류 메시지 또는 개인 데이터는 수집하지 않습니다. 언제든지 설정에서 이 설정을 변경할 수 있습니다."
@@ -2655,7 +2655,7 @@
     "defaultMessage": "프롬프트를 저장하지 못했습니다."
   },
   "promptsSettings.promptEditingDescription": {
-    "defaultMessage": "다양한 상황에서 goose의 동작을 정의하는 프롬프트를 사용자 지정하세요. 이 프롬프트는 Jinja2 템플릿 구문을 사용합니다. 잘못된 변경으로 인해 기능이 중단될 수 있으므로 템플릿 변수를 수정할 때는 주의하세요. 개선 사항을 커뮤니티와 공유해 주세요."
+    "defaultMessage": "다양한 상황에서 karmx의 동작을 정의하는 프롬프트를 사용자 지정하세요. 이 프롬프트는 Jinja2 템플릿 구문을 사용합니다. 잘못된 변경으로 인해 기능이 중단될 수 있으므로 템플릿 변수를 수정할 때는 주의하세요. 개선 사항을 커뮤니티와 공유해 주세요."
   },
   "promptsSettings.promptEditingTitle": {
     "defaultMessage": "프롬프트 편집"
@@ -2751,7 +2751,7 @@
     "defaultMessage": "로그인 중..."
   },
   "providerConfigurationModal.addApiKeyDescription": {
-    "defaultMessage": "이 제공업체를 goose에 연동하려면 API 키를 추가하세요."
+    "defaultMessage": "이 제공업체를 karmx에 연동하려면 API 키를 추가하세요."
   },
   "providerConfigurationModal.browserWindowHint": {
     "defaultMessage": "로그인을 완료할 수 있는 브라우저 창이 열립니다."
@@ -2787,7 +2787,7 @@
     "defaultMessage": "오류"
   },
   "providerConfigurationModal.externalSetupIntro": {
-    "defaultMessage": "이 제공업체는 goose 외부에 구성되어 있습니다. 다음 단계를 따르세요:"
+    "defaultMessage": "이 제공업체는 karmx 외부에 구성되어 있습니다. 다음 단계를 따르세요:"
   },
   "providerConfigurationModal.goBack": {
     "defaultMessage": "돌아가기"
@@ -2871,7 +2871,7 @@
     "defaultMessage": "제공업체 로드 중..."
   },
   "providerSettings.onboardingDescription": {
-    "defaultMessage": "goose를 시작하려면 AI 모델 제공업체를 선택하세요. 각 제공업체가 생성한 API 키를 사용해야 하며 암호화되어 로컬에 저장됩니다. 설정에서 언제든지 제공업체를 변경할 수 있습니다."
+    "defaultMessage": "karmx를 시작하려면 AI 모델 제공업체를 선택하세요. 각 제공업체가 생성한 API 키를 사용해야 하며 암호화되어 로컬에 저장됩니다. 설정에서 언제든지 제공업체를 변경할 수 있습니다."
   },
   "providerSettings.otherProviders": {
     "defaultMessage": "기타 제공업체"
@@ -3804,7 +3804,7 @@
     "defaultMessage": "채팅 기록"
   },
   "sessions.chatHistoryDesc": {
-    "defaultMessage": "goose와 나눈 이전 대화를 확인하고 검색하세요. {shortcut}로 검색할 수 있습니다."
+    "defaultMessage": "karmx와 나눈 이전 대화를 확인하고 검색하세요. {shortcut}로 검색할 수 있습니다."
   },
   "sessions.close": {
     "defaultMessage": "닫기"
@@ -3840,7 +3840,7 @@
     "defaultMessage": "링크 가져오기"
   },
   "sessions.importNostr.description": {
-    "defaultMessage": "goose Nostr 공유 링크를 붙여넣어 세션을 가져오고 복호화한 뒤 불러오세요."
+    "defaultMessage": "karmx Nostr 공유 링크를 붙여넣어 세션을 가져오고 복호화한 뒤 불러오세요."
   },
   "sessions.importNostr.placeholder": {
     "defaultMessage": "goose://sessions/nostr?nevent=...&key=..."
@@ -3924,7 +3924,7 @@
     "defaultMessage": "세션 설명이 업데이트되었습니다."
   },
   "settings.appearance.description": {
-    "defaultMessage": "시스템에서 goose가 표시되는 방식을 설정합니다."
+    "defaultMessage": "시스템에서 karmx가 표시되는 방식을 설정합니다."
   },
   "settings.appearance.title": {
     "defaultMessage": "모양"
@@ -3939,13 +3939,13 @@
     "defaultMessage": "비용 추적"
   },
   "settings.dockIcon.description": {
-    "defaultMessage": "Dock에 goose를 표시합니다."
+    "defaultMessage": "Dock에 karmx를 표시합니다."
   },
   "settings.dockIcon.title": {
     "defaultMessage": "Dock 아이콘"
   },
   "settings.help.description": {
-    "defaultMessage": "문제를 신고하거나 새 기능을 요청하여 goose 개선에 도움을 주세요."
+    "defaultMessage": "문제를 신고하거나 새 기능을 요청하여 karmx 개선에 도움을 주세요."
   },
   "settings.help.reportBug": {
     "defaultMessage": "버그 신고"
@@ -3957,7 +3957,7 @@
     "defaultMessage": "도움말 및 피드백"
   },
   "settings.language.description": {
-    "defaultMessage": "goose의 표시 언어를 선택하세요"
+    "defaultMessage": "karmx의 표시 언어를 선택하세요"
   },
   "settings.language.english": {
     "defaultMessage": "영어"
@@ -4014,7 +4014,7 @@
     "defaultMessage": "중국어(번체)"
   },
   "settings.menuBarIcon.description": {
-    "defaultMessage": "메뉴 막대에 goose를 표시합니다."
+    "defaultMessage": "메뉴 막대에 karmx를 표시합니다."
   },
   "settings.menuBarIcon.title": {
     "defaultMessage": "메뉴 막대 아이콘"
@@ -4035,7 +4035,7 @@
     "defaultMessage": "알림을 클릭하세요"
   },
   "settings.notifications.modal.macStep3": {
-    "defaultMessage": "애플리케이션 목록에서 goose를 찾아 선택하세요"
+    "defaultMessage": "애플리케이션 목록에서 karmx를 찾아 선택하세요"
   },
   "settings.notifications.modal.macStep4": {
     "defaultMessage": "원하는 대로 알림을 활성화하고 설정을 조정합니다."
@@ -4053,7 +4053,7 @@
     "defaultMessage": "시스템 > 알림으로 이동"
   },
   "settings.notifications.modal.winStep3": {
-    "defaultMessage": "애플리케이션 목록에서 goose를 찾아 선택하세요"
+    "defaultMessage": "애플리케이션 목록에서 karmx를 찾아 선택하세요"
   },
   "settings.notifications.modal.winStep4": {
     "defaultMessage": "알림을 켜고 원하는 대로 설정을 조정하세요."
@@ -4062,7 +4062,7 @@
     "defaultMessage": "설정 열기"
   },
   "settings.notifications.task.description": {
-    "defaultMessage": "창이 백그라운드에 있을 때 goose가 작업을 완료하면 알림을 보냅니다."
+    "defaultMessage": "창이 백그라운드에 있을 때 karmx가 작업을 완료하면 알림을 보냅니다."
   },
   "settings.notifications.task.title": {
     "defaultMessage": "작업 완료 알림"
@@ -4071,19 +4071,19 @@
     "defaultMessage": "알림"
   },
   "settings.preventSleep.description": {
-    "defaultMessage": "goose가 작업을 실행하는 동안 컴퓨터가 잠자기 상태로 전환되지 않도록 합니다. 화면은 잠길 수 있습니다."
+    "defaultMessage": "karmx가 작업을 실행하는 동안 컴퓨터가 잠자기 상태로 전환되지 않도록 합니다. 화면은 잠길 수 있습니다."
   },
   "settings.preventSleep.title": {
     "defaultMessage": "잠자기 방지"
   },
   "settings.theme.description": {
-    "defaultMessage": "goose의 모양과 느낌을 맞춤 설정합니다."
+    "defaultMessage": "karmx의 모양과 느낌을 맞춤 설정합니다."
   },
   "settings.theme.title": {
     "defaultMessage": "테마"
   },
   "settings.updates.description": {
-    "defaultMessage": "goose가 최상의 상태로 실행되도록 업데이트를 확인하고 설치합니다."
+    "defaultMessage": "karmx가 최상의 상태로 실행되도록 업데이트를 확인하고 설치합니다."
   },
   "settings.updates.title": {
     "defaultMessage": "업데이트"
@@ -4158,7 +4158,7 @@
     "defaultMessage": "스킬 검색..."
   },
   "skillsView.skillsDescription": {
-    "defaultMessage": "goose 기능을 확장하는 스킬을 확인하세요. {shortcut}로 검색할 수 있습니다."
+    "defaultMessage": "karmx 기능을 확장하는 스킬을 확인하세요. {shortcut}로 검색할 수 있습니다."
   },
   "skillsView.skillsTitle": {
     "defaultMessage": "스킬"
@@ -4401,10 +4401,10 @@
     "defaultMessage": "다른 제공업체 이용"
   },
   "telemetryConsentPrompt.description": {
-    "defaultMessage": "goose 개선을 위해 익명의 사용 데이터를 공유하시겠습니까? 대화, 코드 또는 개인 데이터는 수집하지 않습니다."
+    "defaultMessage": "karmx 개선을 위해 익명의 사용 데이터를 공유하시겠습니까? 대화, 코드 또는 개인 데이터는 수집하지 않습니다."
   },
   "telemetryConsentPrompt.heading": {
-    "defaultMessage": "goose 개선에 도움을 주세요"
+    "defaultMessage": "karmx 개선에 도움을 주세요"
   },
   "telemetryConsentPrompt.learnMore": {
     "defaultMessage": "자세히 알아보기"
@@ -4431,7 +4431,7 @@
     "defaultMessage": "개인정보 보호"
   },
   "telemetrySettings.toggleDescription": {
-    "defaultMessage": "익명 사용 통계를 공유하여 goose 개선에 도움을 주세요."
+    "defaultMessage": "익명 사용 통계를 공유하여 karmx 개선에 도움을 주세요."
   },
   "telemetrySettings.toggleLabel": {
     "defaultMessage": "익명 사용 데이터"
@@ -4512,10 +4512,10 @@
     "defaultMessage": "{toolName}을 허용하시겠습니까?"
   },
   "toolConfirmation.gooseWouldLikeToCallWithName": {
-    "defaultMessage": "goose가 {toolName}을 호출하려고 합니다. 허용하시겠습니까?"
+    "defaultMessage": "karmx가 {toolName}을 호출하려고 합니다. 허용하시겠습니까?"
   },
   "updateSection.autoDownload": {
-    "defaultMessage": "goose가 백그라운드에서 업데이트를 다운로드하며, 종료하거나 다시 시작할 때 설치합니다."
+    "defaultMessage": "karmx가 백그라운드에서 업데이트를 다운로드하며, 종료하거나 다시 시작할 때 설치합니다."
   },
   "updateSection.autoDownloadDisabledByEnv": {
     "defaultMessage": "자동 다운로드는 GOOSE_DISABLE_AUTO_DOWNLOAD 환경 변수를 통해 비활성화되어 있습니다."
@@ -4536,7 +4536,7 @@
     "defaultMessage": "자동 업데이트 다운로드 비활성화"
   },
   "updateSection.disableAutoDownloadDesc": {
-    "defaultMessage": "활성화하면 goose가 새 버전을 알려주지만 자동으로 다운로드하지는 않습니다."
+    "defaultMessage": "활성화하면 karmx가 새 버전을 알려주지만 자동으로 다운로드하지는 않습니다."
   },
   "updateSection.downloadNow": {
     "defaultMessage": "지금 다운로드"

@@ -2317,7 +2317,27 @@ impl GooseAcpAgent {
             return Err(error);
         }
 
-        let user_message = Self::convert_acp_prompt_to_message(&args.prompt);
+        let mut user_message = Self::convert_acp_prompt_to_message(&args.prompt);
+        if Config::global()
+            .get_param::<bool>("KARMX_CONTEXT_AUTO_RETRIEVE")
+            .unwrap_or(false)
+        {
+            if let Ok(session) = self.session_manager.get_session(&session_id, false).await {
+                let query = user_message.as_concat_text();
+                let retrieval = tokio::task::spawn_blocking(move || {
+                    use crate::agents::platform_extensions::context_engine::workspace::WorkspaceIndex;
+                    let index = WorkspaceIndex::build(&session.working_dir, 50_000).ok()?;
+                    let hits = index.search(&query, 20);
+                    if hits.is_empty() { return None; }
+                    Some(index.format_hits(&hits).chars().take(40_000).collect::<String>())
+                }).await;
+                if let Ok(Some(context)) = retrieval {
+                    user_message = user_message.with_text(format!(
+                        "<context_engine codebase_retrieval>\n{context}\n</context_engine>"
+                    ));
+                }
+            }
+        }
         let session_config = SessionConfig {
             id: session_id.clone(),
             schedule_id: None,
@@ -3283,11 +3303,12 @@ print(\"hello, world\")
             .unwrap();
 
         assert_eq!(empty_audience_content.len(), 2);
-        assert!(empty_audience_content.iter().all(|text| text
-            .annotations
-            .as_ref()
-            .and_then(|annotations| annotations.audience.as_ref())
-            .is_some_and(Vec::is_empty)));
+        assert!(empty_audience_content.iter().all(|text| {
+            text.annotations
+                .as_ref()
+                .and_then(|annotations| annotations.audience.as_ref())
+                .is_some_and(Vec::is_empty)
+        }));
         assert!(audience_omitted_content.annotations.is_none());
         assert!(user_content.as_concat_text().contains("visible text"));
         assert!(user_content

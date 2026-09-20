@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use tree_sitter::{Language, Parser as TsParser, Query, QueryCursor, StreamingIterator};
 
-use super::languages::{LangInfo, lang_for_ext};
+use super::languages::{lang_for_ext, LangInfo};
 
 // ── Types ──────────────────────────────────────────────────────────────
 

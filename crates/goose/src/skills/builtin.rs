@@ -1,4 +1,4 @@
-use include_dir::{Dir, include_dir};
+use include_dir::{include_dir, Dir};
 
 static BUILTIN_SKILLS_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/src/skills/builtins");
 

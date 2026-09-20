@@ -2,11 +2,9 @@ Rewrite the following user instruction so it is specific, unambiguous, and actio
 
 Reply in exactly this format:
 
-### BEGIN RESPONSE ###
 <enhanced-prompt>
 the rewritten instruction
 </enhanced-prompt>
-### END RESPONSE ###
 
 User instruction:
 

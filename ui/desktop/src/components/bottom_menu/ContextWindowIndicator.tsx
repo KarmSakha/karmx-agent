@@ -24,13 +24,24 @@ export function ContextWindowIndicator({
   tokenLimit,
   alerts,
 }: ContextWindowIndicatorProps) {
-  if (!tokenLimit) return null;
+  if (!tokenLimit)
+    return (
+      <span
+        className="text-xs text-text-secondary"
+        title="Waiting for the backend to report the model context window"
+      >
+        Context unavailable
+      </span>
+    );
 
   const percentage = Math.round((totalTokens / tokenLimit) * 100);
   const colorClass = getProgressColor(percentage);
 
   return (
-    <div className="flex items-center h-full">
+    <div
+      className="flex items-center h-full"
+      title={`${totalTokens.toLocaleString()} of ${tokenLimit.toLocaleString()} tokens · ${percentage}% used`}
+    >
       <BottomMenuAlertPopover alerts={alerts}>
         <span className={`text-xs font-mono ${colorClass}`}>
           {formatTokenCount(totalTokens)} / {formatTokenCount(tokenLimit)}

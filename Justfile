@@ -131,8 +131,27 @@ package-ui:
     @echo "Packaging desktop app..."
     cd ui/desktop && pnpm install && pnpm run package
     @echo "Signing with entitlements..."
-    codesign --force --deep --sign - --entitlements ui/desktop/entitlements.plist ui/desktop/out/Goose-darwin-arm64/Goose.app
-    @echo "Done! Launch with: open ui/desktop/out/Goose-darwin-arm64/Goose.app"
+    codesign --force --deep --sign - --entitlements ui/desktop/entitlements.plist ui/desktop/out/KarmX-darwin-arm64/KarmX.app
+    @echo "Done! Launch with: open ui/desktop/out/KarmX-darwin-arm64/KarmX.app"
+
+# Build a distributable KarmX DMG (macOS, Apple Silicon)
+# Signing runs automatically when a Developer ID identity is in the keychain;
+# notarization runs when KARMX_NOTARY_PROFILE (or APPLE_ID creds) is set.
+bundle-ui-dmg:
+    @just release-binary
+    @echo "Building KarmX DMG..."
+    cd ui/desktop && pnpm install && node scripts/prepare-platform-binaries.js && pnpm run make
+    @if [ -n "$$KARMX_NOTARY_PROFILE" ]; then \
+        echo "Signing + notarizing DMG with profile $$KARMX_NOTARY_PROFILE..."; \
+        cd ui/desktop && \
+        codesign --sign "$${OSX_SIGN_IDENTITY:-Developer ID Application: karmsakha limited (PB5LGBYDAR)}" --timestamp out/make/KarmX-*-arm64.dmg && \
+        xcrun notarytool submit out/make/KarmX-*-arm64.dmg --keychain-profile "$$KARMX_NOTARY_PROFILE" --wait && \
+        xcrun stapler staple out/make/KarmX-*-arm64.dmg && \
+        xcrun stapler validate out/make/KarmX-*-arm64.dmg; \
+    else \
+        echo "Skipping DMG notarization (set KARMX_NOTARY_PROFILE to enable)"; \
+    fi
+    @echo "Done! DMG is in ui/desktop/out/make/"
 
 # Run UI with latest (Windows version)
 run-ui-windows:

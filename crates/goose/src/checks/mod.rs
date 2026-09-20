@@ -105,8 +105,9 @@ impl Check {
                 path.display()
             ),
             Err(e) => {
-                return Err(anyhow!(e))
-                    .with_context(|| format!("check {}: invalid frontmatter YAML", path.display()))
+                return Err(anyhow!(e)).with_context(|| {
+                    format!("check {}: invalid frontmatter YAML", path.display())
+                });
             }
         };
 
@@ -423,7 +424,7 @@ fn read_checks_dir(
         Ok(_) => return Ok(Vec::new()),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
         Err(error) => {
-            return Err(error).with_context(|| format!("inspect checks dir {}", dir.display()))
+            return Err(error).with_context(|| format!("inspect checks dir {}", dir.display()));
         }
     }
     let mut out = Vec::new();
@@ -479,8 +480,9 @@ fn checks_dir_is_unlinked(scan_root: &Path, dir: &Path) -> Result<bool> {
             Ok(_) => return Ok(false),
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
             Err(error) => {
-                return Err(error)
-                    .with_context(|| format!("inspect checks dir component {}", current.display()))
+                return Err(error).with_context(|| {
+                    format!("inspect checks dir component {}", current.display())
+                });
             }
         }
     }

@@ -1,0 +1,12 @@
+node_modules
+dist
+.DS_Store
+.env
+
+# Generated artifacts — keep local, do not publish
+renders/
+frames/
+snapshots/
+.thumbnails/
+.waveform-cache/
+out/

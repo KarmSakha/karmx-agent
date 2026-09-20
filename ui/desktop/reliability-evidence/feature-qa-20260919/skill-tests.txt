@@ -1,0 +1,8 @@
+
+running 3 tests
+test skills::router::tests::honors_disable_model_invocation ... ok
+test skills::router::tests::ranks_matching_skill_and_ignores_greetings ... ok
+test skills::router::tests::when_to_use_contributes_to_ranking ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 2371 filtered out; finished in 0.00s
+

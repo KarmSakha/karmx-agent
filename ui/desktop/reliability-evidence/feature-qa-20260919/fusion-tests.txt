@@ -1,0 +1,9 @@
+
+running 4 tests
+test agents::local_fusion::tests::brief_does_not_duplicate_on_trim ... ok
+test agents::local_fusion::tests::brief_preserves_the_message_and_adds_a_report_contract ... ok
+test agents::local_fusion::tests::sidekick_guidance_follows_the_tool_list ... ok
+test agents::local_fusion::tests::two_registered_models_keep_sidekick_distinct_from_lead ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 2370 filtered out; finished in 0.01s
+

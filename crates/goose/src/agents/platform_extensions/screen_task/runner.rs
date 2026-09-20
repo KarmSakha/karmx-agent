@@ -9,6 +9,7 @@ use std::time::Duration;
 
 pub struct RunConfig {
     pub goal: String,
+    pub app: Option<String>,
     pub steps: usize,
     pub delay_ms: u64,
     pub min_confidence: f64,
@@ -29,8 +30,10 @@ pub struct StepTrace {
     pub elapsed_ms: u128,
 }
 
-/// One full pass. `None` when the screen can't be sensed at all.
-fn sense() -> Option<(
+/// One full pass, preserving the reason if sensing fails.
+fn sense(
+    expected_app: Option<&str>,
+) -> anyhow::Result<(
     axwalk::AxInfo,
     capture::Capture,
     Vec<items::OcrLine>,
@@ -38,12 +41,26 @@ fn sense() -> Option<(
 )> {
     {
         let display = display_bounds();
-        let ax = axwalk::snapshot(&display)?;
-        let cap = capture::grab(ax.window).ok()?;
+        let ax = axwalk::snapshot(&display).ok_or_else(|| {
+            anyhow::anyhow!(
+                "Cannot identify the foreground application through macOS Accessibility"
+            )
+        })?;
+        check_app(expected_app, &ax.app)?;
+        let cap = capture::grab(ax.window)?;
         let lines = ocr::read_lines(&cap);
         let merged = items::merge_items(&lines, &ax.pressables);
-        Some((ax, cap, lines, merged))
+        Ok((ax, cap, lines, merged))
     }
+}
+
+fn check_app(expected: Option<&str>, actual: &str) -> anyhow::Result<()> {
+    if let Some(expected) = expected {
+        if !expected.eq_ignore_ascii_case(actual) {
+            anyhow::bail!("Expected foreground app '{expected}', but found '{actual}'. Bring the requested app forward before retrying. No action performed.");
+        }
+    }
+    Ok(())
 }
 
 fn display_bounds() -> items::Frame {
@@ -71,17 +88,42 @@ fn chrome_url() -> Option<String> {
         .filter(|s| s.starts_with("http"))
 }
 
+pub fn check_permissions() -> anyhow::Result<()> {
+    unsafe extern "C" {
+        fn CGPreflightScreenCaptureAccess() -> bool;
+        fn AXIsProcessTrusted() -> bool;
+    }
+    let mut missing = Vec::new();
+    unsafe {
+        if !AXIsProcessTrusted() {
+            missing.push("Accessibility");
+        }
+        if !CGPreflightScreenCaptureAccess() {
+            missing.push("Screen Recording");
+        }
+    }
+    if !missing.is_empty() {
+        anyhow::bail!("macOS permission required: {}. Enable KarmX (or the terminal hosting the CLI) in System Settings > Privacy & Security, then restart the app. No actions were performed.", missing.join(" and "));
+    }
+    Ok(())
+}
+
 /// Run the loop. Returns per-step traces plus a stop reason.
 pub async fn run(cfg: &RunConfig) -> (Vec<StepTrace>, String) {
     let mut traces = Vec::new();
+    if let Err(error) = check_permissions() {
+        return (traces, error.to_string());
+    }
     let mut history: Vec<String> = Vec::new();
     let mut noops = 0usize;
 
     for n in 1..=cfg.steps {
         let started = std::time::Instant::now();
-        let Some((ax, cap, _lines, merged)) = sense() else {
-            return (traces, "could not sense the screen".to_string());
+        let (ax, cap, lines, mut merged) = match sense(cfg.app.as_deref()) {
+            Ok(screen) => screen,
+            Err(error) => return (traces, format!("Screen sensing failed: {error:#}")),
         };
+        merged.truncate(240);
         let url = (ax.app == "Google Chrome").then(chrome_url).flatten();
         let screen = Screen {
             app: ax.app.clone(),
@@ -101,19 +143,10 @@ pub async fn run(cfg: &RunConfig) -> (Vec<StepTrace>, String) {
             );
         };
 
-        if decision.stops() {
-            traces.push(StepTrace {
-                n,
-                app: ax.app.clone(),
-                items: merged.len(),
-                kind: decision.kind.clone(),
-                detail: String::new(),
-                confidence: decision.confidence,
-                acted: false,
-                elapsed_ms: started.elapsed().as_millis(),
-            });
-            return (traces, format!("stopping: {}", decision.kind));
+        if axwalk::frontmost().map(|(_, pid)| pid) != Some(ax.pid) {
+            return (traces, "Foreground app changed while planning. Stopped without performing the pending action; retry with the intended app in front.".to_string());
         }
+
         if decision.confidence < cfg.min_confidence {
             traces.push(StepTrace {
                 n,
@@ -130,6 +163,31 @@ pub async fn run(cfg: &RunConfig) -> (Vec<StepTrace>, String) {
                 format!(
                     "stopping: confidence {:.2} below {:.2}",
                     decision.confidence, cfg.min_confidence
+                ),
+            );
+        }
+
+        if decision.stops() {
+            traces.push(StepTrace {
+                n,
+                app: ax.app.clone(),
+                items: merged.len(),
+                kind: decision.kind.clone(),
+                detail: String::new(),
+                confidence: decision.confidence,
+                acted: false,
+                elapsed_ms: started.elapsed().as_millis(),
+            });
+            let observed = lines
+                .iter()
+                .map(|line| line.text.as_str())
+                .collect::<Vec<_>>()
+                .join("\n");
+            return (
+                traces,
+                format!(
+                    "stopping: {}\nObserved screen text:\n{}",
+                    decision.kind, observed
                 ),
             );
         }
@@ -155,7 +213,7 @@ pub async fn run(cfg: &RunConfig) -> (Vec<StepTrace>, String) {
             kind: decision.kind.clone(),
             detail: detail.clone(),
             confidence: decision.confidence,
-            acted: !cfg.dry_run,
+            acted: !cfg.dry_run && !detail.starts_with("action failed:"),
             elapsed_ms: started.elapsed().as_millis(),
         });
         if noops >= 2 {
@@ -272,12 +330,20 @@ async fn act(
 mod tests {
     use super::*;
 
+    #[test]
+    fn app_guard_rejects_the_wrong_foreground() {
+        assert!(check_app(Some("Calculator"), "ChatGPT").is_err());
+        assert!(check_app(Some("Calculator"), "calculator").is_ok());
+        assert!(check_app(None, "Finder").is_ok());
+    }
+
     /// Drives the real screen — run manually with `cargo test -- --ignored`.
     #[tokio::test]
     #[ignore = "needs Screen Recording + Accessibility and a live Jev key"]
     async fn dry_run_senses_the_frontmost_app() {
         let cfg = RunConfig {
             goal: "open the browser".to_string(),
+            app: None,
             steps: 1,
             delay_ms: 0,
             min_confidence: 0.0,

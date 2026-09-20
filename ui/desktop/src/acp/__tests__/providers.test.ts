@@ -187,6 +187,29 @@ describe('ACP providers', () => {
     expect(providers.map((provider) => provider.uses_acp)).toEqual([false, false, true]);
   });
 
+  it('refreshes a native provider without calling the ACP-only readiness endpoint', async () => {
+    const entry = providerEntry({ providerId: 'karmx_lucy', acp: false, configured: true });
+    const client = {
+      goose: {
+        providersList_unstable: vi.fn().mockResolvedValue({ entries: [entry] }),
+        providersReadinessCheck_unstable: vi.fn(),
+        providersInventoryRefresh_unstable: vi
+          .fn()
+          .mockResolvedValue({ started: ['karmx_lucy'], skipped: [] }),
+      },
+    };
+    vi.mocked(getAcpClient).mockResolvedValue(
+      client as unknown as Awaited<ReturnType<typeof getAcpClient>>
+    );
+    const result = await acpRefreshProviderDetails('karmx_lucy');
+    expect(client.goose.providersReadinessCheck_unstable).not.toHaveBeenCalled();
+    expect(client.goose.providersInventoryRefresh_unstable).toHaveBeenCalledWith({
+      providerIds: ['karmx_lucy'],
+    });
+    expect(result.provider.name).toBe('karmx_lucy');
+    expect(result.connectionChecked).toBe(false);
+  });
+
   it('probes an installed ACP adapter and returns its refreshed models', async () => {
     const installed = providerEntry({ configured: true, refreshing: false });
     const refreshed = providerEntry({

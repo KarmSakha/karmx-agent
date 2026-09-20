@@ -1,0 +1,6 @@
+Installed GUI observations, 2026-09-19
+Coder home draft: one invocation eventually showed success, but output was not captured before draft cleanup; not counted as a verified content pass. Second invocation displayed "Failed to parse enhanced prompt from response" and preserved original draft.
+Lucy session 20260919_76: success, draft remained unsent.
+Input: Improve the checkout button contrast and touch target on mobile without changing purchase behavior.
+Output: Update the checkout button's mobile styles to meet WCAG AA contrast standards (4.5:1) against its background and increase the touch target to a minimum of 44x44 CSS pixels with adequate surrounding spacing. Ensure the visual and interactive adjustments do not alter the existing click handler or purchase flow.
+Draft cleared after verification. Default selection restored to coder.

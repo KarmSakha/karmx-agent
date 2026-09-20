@@ -2,7 +2,7 @@
 
 You'll generally create one of two release types: a regular feature release (minor version bump like 1.20) or a bug-fixing patch release (patch version bump like 1.20.1). 
 
-goose uses GitHub actions to automate the release process. The actual releases are triggered by tags.
+karmx uses GitHub actions to automate the release process. The actual releases are triggered by tags.
 
 ## Minor version releases
 

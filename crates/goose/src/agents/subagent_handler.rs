@@ -226,8 +226,7 @@ fn get_agent_messages(params: SubagentRunParams) -> AgentMessagesFuture {
                     conversation = updated_conversation;
                 }
                 Err(e) => {
-                    tracing::error!("Error receiving message from subagent: {}", e);
-                    break;
+                    return Err(anyhow!("Subagent failed: {e}"));
                 }
             }
         }

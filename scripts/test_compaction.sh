@@ -13,7 +13,7 @@ if [ -f .env ]; then
 fi
 
 if [ -z "$SKIP_BUILD" ]; then
-  echo "Building goose..."
+  echo "Building karmx..."
   cargo build --bin goose
   echo ""
 else
@@ -22,7 +22,7 @@ else
 fi
 
 SCRIPT_DIR=$(pwd)
-GOOSE_BIN="$SCRIPT_DIR/target/debug/goose"
+GOOSE_BIN="$SCRIPT_DIR/target/debug/karmx"
 
 # Apply provider/model overrides if set
 if [ -n "$COMPACTION_PROVIDER" ]; then

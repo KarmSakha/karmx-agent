@@ -52,7 +52,7 @@ export default function DeeplinkGenerator() {
       type: "stdio",
       id: "example-extension",
       name: "Example Extension",
-      description: "An example goose extension",
+      description: "An example karmx extension",
       command: "npx @gooseai/example-extension",
       environmentVariables: [
         {
@@ -69,7 +69,7 @@ export default function DeeplinkGenerator() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.toString()) {
       try {
-        if (urlParams.get('cmd') === 'goose' && urlParams.getAll('arg').includes('mcp')) {
+        if (urlParams.get('cmd') === 'karmx' && urlParams.getAll('arg').includes('mcp')) {
           const args = urlParams.getAll('arg');
           const extensionId = args[args.indexOf('mcp') + 1];
           if (!extensionId) {
@@ -188,7 +188,7 @@ export default function DeeplinkGenerator() {
   const generateDeeplink = (server: ServerConfig): string => {
     if (server.is_builtin) {
       const queryParams = [
-        'cmd=goose',
+        'cmd=karmx',
         'arg=mcp',
         `arg=${encodeURIComponent(server.id)}`,
         `description=${encodeURIComponent(server.id)}`
@@ -314,7 +314,7 @@ export default function DeeplinkGenerator() {
             Deeplink Generator
           </h1>
           <p className="text-textProminent">
-            Generate installation deeplinks for goose extensions that can be shared with others.
+            Generate installation deeplinks for karmx extensions that can be shared with others.
           </p>
         </div>
 
@@ -627,7 +627,7 @@ export default function DeeplinkGenerator() {
               </ul>
             </li>
             <li>Click "Generate Deeplink" to create your installation deeplink.</li>
-            <li>Copy and share the generated deeplink — when users click it, it will open goose Desktop and prompt them to install your extension.</li>
+            <li>Copy and share the generated deeplink — when users click it, it will open karmx Desktop and prompt them to install your extension.</li>
           </ol>
         </div>
       </div>

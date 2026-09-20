@@ -50,7 +50,7 @@ export default function CLIExtensionInstructions({
       <ol>
         <li>Run the <code>configure</code> command:</li>
       </ol>
-      <CodeBlock language="sh">{`goose configure`}</CodeBlock>
+      <CodeBlock language="sh">{`karmx configure`}</CodeBlock>
 
       <ol start={2}>
         <li>
@@ -157,7 +157,7 @@ ${
 
       <ol start={5}>
         <li>
-          Enter the number of seconds goose should wait for actions to complete before timing out. Default is{' '}
+          Enter the number of seconds karmx should wait for actions to complete before timing out. Default is{' '}
           <code>300</code> seconds.
         </li>
       </ol>

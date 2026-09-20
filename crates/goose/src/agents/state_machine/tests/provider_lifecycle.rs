@@ -1,13 +1,13 @@
 use anyhow::Result;
 
-use super::calculator_extension::{ADD, ADD_VALUES, named_values, value};
+use super::calculator_extension::{named_values, value, ADD, ADD_VALUES};
 use super::dummy_api::ProviderFeatures;
 use super::pipeline::MessageKind::{Agent, Error, Thinking, ToolCall, ToolResponse};
 use super::pipeline::{test_pipeline, test_pipeline_with};
 use crate::agents::AgentEvent;
-use crate::conversation::Conversation;
 use crate::conversation::fix_conversation;
 use crate::conversation::message::{Message, MessageContent, MessageErrorKind};
+use crate::conversation::Conversation;
 
 #[tokio::test]
 async fn provider_lifecycle() -> Result<()> {
@@ -45,29 +45,25 @@ async fn provider_lifecycle() -> Result<()> {
     result.assert_message(4, ToolCall, ADD);
     result.assert_message(5, ToolResponse, "result: 1");
     result.assert_message(-1, Agent, "The total is 1.");
-    assert!(
-        result
-            .conversation()
-            .messages()
-            .iter()
-            .filter(|message| message.role == rmcp::model::Role::Assistant)
-            .all(|message| {
-                message
-                    .metadata
-                    .inference
-                    .as_ref()
-                    .and_then(|inference| inference.resolved_model.as_deref())
-                    == Some("resolved-test-model")
-            })
-    );
+    assert!(result
+        .conversation()
+        .messages()
+        .iter()
+        .filter(|message| message.role == rmcp::model::Role::Assistant)
+        .all(|message| {
+            message
+                .metadata
+                .inference
+                .as_ref()
+                .and_then(|inference| inference.resolved_model.as_deref())
+                == Some("resolved-test-model")
+        }));
 
     let calls = api.calls();
     assert!(calls[0].input_has_image("image/png", image_data));
-    assert!(
-        calls[..2]
-            .iter()
-            .all(|call| call.system_contains("CUSTOM_SYSTEM_PROMPT"))
-    );
+    assert!(calls[..2]
+        .iter()
+        .all(|call| call.system_contains("CUSTOM_SYSTEM_PROMPT")));
     assert_eq!(
         calls[1].input_occurrences("I should inspect the image before calculating."),
         1
@@ -79,12 +75,10 @@ async fn provider_lifecycle() -> Result<()> {
     assert_eq!(calls[1].input_occurrences(ADD), 1);
     let schema = calls[0].tool_schema(ADD_VALUES).expect("add_values schema");
     assert!(schema.get("additionalProperties").is_some());
-    assert!(
-        schema
-            .get("properties")
-            .and_then(serde_json::Value::as_object)
-            .is_none_or(serde_json::Map::is_empty)
-    );
+    assert!(schema
+        .get("properties")
+        .and_then(serde_json::Value::as_object)
+        .is_none_or(serde_json::Map::is_empty));
 
     api.on("make a malformed mixed call")
         .reasoning("I should preserve this reasoning.")
@@ -181,16 +175,14 @@ async fn provider_lifecycle() -> Result<()> {
     result.assert_message(-1, Agent, "The total is 6.");
 
     assert!(result.session.usage.total_tokens.is_none());
-    assert!(
-        result
-            .session
-            .conversation
-            .as_ref()
-            .and_then(Conversation::last)
-            .and_then(|message| message.metadata.usage.as_ref())
-            .and_then(|usage| usage.total_tokens)
-            .is_none()
-    );
+    assert!(result
+        .session
+        .conversation
+        .as_ref()
+        .and_then(Conversation::last)
+        .and_then(|message| message.metadata.usage.as_ref())
+        .and_then(|usage| usage.total_tokens)
+        .is_none());
 
     api.on("return no choices").no_choices();
     let result = pipeline.run(["return no choices"]).await?;
@@ -228,11 +220,10 @@ async fn provider_lifecycle() -> Result<()> {
     let result = pipeline.run(["after server error"]).await?;
     result.assert_message(-1, Agent, "recovered from server error");
     assert!(result.session.usage.total_tokens.is_none());
-    assert!(
-        api.calls()
-            .iter()
-            .all(|call| call.system_contains("CUSTOM_SYSTEM_PROMPT"))
-    );
+    assert!(api
+        .calls()
+        .iter()
+        .all(|call| call.system_contains("CUSTOM_SYSTEM_PROMPT")));
 
     pipeline.clear_system_prompt_override().await;
     pipeline = pipeline.with_model("gpt-4.1").await;
@@ -263,12 +254,10 @@ async fn usage_and_provider_errors_survive_persistence() -> Result<()> {
     assert!(result.events.iter().any(
         |event| matches!(event, AgentEvent::Usage(usage) if usage.usage.total_tokens == Some(total_tokens))
     ));
-    assert!(
-        result
-            .events
-            .iter()
-            .any(|event| matches!(event, AgentEvent::MessageUsage { .. }))
-    );
+    assert!(result
+        .events
+        .iter()
+        .any(|event| matches!(event, AgentEvent::MessageUsage { .. })));
     let assistant = result
         .conversation()
         .messages()
@@ -294,12 +283,10 @@ async fn usage_and_provider_errors_survive_persistence() -> Result<()> {
     assert!(result.events.iter().any(
         |event| matches!(event, AgentEvent::Usage(usage) if usage.usage.total_tokens == Some(stream_total))
     ));
-    assert!(
-        result
-            .events
-            .iter()
-            .any(|event| matches!(event, AgentEvent::MessageUsage { .. }))
-    );
+    assert!(result
+        .events
+        .iter()
+        .any(|event| matches!(event, AgentEvent::MessageUsage { .. })));
     result.assert_message(-2, Agent, "partial response");
     let error = result
         .conversation()

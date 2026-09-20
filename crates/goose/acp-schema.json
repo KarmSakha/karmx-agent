@@ -2982,6 +2982,57 @@
       "x-side": "agent",
       "x-method": "_goose/unstable/providers/secrets/delete"
     },
+    "EnhancePromptRequest_unstable": {
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string"
+        },
+        "workingDir": {
+          "type": "string"
+        },
+        "sessionId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "recentContext": {
+          "type": "string",
+          "default": ""
+        }
+      },
+      "required": [
+        "prompt",
+        "workingDir"
+      ],
+      "x-side": "agent",
+      "x-method": "_goose/unstable/prompts/enhance"
+    },
+    "EnhancePromptResponse_unstable": {
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string"
+        },
+        "wasEnhanced": {
+          "type": "boolean"
+        },
+        "errorMessage": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "prompt",
+        "wasEnhanced"
+      ],
+      "x-side": "agent",
+      "x-method": "_goose/unstable/prompts/enhance"
+    },
     "CanonicalModelInfoRequest_unstable": {
       "type": "object",
       "properties": {
@@ -7353,6 +7404,15 @@
                 {
                   "allOf": [
                     {
+                      "$ref": "#/$defs/EnhancePromptRequest_unstable"
+                    }
+                  ],
+                  "description": "Params for _goose/unstable/prompts/enhance",
+                  "title": "EnhancePromptRequest_unstable"
+                },
+                {
+                  "allOf": [
+                    {
                       "$ref": "#/$defs/CanonicalModelInfoRequest_unstable"
                     }
                   ],
@@ -8230,6 +8290,14 @@
                         }
                       ],
                       "title": "ProviderSecretsListResponse_unstable"
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/$defs/EnhancePromptResponse_unstable"
+                        }
+                      ],
+                      "title": "EnhancePromptResponse_unstable"
                     },
                     {
                       "allOf": [

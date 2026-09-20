@@ -15,6 +15,7 @@ pub mod elements;
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use base64::Engine;
 use rmcp::model::{
     CallToolResult, ContentBlock, Implementation, InitializeResult, JsonObject, ListToolsResult,
     ServerCapabilities, Tool,
@@ -47,6 +48,7 @@ struct Session {
 pub struct ComputerControlClient {
     info: InitializeResult,
     session: Mutex<Option<Session>>,
+    operation: Mutex<()>,
 }
 
 impl ComputerControlClient {
@@ -60,6 +62,7 @@ impl ComputerControlClient {
         Ok(Self {
             info,
             session: Mutex::new(None),
+            operation: Mutex::new(()),
         })
     }
 
@@ -146,8 +149,8 @@ impl ComputerControlClient {
             ),
             Tool::new(
                 ELEMENTS_TOOL.to_string(),
-                "List the interactive elements of the current page as a compact table: \
-             index, tag, kind, text, center coordinates, in-viewport. Use it to act \
+                "Read the visible page text, title, URL, and interactive elements as a compact table: \
+             index, tag, kind, text, center coordinates, in-viewport, and exact link hrefs. Use it to act \
              on 'the login button' instead of guessing coordinates.\n\n\
              Requires Chrome running with --remote-debugging-port=<port> (default 9222); \
              pass launch: true to have it started for you."
@@ -237,10 +240,23 @@ impl ComputerControlClient {
                          yourself with --remote-debugging-port={port}"
                     ));
                 }
-                Self::launch_browser(port).await?;
-                self.ensure_session(port).await.map_err(|e| {
-                    format!("Chrome launched but attaching to port {port} still failed: {e}")
-                })
+                // An occupied port can belong to something other than Chrome CDP.
+                let launch_port = match std::net::TcpListener::bind(("127.0.0.1", port)) {
+                    Ok(listener) => listener.local_addr().map_err(|e| e.to_string())?.port(),
+                    Err(_) => std::net::TcpListener::bind(("127.0.0.1", 0))
+                        .and_then(|listener| listener.local_addr())
+                        .map_err(|e| e.to_string())?
+                        .port(),
+                };
+                Self::launch_browser(launch_port).await?;
+                let client = self.ensure_session(launch_port).await.map_err(|e| {
+                    format!("Chrome launched but attaching to port {launch_port} still failed: {e}")
+                })?;
+                // Cache under the requested port so subsequent calls reuse our page.
+                if let Some(session) = self.session.lock().await.as_mut() {
+                    session.port = port;
+                }
+                Ok(client)
             }
         }
     }
@@ -249,7 +265,15 @@ impl ComputerControlClient {
     async fn ensure_session(&self, port: u16) -> Result<Arc<CdpClient>, String> {
         let mut guard = self.session.lock().await;
         if let Some(s) = guard.as_ref() {
-            if s.port == port {
+            if s.port == port
+                && tokio::time::timeout(
+                    std::time::Duration::from_secs(2),
+                    s.client
+                        .call("Runtime.evaluate", serde_json::json!({"expression": "1"})),
+                )
+                .await
+                .is_ok_and(|result| result.is_ok())
+            {
                 return Ok(s.client.clone());
             }
         }
@@ -273,12 +297,14 @@ impl ComputerControlClient {
     /// Spawns the binary directly — `open -a` forwards to an already-running
     /// Chrome instance, which silently drops the debugging-port args.
     async fn launch_browser(port: u16) -> Result<(), String> {
-        let profile = std::env::temp_dir().join("karmx-cdp-profile");
-        let chrome_args = format!(
-            "--remote-debugging-port={port} --user-data-dir={} --no-first-run \
-             --no-default-browser-check",
-            profile.display()
-        );
+        let profile = std::env::temp_dir().join(format!("karmx-cdp-profile-{port}"));
+        let chrome_args = [
+            format!("--remote-debugging-port={port}"),
+            "--remote-debugging-address=127.0.0.1".to_string(),
+            format!("--user-data-dir={}", profile.display()),
+            "--no-first-run".to_string(),
+            "--no-default-browser-check".to_string(),
+        ];
         #[cfg(target_os = "macos")]
         let spawned = [
             "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
@@ -287,7 +313,9 @@ impl ComputerControlClient {
         .iter()
         .find_map(|bin| {
             std::process::Command::new(bin)
-                .args(chrome_args.split_whitespace())
+                .args(&chrome_args)
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
                 .spawn()
                 .ok()
         })
@@ -299,7 +327,9 @@ impl ComputerControlClient {
             .iter()
             .find_map(|bin| {
                 std::process::Command::new(bin)
-                    .args(chrome_args.split_whitespace())
+                    .args(&chrome_args)
+                    .stdout(std::process::Stdio::null())
+                    .stderr(std::process::Stdio::null())
                     .spawn()
                     .ok()
             })
@@ -309,10 +339,14 @@ impl ComputerControlClient {
             });
         spawned.map_err(|e| format!("could not start Chrome: {e}"))?;
 
-        let url = format!("http://127.0.0.1:{port}/json/version");
-        for _ in 0..20 {
+        let target = CdpTarget {
+            host: "127.0.0.1".into(),
+            port,
+        };
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        while std::time::Instant::now() < deadline {
             tokio::time::sleep(std::time::Duration::from_millis(250)).await;
-            if reqwest::get(&url).await.is_ok() {
+            if target.discover().await.is_ok() {
                 return Ok(());
             }
         }
@@ -356,6 +390,7 @@ impl McpClientTrait for ComputerControlClient {
         arguments: Option<JsonObject>,
         _cancellation_token: CancellationToken,
     ) -> Result<CallToolResult, Error> {
+        let _operation = self.operation.lock().await;
         let args = serde_json::Value::Object(arguments.unwrap_or_default());
         match name {
             CONTROL_TOOL => Ok(self.run_control(&args).await),
@@ -409,10 +444,7 @@ impl ComputerControlClient {
         };
 
         if let Some(url) = args.get("url").and_then(|v| v.as_str()) {
-            if let Err(e) = client
-                .call("Page.navigate", serde_json::json!({ "url": url }))
-                .await
-            {
+            if let Err(e) = client.ensure_url(url).await {
                 return CallToolResult::error(vec![ContentBlock::text(format!(
                     "navigation to {url} failed: {e}"
                 ))]);
@@ -475,19 +507,11 @@ impl ComputerControlClient {
                 .join("\n")
         );
 
-        if want_shot {
-            match client
-                .screenshot(serde_json::json!({ "format": "png" }))
-                .await
-            {
-                Ok(png) => {
-                    out.push_str(&format!("\n\nscreenshot: {} bytes (png)", png.len()));
-                }
-                Err(e) => out.push_str(&format!("\n\nscreenshot failed: {e}")),
-            }
-        }
-
-        CallToolResult::success(vec![ContentBlock::text(out)])
+        out.push_str(&format!(
+            "\n\nVisible text:\n{}",
+            info.get("text").map(String::as_str).unwrap_or("")
+        ));
+        browser_result(&client, out, want_shot).await
     }
 
     async fn run_page_elements(&self, args: &serde_json::Value) -> CallToolResult {
@@ -507,24 +531,29 @@ impl ComputerControlClient {
             }
         };
         if let Some(url) = args.get("url").and_then(|v| v.as_str()) {
-            if let Err(e) = client
-                .call("Page.navigate", serde_json::json!({ "url": url }))
-                .await
-            {
+            if let Err(e) = client.ensure_url(url).await {
                 return CallToolResult::error(vec![ContentBlock::text(format!(
                     "navigation to {url} failed: {e}"
                 ))]);
             }
         }
+        let page = client.page_info().await.unwrap_or_default();
+        let visible = format!(
+            "page: {}\nurl: {}\n\nVisible text:\n{}\n\n",
+            page.get("title").map(String::as_str).unwrap_or(""),
+            page.get("url").map(String::as_str).unwrap_or(""),
+            page.get("text").map(String::as_str).unwrap_or("")
+        );
         match elements::get_page_elements(&client).await {
             Ok(elements) if elements.is_empty() => {
-                CallToolResult::success(vec![ContentBlock::text(
-                    "no interactive elements found on the page".to_string(),
-                )])
+                CallToolResult::success(vec![ContentBlock::text(format!(
+                    "{visible}no interactive elements found on the page"
+                ))])
             }
-            Ok(elements) => {
-                CallToolResult::success(vec![ContentBlock::text(elements::format_table(&elements))])
-            }
+            Ok(elements) => CallToolResult::success(vec![ContentBlock::text(format!(
+                "{visible}{}",
+                elements::format_table(&elements)
+            ))]),
             Err(e) => CallToolResult::error(vec![ContentBlock::text(format!(
                 "could not read page elements: {e}"
             ))]),
@@ -564,10 +593,7 @@ impl ComputerControlClient {
             }
         };
         if let Some(url) = args.get("url").and_then(|v| v.as_str()) {
-            if let Err(e) = client
-                .call("Page.navigate", serde_json::json!({ "url": url }))
-                .await
-            {
+            if let Err(e) = client.ensure_url(url).await {
                 return CallToolResult::error(vec![ContentBlock::text(format!(
                     "navigation to {url} failed: {e}"
                 ))]);
@@ -593,7 +619,7 @@ impl ComputerControlClient {
             None => instruction.to_string(),
         };
         let Some(element) = elements::resolve_target(&target, &page_elements).await else {
-            return CallToolResult::success(vec![ContentBlock::text(format!(
+            return CallToolResult::error(vec![ContentBlock::text(format!(
                 "could not resolve \"{instruction}\" to a page element — pick an index \
                  or coordinates from the table and call computer_control:\n\n{}",
                 elements::format_table(&page_elements)
@@ -654,21 +680,35 @@ impl ComputerControlClient {
             "{action} element {} ({} \"{}\") at ({x},{y})\n\npage: {title}\nurl: {url}",
             element.index, element.tag, element.text
         );
-        if args
+        out.push_str(&format!(
+            "\n\nVisible text:\n{}",
+            info.get("text").map(String::as_str).unwrap_or("")
+        ));
+        let want_shot = args
             .get("screenshot")
             .and_then(|v| v.as_bool())
-            .unwrap_or(true)
-        {
-            match client
-                .screenshot(serde_json::json!({ "format": "png" }))
-                .await
-            {
-                Ok(png) => out.push_str(&format!("\n\nscreenshot: {} bytes (png)", png.len())),
-                Err(e) => out.push_str(&format!("\n\nscreenshot failed: {e}")),
-            }
-        }
-        CallToolResult::success(vec![ContentBlock::text(out)])
+            .unwrap_or(true);
+        browser_result(&client, out, want_shot).await
     }
+}
+
+async fn browser_result(client: &CdpClient, text: String, screenshot: bool) -> CallToolResult {
+    let mut content = vec![ContentBlock::text(text)];
+    if screenshot {
+        match client
+            .screenshot(serde_json::json!({"format": "png"}))
+            .await
+        {
+            Ok(png) => content.push(ContentBlock::image(
+                base64::engine::general_purpose::STANDARD.encode(png),
+                "image/png",
+            )),
+            Err(error) => content.push(ContentBlock::text(format!(
+                "Screenshot unavailable: {error}"
+            ))),
+        }
+    }
+    CallToolResult::success(content)
 }
 
 #[cfg(test)]

@@ -18,6 +18,65 @@ fn mask_secret(secret: serde_json::Value) -> String {
 }
 
 impl GooseAcpAgent {
+    pub(super) async fn on_enhance_prompt(
+        &self,
+        req: EnhancePromptRequest,
+    ) -> Result<EnhancePromptResponse, agent_client_protocol::Error> {
+        if req.prompt.trim().is_empty() || req.prompt.len() > 100_000 {
+            return Err(agent_client_protocol::Error::invalid_params()
+                .data("Prompt must contain 1–100000 bytes"));
+        }
+        let (provider, model) = if let Some(session_id) = req.session_id.as_deref() {
+            let agent = self.get_session_agent(session_id).await?;
+            let provider = agent.provider().await.internal_err()?;
+            let model = agent
+                .model_config_for_session(session_id)
+                .await
+                .internal_err()?;
+            (provider, model)
+        } else {
+            let config = self.config()?;
+            let provider_name = config.get_goose_provider().internal_err()?;
+            let model_name = config.get_goose_model().internal_err()?;
+            let provider = crate::providers::create(&provider_name, vec![])
+                .await
+                .internal_err()?;
+            let model =
+                crate::model_config::model_config_from_user_config(&provider_name, &model_name)
+                    .internal_err()?;
+            (provider, model)
+        };
+        let context = format!(
+            "Working directory: {}\n{}",
+            req.working_dir,
+            req.recent_context.chars().take(4000).collect::<String>()
+        );
+        let enhancement =
+            crate::agents::platform_extensions::context_engine::enhance::enhance_with_context(
+                &provider,
+                &model,
+                &req.prompt,
+                &context,
+            );
+        let result =
+            match tokio::time::timeout(std::time::Duration::from_secs(45), enhancement).await {
+                Ok(result) => result,
+                Err(_) => return Ok(EnhancePromptResponse {
+                    prompt: req.prompt,
+                    was_enhanced: false,
+                    error_message: Some(
+                        "The model did not respond within 45 seconds. Your draft was preserved."
+                            .into(),
+                    ),
+                }),
+            };
+        Ok(EnhancePromptResponse {
+            prompt: result.prompt,
+            was_enhanced: result.was_enhanced,
+            error_message: result.error_message,
+        })
+    }
+
     pub(super) async fn on_preferences_read(
         &self,
         req: PreferencesReadRequest,
@@ -36,7 +95,7 @@ impl GooseAcpAgent {
                 Ok(value) => value,
                 Err(crate::config::ConfigError::NotFound(_)) => serde_json::Value::Null,
                 Err(e) => {
-                    return Err(agent_client_protocol::Error::internal_error().data(e.to_string()))
+                    return Err(agent_client_protocol::Error::internal_error().data(e.to_string()));
                 }
             };
             values.push(PreferenceValue { key, value });
@@ -88,7 +147,7 @@ impl GooseAcpAgent {
             Ok(value) => value,
             Err(crate::config::ConfigError::NotFound(_)) => serde_json::Value::Null,
             Err(e) => {
-                return Err(agent_client_protocol::Error::internal_error().data(e.to_string()))
+                return Err(agent_client_protocol::Error::internal_error().data(e.to_string()));
             }
         };
         Ok(ConfigReadResponse { value })

@@ -199,7 +199,7 @@ function ToastErrorContent({
       <div className="flex-none flex items-center gap-2">
         {showRecovery && (
           <Button onClick={() => startNewSession(recoverHints, setView, getInitialWorkingDir())}>
-            Ask goose
+            Ask KarmX
           </Button>
         )}
         {hasBoth && (
@@ -220,10 +220,13 @@ function ToastErrorContent({
   );
 }
 
-export function toastError({ title, msg, traceback, recoverHints }: ToastErrorProps) {
+export function toastError(
+  { title, msg, traceback, recoverHints }: ToastErrorProps,
+  toastOptions?: ToastOptions
+) {
   return toast.error(
     <ToastErrorContent title={title} msg={msg} traceback={traceback} recoverHints={recoverHints} />,
-    { ...commonToastOptions, autoClose: traceback ? false : 5000 }
+    { ...commonToastOptions, autoClose: traceback ? false : 5000, ...toastOptions }
   );
 }
 

@@ -3,7 +3,7 @@ import type { MCPServer } from "../types/server";
 export function getGooseInstallLink(server: MCPServer): string {
   if (server.is_builtin) {
     const queryParams = [
-      'cmd=goose',
+      'cmd=karmx',
       'arg=mcp',
       `arg=${encodeURIComponent(server.id)}`,
       `description=${encodeURIComponent(server.id)}`

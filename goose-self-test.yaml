@@ -6,6 +6,8 @@ author:
 
 activities:
   - Initialize test workspace and logging infrastructure
+  - Verify model inactivity errors and bounded browser discovery
+  - Verify concise task completion without unrelated rewrites
   - Test file operations (create, read, update, delete, undo)
   - Validate shell command execution and error handling
   - Validate Azure AI Foundry provider routing and deployment aliases
@@ -25,7 +27,7 @@ parameters:
     input_type: string
     requirement: optional
     default: "all"
-    description: "Which test phases to run: all, basic, extensions, delegation, reasoning, acp-effort, advanced"
+    description: "Which test phases to run: all, basic, extensions, delegation, reasoning, acp-effort, advanced, reliability"
 
   - key: test_depth
     input_type: string
@@ -70,6 +72,10 @@ instructions: |
 
   ## Test Execution Framework
 
+  {% if test_phases == "reliability" %}
+  Run only the focused reliability check in the user prompt. Do not run the general phases,
+  discover extensions, or delegate work. Verify the requested function and write its report.
+  {% else %}
   ### Phase 1: Environment Setup & Basic Tool Validation
   Create a structured test workspace and validate core developer tools:
   - File operations (CRUD + undo)
@@ -111,6 +117,7 @@ instructions: |
   - Phase success: ≥80% tests pass
   - Suite success: All phases complete, critical features work
   - Each test logs: setup → execute → validate → result → cleanup
+  {% endif %}
 
 extensions:
   - type: builtin
@@ -135,10 +142,21 @@ prompt: |
   ## 🚀 INITIALIZATION
   Create test workspace using `mkdir -p {{ workspace_dir }}/archive` for all test artifacts and reports.
 
+  {% if test_phases != "reliability" %}
   Track your progress using the todo extension. Start with:
   - [ ] Initialize test workspace
   - [ ] Set up logging infrastructure
   - [ ] Begin Phase 1 testing
+  {% endif %}
+
+  {% if test_phases == "reliability" %}
+  ## Focused reliability check
+  Work only inside {{ workspace_dir }}. Do not change the app configuration or run unrelated phases.
+  1. Write a small JavaScript mergeIntervals function for [start, end] pairs, merging overlapping and touching intervals without mutating input.
+  2. Add and run checks for empty input, overlapping intervals, touching intervals, and unchanged input. Derive expected values from the requirements, not from implementation output.
+  3. If a check fails, repair the incorrect implementation or expectation and rerun it.
+  4. Once these checks pass, stop editing. Record the exact command and observed outcome in the final report. Do not add extra input formats or optional refactors.
+  {% endif %}
 
   {% if test_phases == "all" or "basic" in test_phases %}
   ## 📝 PHASE 1: Basic Tool Validation
@@ -480,6 +498,10 @@ prompt: |
 
   ## 📊 PHASE 5: Final Report Generation
 
+  {% if test_phases == "reliability" %}
+  Write {{ workspace_dir }}/detailed_report.md with the exact test command, its observed results,
+  and any fixes. Finish with a short pass/fail summary of only the checks actually performed.
+  {% else %}
   Create TWO reports:
 
   ### 1. Detailed Report at {{ workspace_dir }}/detailed_report.md
@@ -533,6 +555,7 @@ prompt: |
   - **Informative**: Key findings at a glance
 
   Always end with this summary so users immediately see the results without digging through files.
+  {% endif %}
 
   {% if cleanup_after == "true" %}
   ## 🧹 CLEANUP

@@ -7,7 +7,7 @@ export const GooseLogo = (props: { className?: string }) => {
     ? 'img/goose-logo-white.png' 
     : 'img/goose-logo-black.png';
   
-  const logoAlt = 'goose logo';
+  const logoAlt = 'karmx logo';
 
   return (
     <img

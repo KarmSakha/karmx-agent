@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="864" viewBox="0 0 1280 864">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a1b1f"/>
+      <stop offset="1" stop-color="#121216"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.28" r="0.7">
+      <stop offset="0" stop-color="#6e56cf" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#6e56cf" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="arrow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#777b84"/>
+      <stop offset="1" stop-color="#8f7cec"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="864" fill="url(#bg)"/>
+  <rect width="1280" height="864" fill="url(#glow)"/>
+  <text x="640" y="120" text-anchor="middle" font-family="Inter, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="52" font-weight="600" fill="#fcfcfd" letter-spacing="1">KarmX</text>
+  <text x="640" y="162" text-anchor="middle" font-family="Inter, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="26" font-weight="400" fill="#777b84">Drag the app to Applications to install</text>
+  <path d="M 596 400 L 664 400 M 644 380 L 664 400 L 644 420" stroke="url(#arrow)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

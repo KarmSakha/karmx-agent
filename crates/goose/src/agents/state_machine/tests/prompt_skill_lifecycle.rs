@@ -3,14 +3,14 @@ use serde_json::json;
 
 use super::calculator_extension::ADD;
 use super::pipeline::{
-    MessageKind::Agent, MessageKind::ToolResponse, MessageKind::User, test_pipeline,
+    test_pipeline, MessageKind::Agent, MessageKind::ToolResponse, MessageKind::User,
 };
 #[cfg(feature = "code-mode")]
 use crate::agents::state_machine::ops_tool_approval::TOOL_EXECUTABLE_KEY;
 #[cfg(feature = "code-mode")]
-use crate::config::GooseMode;
-#[cfg(feature = "code-mode")]
 use crate::config::permission::PermissionLevel;
+#[cfg(feature = "code-mode")]
+use crate::config::GooseMode;
 #[cfg(feature = "code-mode")]
 use crate::conversation::message::MessageContent;
 
@@ -132,13 +132,11 @@ async fn unadvertised_load_skill_is_neither_approved_nor_loaded() -> Result<()> 
                 .is_ok_and(|tool_call| tool_call.name == "load_skill")
         })
         .expect("load_skill request");
-    assert!(
-        request
-            .tool_meta
-            .as_ref()
-            .and_then(|metadata| metadata.get(TOOL_EXECUTABLE_KEY))
-            .is_none()
-    );
+    assert!(request
+        .tool_meta
+        .as_ref()
+        .and_then(|metadata| metadata.get(TOOL_EXECUTABLE_KEY))
+        .is_none());
 
     Ok(())
 }

@@ -120,3 +120,11 @@ cudaforge = { git = "https://github.com/jbg/cudaforge", rev = "e7c1967340e40673d
 # full debug info and stay fully debuggable; release builds are unaffected.
 [profile.dev.package."*"]
 debug = false
+
+# macOS 27 rejects misaligned proc-macro dylibs produced by Rust's debug stripper.
+# Keep build-time library symbols; application binaries are unaffected.
+[profile.dev.build-override]
+strip = "none"
+
+[profile.release.build-override]
+strip = "none"

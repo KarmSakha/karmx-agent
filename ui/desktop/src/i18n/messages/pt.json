@@ -27,7 +27,7 @@
     "defaultMessage": "Delete \"{name}\"? This cannot be undone."
   },
   "appsView.description": {
-    "defaultMessage": "Aplicações dos seus servidores MCP e aplicações criadas pelo próprio goose. Pode pedir-lhe para criar novas aplicações através da interface de chat e elas aparecerão aqui."
+    "defaultMessage": "Aplicações dos seus servidores MCP e aplicações criadas pelo próprio karmx. Pode pedir-lhe para criar novas aplicações através da interface de chat e elas aparecerão aqui."
   },
   "appsView.errorLoading": {
     "defaultMessage": "Erro ao carregar aplicações: {error}"
@@ -45,7 +45,7 @@
     "defaultMessage": "A carregar aplicações..."
   },
   "appsView.noAppsDescription": {
-    "defaultMessage": "Abra um chat e peça ao goose a aplicação que pretende. Ele pode criar uma para si e ela aparecerá aqui. Ou, se alguém tiver partilhado uma aplicação, pode importá-la com o botão acima."
+    "defaultMessage": "Abra um chat e peça ao karmx a aplicação que pretende. Ele pode criar uma para si e ela aparecerá aqui. Ou, se alguém tiver partilhado uma aplicação, pode importá-la com o botão acima."
   },
   "appsView.noAppsTitle": {
     "defaultMessage": "Nenhuma aplicação disponível"
@@ -84,7 +84,7 @@
     "defaultMessage": "Credencial eliminada"
   },
   "authSettings.description": {
-    "defaultMessage": "Faça a gestão das credenciais de fornecedores armazenadas localmente pelo goose."
+    "defaultMessage": "Faça a gestão das credenciais de fornecedores armazenadas localmente pelo karmx."
   },
   "authSettings.empty": {
     "defaultMessage": "Não foram encontradas credenciais de fornecedores armazenadas localmente."
@@ -171,10 +171,10 @@
     "defaultMessage": "Iniciar"
   },
   "chat.notification.taskComplete.body": {
-    "defaultMessage": "Clique aqui para colocar o Goose novamente em foco."
+    "defaultMessage": "Clique aqui para colocar o KarmX novamente em foco."
   },
   "chat.notification.taskComplete.title": {
-    "defaultMessage": "O Goose concluiu a tarefa."
+    "defaultMessage": "O KarmX concluiu a tarefa."
   },
   "chatInput.contextWindow": {
     "defaultMessage": "Janela de contexto"
@@ -225,13 +225,13 @@
     "defaultMessage": "A aguardar que as imagens sejam guardadas..."
   },
   "chatSettings.modeDescription": {
-    "defaultMessage": "Escolha o modo predefinido que o Goose utiliza para novas sessões. As sessões existentes mantêm o seu modo atual."
+    "defaultMessage": "Escolha o modo predefinido que o KarmX utiliza para novas sessões. As sessões existentes mantêm o seu modo atual."
   },
   "chatSettings.modeTitle": {
     "defaultMessage": "Modo predefinido"
   },
   "chatSettings.responseStylesDescription": {
-    "defaultMessage": "Escolha como o Goose deve formatar e estilizar as suas respostas"
+    "defaultMessage": "Escolha como o KarmX deve formatar e estilizar as suas respostas"
   },
   "chatSettings.responseStylesTitle": {
     "defaultMessage": "Estilos de resposta"
@@ -252,10 +252,10 @@
     "defaultMessage": "Editor de configuração"
   },
   "configSettings.description": {
-    "defaultMessage": "Edite as definições de configuração do seu goose"
+    "defaultMessage": "Edite as definições de configuração do seu karmx"
   },
   "configSettings.descriptionWithProvider": {
-    "defaultMessage": "Edite as definições de configuração do seu goose (definições atuais de {provider})"
+    "defaultMessage": "Edite as definições de configuração do seu karmx (definições atuais de {provider})"
   },
   "configSettings.done": {
     "defaultMessage": "Concluído"
@@ -327,7 +327,7 @@
     "defaultMessage": "Máximo de turnos"
   },
   "conversationLimitsDropdown.maxTurnsDescription": {
-    "defaultMessage": "Número máximo de turnos do agente antes de o Goose solicitar a intervenção do utilizador"
+    "defaultMessage": "Número máximo de turnos do agente antes de o KarmX solicitar a intervenção do utilizador"
   },
   "costTracker.costUnavailable": {
     "defaultMessage": "Dados de custo não disponíveis para {model} ({inputTokens} tokens de entrada, {outputTokens} tokens de saída)"
@@ -783,7 +783,7 @@
     "defaultMessage": "Editar definições de {name}"
   },
   "defaultCardButtons.getStarted": {
-    "defaultMessage": "Comece a usar o goose!"
+    "defaultMessage": "Comece a usar o karmx!"
   },
   "defaultProviderSetupForm.apiHostLabel": {
     "defaultMessage": "Host da API"
@@ -924,7 +924,7 @@
     "defaultMessage": "Enter path"
   },
   "dirSwitcher.enterPathPlaceholder": {
-    "defaultMessage": "Enter an absolute path (e.g. /home/goose/workspace)"
+    "defaultMessage": "Enter an absolute path (e.g. /home/karmx/workspace)"
   },
   "dirSwitcher.enterPathInvalid": {
     "defaultMessage": "Working directory must be an absolute path"
@@ -963,7 +963,7 @@
     "defaultMessage": "A solicitação de informações foi cancelada."
   },
   "elicitationRequest.defaultMessage": {
-    "defaultMessage": "O Goose precisa de algumas informações suas."
+    "defaultMessage": "O KarmX precisa de algumas informações suas."
   },
   "elicitationRequest.expired": {
     "defaultMessage": "Esta solicitação expirou. A extensão precisará perguntar novamente."
@@ -1008,7 +1008,7 @@
     "defaultMessage": "Ocorreu um erro."
   },
   "errorBoundary.errorWithVersion": {
-    "defaultMessage": "Ocorreu um erro no Goose v{version}."
+    "defaultMessage": "Ocorreu um erro no KarmX v{version}."
   },
   "errorBoundary.heading": {
     "defaultMessage": "Honk!"
@@ -1191,7 +1191,7 @@
     "defaultMessage": "As extensões ativadas aqui são usadas como padrão para novos chats. Você também pode ativar ou desativar extensões durante o chat."
   },
   "extensionsView.description": {
-    "defaultMessage": "Essas extensões usam o Model Context Protocol (MCP). Elas podem expandir as capacidades do Goose usando três componentes principais: Prompts, Recursos e Ferramentas. {searchShortcut} para pesquisar."
+    "defaultMessage": "Essas extensões usam o Model Context Protocol (MCP). Elas podem expandir as capacidades do KarmX usando três componentes principais: Prompts, Recursos e Ferramentas. {searchShortcut} para pesquisar."
   },
   "extensionsView.heading": {
     "defaultMessage": "Extensões"
@@ -1209,19 +1209,19 @@
     "defaultMessage": "AA:BB:CC:... ou sha256/base64"
   },
   "externalBackendSection.description": {
-    "defaultMessage": "Por padrão, o goose inicia um servidor para você; use isto para conectar-se a um servidor goose externo"
+    "defaultMessage": "Por padrão, o karmx inicia um servidor para você; use isto para conectar-se a um servidor karmx externo"
   },
   "externalBackendSection.fingerprintRequiresHttps": {
     "defaultMessage": "Certificate fingerprint requires an https URL"
   },
   "externalBackendSection.restartNote": {
-    "defaultMessage": "As alterações exigem reiniciar o Goose para entrar em vigor. As novas janelas de chat se conectarão ao servidor externo."
+    "defaultMessage": "As alterações exigem reiniciar o KarmX para entrar em vigor. As novas janelas de chat se conectarão ao servidor externo."
   },
   "externalBackendSection.secretKey": {
     "defaultMessage": "Chave secreta"
   },
   "externalBackendSection.secretKeyHelp": {
-    "defaultMessage": "A chave secreta configurada no servidor Goose (GOOSE_SERVER__SECRET_KEY)"
+    "defaultMessage": "A chave secreta configurada no servidor KarmX (GOOSE_SERVER__SECRET_KEY)"
   },
   "externalBackendSection.secretKeyPlaceholder": {
     "defaultMessage": "Insira a chave secreta do servidor"
@@ -1230,10 +1230,10 @@
     "defaultMessage": "URL do servidor"
   },
   "externalBackendSection.serverUrlHelp": {
-    "defaultMessage": "Enter the HTTP(S) base URL. Goose checks /status and connects to /acp under this base."
+    "defaultMessage": "Enter the HTTP(S) base URL. KarmX checks /status and connects to /acp under this base."
   },
   "externalBackendSection.title": {
-    "defaultMessage": "Servidor Goose"
+    "defaultMessage": "Servidor KarmX"
   },
   "externalBackendSection.urlBaseError": {
     "defaultMessage": "URL must be the backend base URL before /acp, without query parameters or fragments"
@@ -1248,7 +1248,7 @@
     "defaultMessage": "Usar servidor externo"
   },
   "externalBackendSection.useExternalServerDescription": {
-    "defaultMessage": "Conecte-se a um servidor goose em execução em outro lugar (requer reinicialização do app)"
+    "defaultMessage": "Conecte-se a um servidor karmx em execução em outro lugar (requer reinicialização do app)"
   },
   "externalBackendSection.workingDir": {
     "defaultMessage": "Diretório de trabalho remoto (opcional)"
@@ -1257,7 +1257,7 @@
     "defaultMessage": "Caminho absoluto no backend externo. Deixe em branco para enviar o diretório de trabalho local."
   },
   "externalBackendSection.workingDirPlaceholder": {
-    "defaultMessage": "/home/goose/workspace"
+    "defaultMessage": "/home/karmx/workspace"
   },
   "goosehintsModal.close": {
     "defaultMessage": "Fechar"
@@ -1266,7 +1266,7 @@
     "defaultMessage": "Desenvolvedor"
   },
   "goosehintsModal.dialogDescription": {
-    "defaultMessage": "Forneça contexto adicional sobre seu projeto para melhorar a comunicação com o Goose"
+    "defaultMessage": "Forneça contexto adicional sobre seu projeto para melhorar a comunicação com o KarmX"
   },
   "goosehintsModal.dialogTitle": {
     "defaultMessage": "Configurar dicas do projeto (.goosehints)"
@@ -1287,7 +1287,7 @@
     "defaultMessage": "Arquivo .goosehints encontrado em: {filePath}"
   },
   "goosehintsModal.helpText1": {
-    "defaultMessage": ".goosehints é um arquivo de texto usado para fornecer contexto adicional sobre seu projeto e melhorar a comunicação com o Goose."
+    "defaultMessage": ".goosehints é um arquivo de texto usado para fornecer contexto adicional sobre seu projeto e melhorar a comunicação com o KarmX."
   },
   "goosehintsModal.helpText2": {
     "defaultMessage": "Verifique se a extensão {bold} está ativada na página de extensões. Esta extensão é necessária para usar o .goosehints. Você precisará reiniciar sua sessão para que as atualizações do .goosehints entrem em vigor."
@@ -1314,13 +1314,13 @@
     "defaultMessage": "Configurar"
   },
   "goosehintsSection.description": {
-    "defaultMessage": "Configure o arquivo .goosehints do seu projeto para fornecer contexto adicional ao Goose"
+    "defaultMessage": "Configure o arquivo .goosehints do seu projeto para fornecer contexto adicional ao KarmX"
   },
   "goosehintsSection.title": {
     "defaultMessage": "Dicas do projeto (.goosehints)"
   },
   "groupedExtensionLoadingToast.askGoose": {
-    "defaultMessage": "Pergunte ao goose"
+    "defaultMessage": "Pergunte ao karmx"
   },
   "groupedExtensionLoadingToast.collapseDetails": {
     "defaultMessage": "Recolher detalhes"
@@ -1440,7 +1440,7 @@
     "defaultMessage": "Hugging Face"
   },
   "imagePreview.altText": {
-    "defaultMessage": "imagem do goose"
+    "defaultMessage": "imagem do karmx"
   },
   "imagePreview.clickToCollapse": {
     "defaultMessage": "Clique para recolher"
@@ -1488,7 +1488,7 @@
     "defaultMessage": "Arquivo da receita"
   },
   "importRecipeForm.reviewWarning": {
-    "defaultMessage": "Certifique-se de revisar o conteúdo dos arquivos de receita antes de adicioná-los à sua interface do goose."
+    "defaultMessage": "Certifique-se de revisar o conteúdo dos arquivos de receita antes de adicioná-los à sua interface do karmx."
   },
   "importRecipeForm.schemaDescription": {
     "defaultMessage": "Seu arquivo YAML ou JSON deve seguir esta estrutura. Os campos obrigatórios são: title, description e instructions ou prompt."
@@ -1599,13 +1599,13 @@
     "defaultMessage": "Atalhos do Aplicativo"
   },
   "keyboardShortcuts.categoryApplicationDescription": {
-    "defaultMessage": "Estes atalhos funcionam quando o Goose é o aplicativo ativo"
+    "defaultMessage": "Estes atalhos funcionam quando o KarmX é o aplicativo ativo"
   },
   "keyboardShortcuts.categoryGlobal": {
     "defaultMessage": "Atalhos Globais"
   },
   "keyboardShortcuts.categoryGlobalDescription": {
-    "defaultMessage": "Estes atalhos funcionam em todo o sistema, mesmo quando o Goose não está em foco"
+    "defaultMessage": "Estes atalhos funcionam em todo o sistema, mesmo quando o KarmX não está em foco"
   },
   "keyboardShortcuts.categorySearch": {
     "defaultMessage": "Atalhos de Busca"
@@ -1647,10 +1647,10 @@
     "defaultMessage": "Buscar Anterior"
   },
   "keyboardShortcuts.focusWindowDescription": {
-    "defaultMessage": "Trazer a janela do Goose para frente de qualquer lugar"
+    "defaultMessage": "Trazer a janela do KarmX para frente de qualquer lugar"
   },
   "keyboardShortcuts.focusWindowLabel": {
-    "defaultMessage": "Focar a Janela do Goose"
+    "defaultMessage": "Focar a Janela do KarmX"
   },
   "keyboardShortcuts.loading": {
     "defaultMessage": "Carregando..."
@@ -1662,7 +1662,7 @@
     "defaultMessage": "Nova Conversa"
   },
   "keyboardShortcuts.newChatWindowDescription": {
-    "defaultMessage": "Abrir uma nova janela do Goose"
+    "defaultMessage": "Abrir uma nova janela do KarmX"
   },
   "keyboardShortcuts.newChatWindowLabel": {
     "defaultMessage": "Nova Janela de Conversa"
@@ -1701,7 +1701,7 @@
     "defaultMessage": "Redefinir para os Padrões"
   },
   "keyboardShortcuts.restartDescription": {
-    "defaultMessage": "Alterações nos atalhos do aplicativo (como Nova Conversa, Configurações, etc.) exigem reiniciar o Goose para entrar em vigor. Os atalhos globais (Focar a Janela, Iniciador Rápido) funcionam imediatamente."
+    "defaultMessage": "Alterações nos atalhos do aplicativo (como Nova Conversa, Configurações, etc.) exigem reiniciar o KarmX para entrar em vigor. Os atalhos globais (Focar a Janela, Iniciador Rápido) funcionam imediatamente."
   },
   "keyboardShortcuts.restartRequired": {
     "defaultMessage": "Reinício Necessário"
@@ -1731,13 +1731,13 @@
     "defaultMessage": "Alternar Navegação"
   },
   "launcher.placeholder": {
-    "defaultMessage": "Pergunte qualquer coisa ao goose..."
+    "defaultMessage": "Pergunte qualquer coisa ao karmx..."
   },
   "loadingGoose.compacting": {
-    "defaultMessage": "o goose está compactando a conversa..."
+    "defaultMessage": "o karmx está compactando a conversa..."
   },
   "loadingGoose.idle": {
-    "defaultMessage": "o goose está trabalhando nisso…"
+    "defaultMessage": "o karmx está trabalhando nisso…"
   },
   "loadingGoose.loadingConversation": {
     "defaultMessage": "carregando conversa..."
@@ -1746,13 +1746,13 @@
     "defaultMessage": "reiniciando sessão..."
   },
   "loadingGoose.streaming": {
-    "defaultMessage": "o goose está trabalhando nisso…"
+    "defaultMessage": "o karmx está trabalhando nisso…"
   },
   "loadingGoose.thinking": {
-    "defaultMessage": "o goose está pensando…"
+    "defaultMessage": "o karmx está pensando…"
   },
   "loadingGoose.waiting": {
-    "defaultMessage": "o goose está aguardando…"
+    "defaultMessage": "o karmx está aguardando…"
   },
   "localInferenceSettings.deleteConfirm": {
     "defaultMessage": "Excluir este modelo? Você poderá baixá-lo novamente mais tarde."
@@ -2388,7 +2388,7 @@
     "defaultMessage": "O servidor pode estar a iniciar ou temporariamente indisponível."
   },
   "onboardingGuard.checkProviderErrorTitle": {
-    "defaultMessage": "Não foi possível ligar ao servidor Goose"
+    "defaultMessage": "Não foi possível ligar ao servidor KarmX"
   },
   "onboardingGuard.retry": {
     "defaultMessage": "Tentar novamente"
@@ -2397,10 +2397,10 @@
     "defaultMessage": "O seu agente de IA local. Ligue um fornecedor de modelos de IA para começar."
   },
   "onboardingGuard.welcomeTitle": {
-    "defaultMessage": "Bem-vindo ao goose"
+    "defaultMessage": "Bem-vindo ao karmx"
   },
   "onboardingSuccess.allSet": {
-    "defaultMessage": "Está tudo pronto para começar a usar o goose."
+    "defaultMessage": "Está tudo pronto para começar a usar o karmx."
   },
   "onboardingSuccess.connectedTo": {
     "defaultMessage": "Ligado a {providerName}"
@@ -2415,7 +2415,7 @@
     "defaultMessage": "Modelo local pronto"
   },
   "onboardingSuccess.privacyDescription": {
-    "defaultMessage": "Os dados de utilização anónimos ajudam a melhorar o goose. Nunca recolhemos as suas conversas, código ou dados pessoais."
+    "defaultMessage": "Os dados de utilização anónimos ajudam a melhorar o karmx. Nunca recolhemos as suas conversas, código ou dados pessoais."
   },
   "onboardingSuccess.privacyTitle": {
     "defaultMessage": "Privacidade"
@@ -2583,10 +2583,10 @@
     "defaultMessage": "Métricas da sessão (duração, número de interações, utilização de tokens)"
   },
   "privacyInfoModal.collectVersion": {
-    "defaultMessage": "Versão do goose e método de instalação"
+    "defaultMessage": "Versão do karmx e método de instalação"
   },
   "privacyInfoModal.description": {
-    "defaultMessage": "Os dados de utilização anónimos ajudam-nos a compreender como o goose é utilizado e a identificar áreas a melhorar."
+    "defaultMessage": "Os dados de utilização anónimos ajudam-nos a compreender como o karmx é utilizado e a identificar áreas a melhorar."
   },
   "privacyInfoModal.neverCollect": {
     "defaultMessage": "Nunca recolhemos as suas conversas, código, argumentos de ferramentas, mensagens de erro ou quaisquer dados pessoais. Pode alterar esta definição a qualquer momento em Definições."
@@ -2655,7 +2655,7 @@
     "defaultMessage": "Falha ao guardar o prompt"
   },
   "promptsSettings.promptEditingDescription": {
-    "defaultMessage": "Personalize os prompts que definem o comportamento do goose em diferentes contextos. Estes prompts usam a sintaxe de templating Jinja2. Tenha cuidado ao modificar as variáveis de template, pois alterações incorretas podem quebrar a funcionalidade. Partilhe quaisquer melhorias com a comunidade."
+    "defaultMessage": "Personalize os prompts que definem o comportamento do karmx em diferentes contextos. Estes prompts usam a sintaxe de templating Jinja2. Tenha cuidado ao modificar as variáveis de template, pois alterações incorretas podem quebrar a funcionalidade. Partilhe quaisquer melhorias com a comunidade."
   },
   "promptsSettings.promptEditingTitle": {
     "defaultMessage": "Edição de prompts"
@@ -2751,7 +2751,7 @@
     "defaultMessage": "A iniciar sessão..."
   },
   "providerConfigurationModal.addApiKeyDescription": {
-    "defaultMessage": "Adicione a(s) sua(s) chave(s) de API deste fornecedor para integrar no goose"
+    "defaultMessage": "Adicione a(s) sua(s) chave(s) de API deste fornecedor para integrar no karmx"
   },
   "providerConfigurationModal.browserWindowHint": {
     "defaultMessage": "Será aberta uma janela do navegador para concluir o início de sessão."
@@ -2787,7 +2787,7 @@
     "defaultMessage": "Erro"
   },
   "providerConfigurationModal.externalSetupIntro": {
-    "defaultMessage": "Este fornecedor é configurado fora do goose. Siga estes passos:"
+    "defaultMessage": "Este fornecedor é configurado fora do karmx. Siga estes passos:"
   },
   "providerConfigurationModal.goBack": {
     "defaultMessage": "Voltar"
@@ -2871,7 +2871,7 @@
     "defaultMessage": "A carregar fornecedores..."
   },
   "providerSettings.onboardingDescription": {
-    "defaultMessage": "Selecione um fornecedor de modelos de IA para começar a usar o goose. Terá de usar chaves de API geradas por cada fornecedor, que serão encriptadas e armazenadas localmente. Pode alterar o seu fornecedor a qualquer momento nas definições."
+    "defaultMessage": "Selecione um fornecedor de modelos de IA para começar a usar o karmx. Terá de usar chaves de API geradas por cada fornecedor, que serão encriptadas e armazenadas localmente. Pode alterar o seu fornecedor a qualquer momento nas definições."
   },
   "providerSettings.otherProviders": {
     "defaultMessage": "Outros fornecedores"
@@ -3804,7 +3804,7 @@
     "defaultMessage": "Histórico de conversas"
   },
   "sessions.chatHistoryDesc": {
-    "defaultMessage": "Veja e pesquise as suas conversas anteriores com o Goose. {shortcut} para pesquisar."
+    "defaultMessage": "Veja e pesquise as suas conversas anteriores com o KarmX. {shortcut} para pesquisar."
   },
   "sessions.close": {
     "defaultMessage": "Fechar"
@@ -3840,7 +3840,7 @@
     "defaultMessage": "Importar ligação"
   },
   "sessions.importNostr.description": {
-    "defaultMessage": "Cole uma ligação de partilha Nostr do Goose para obter, desencriptar e importar a sessão."
+    "defaultMessage": "Cole uma ligação de partilha Nostr do KarmX para obter, desencriptar e importar a sessão."
   },
   "sessions.importNostr.placeholder": {
     "defaultMessage": "goose://sessions/nostr?nevent=...&key=..."
@@ -3924,7 +3924,7 @@
     "defaultMessage": "Descrição da sessão atualizada com êxito"
   },
   "settings.appearance.description": {
-    "defaultMessage": "Configure como o goose aparece no seu sistema"
+    "defaultMessage": "Configure como o karmx aparece no seu sistema"
   },
   "settings.appearance.title": {
     "defaultMessage": "Aparência"
@@ -3939,13 +3939,13 @@
     "defaultMessage": "Acompanhamento de Custos"
   },
   "settings.dockIcon.description": {
-    "defaultMessage": "Mostrar o goose na dock"
+    "defaultMessage": "Mostrar o karmx na dock"
   },
   "settings.dockIcon.title": {
     "defaultMessage": "Ícone da dock"
   },
   "settings.help.description": {
-    "defaultMessage": "Ajude-nos a melhorar o goose comunicando problemas ou solicitando novas funcionalidades"
+    "defaultMessage": "Ajude-nos a melhorar o karmx comunicando problemas ou solicitando novas funcionalidades"
   },
   "settings.help.reportBug": {
     "defaultMessage": "Comunicar um Erro"
@@ -3957,7 +3957,7 @@
     "defaultMessage": "Ajuda e comentários"
   },
   "settings.language.description": {
-    "defaultMessage": "Escolha o idioma de exibição do goose"
+    "defaultMessage": "Escolha o idioma de exibição do karmx"
   },
   "settings.language.english": {
     "defaultMessage": "English"
@@ -4014,7 +4014,7 @@
     "defaultMessage": "Chinês (tradicional)"
   },
   "settings.menuBarIcon.description": {
-    "defaultMessage": "Mostrar o goose na barra de menus"
+    "defaultMessage": "Mostrar o karmx na barra de menus"
   },
   "settings.menuBarIcon.title": {
     "defaultMessage": "Ícone da barra de menus"
@@ -4035,7 +4035,7 @@
     "defaultMessage": "Clique em Notificações"
   },
   "settings.notifications.modal.macStep3": {
-    "defaultMessage": "Encontre e selecione o goose na lista de aplicações"
+    "defaultMessage": "Encontre e selecione o karmx na lista de aplicações"
   },
   "settings.notifications.modal.macStep4": {
     "defaultMessage": "Ative as notificações e ajuste as definições conforme pretendido"
@@ -4053,7 +4053,7 @@
     "defaultMessage": "Vá para Sistema > Notificações"
   },
   "settings.notifications.modal.winStep3": {
-    "defaultMessage": "Encontre e selecione o goose na lista de aplicações"
+    "defaultMessage": "Encontre e selecione o karmx na lista de aplicações"
   },
   "settings.notifications.modal.winStep4": {
     "defaultMessage": "Ative as notificações e ajuste as definições conforme pretendido"
@@ -4062,7 +4062,7 @@
     "defaultMessage": "Abrir Definições"
   },
   "settings.notifications.task.description": {
-    "defaultMessage": "Notificar quando o Goose concluir uma tarefa enquanto a janela está em segundo plano"
+    "defaultMessage": "Notificar quando o KarmX concluir uma tarefa enquanto a janela está em segundo plano"
   },
   "settings.notifications.task.title": {
     "defaultMessage": "Notificações de conclusão de tarefas"
@@ -4071,19 +4071,19 @@
     "defaultMessage": "Notificações"
   },
   "settings.preventSleep.description": {
-    "defaultMessage": "Manter o computador ativo enquanto o goose executa uma tarefa (o ecrã ainda pode ser bloqueado)"
+    "defaultMessage": "Manter o computador ativo enquanto o karmx executa uma tarefa (o ecrã ainda pode ser bloqueado)"
   },
   "settings.preventSleep.title": {
     "defaultMessage": "Impedir Suspensão"
   },
   "settings.theme.description": {
-    "defaultMessage": "Personalize a aparência e o comportamento do goose"
+    "defaultMessage": "Personalize a aparência e o comportamento do karmx"
   },
   "settings.theme.title": {
     "defaultMessage": "Tema"
   },
   "settings.updates.description": {
-    "defaultMessage": "Verifique e instale atualizações para manter o goose a funcionar no seu melhor"
+    "defaultMessage": "Verifique e instale atualizações para manter o karmx a funcionar no seu melhor"
   },
   "settings.updates.title": {
     "defaultMessage": "Atualizações"
@@ -4158,7 +4158,7 @@
     "defaultMessage": "Pesquisar competências..."
   },
   "skillsView.skillsDescription": {
-    "defaultMessage": "Veja as competências instaladas que ampliam as capacidades do Goose. {shortcut} para pesquisar."
+    "defaultMessage": "Veja as competências instaladas que ampliam as capacidades do KarmX. {shortcut} para pesquisar."
   },
   "skillsView.skillsTitle": {
     "defaultMessage": "Competências"
@@ -4401,10 +4401,10 @@
     "defaultMessage": "Utilizar outro fornecedor"
   },
   "telemetryConsentPrompt.description": {
-    "defaultMessage": "Gostaria de partilhar dados de utilização anónimos para ajudar a melhorar o goose? Nunca recolhemos as suas conversas, código ou dados pessoais."
+    "defaultMessage": "Gostaria de partilhar dados de utilização anónimos para ajudar a melhorar o karmx? Nunca recolhemos as suas conversas, código ou dados pessoais."
   },
   "telemetryConsentPrompt.heading": {
-    "defaultMessage": "Ajude a melhorar o goose"
+    "defaultMessage": "Ajude a melhorar o karmx"
   },
   "telemetryConsentPrompt.learnMore": {
     "defaultMessage": "Saber mais"
@@ -4431,7 +4431,7 @@
     "defaultMessage": "Privacidade"
   },
   "telemetrySettings.toggleDescription": {
-    "defaultMessage": "Ajude a melhorar o goose partilhando estatísticas de utilização anónimas."
+    "defaultMessage": "Ajude a melhorar o karmx partilhando estatísticas de utilização anónimas."
   },
   "telemetrySettings.toggleLabel": {
     "defaultMessage": "Dados de utilização anónimos"
@@ -4512,10 +4512,10 @@
     "defaultMessage": "Permitir {toolName}?"
   },
   "toolConfirmation.gooseWouldLikeToCallWithName": {
-    "defaultMessage": "O Goose gostaria de invocar {toolName}. Permitir?"
+    "defaultMessage": "O KarmX gostaria de invocar {toolName}. Permitir?"
   },
   "updateSection.autoDownload": {
-    "defaultMessage": "O Goose transferirá a atualização em segundo plano e instalá-la-á da próxima vez que sair ou reiniciar."
+    "defaultMessage": "O KarmX transferirá a atualização em segundo plano e instalá-la-á da próxima vez que sair ou reiniciar."
   },
   "updateSection.autoDownloadDisabledByEnv": {
     "defaultMessage": "As transferências automáticas estão desativadas através da variável de ambiente GOOSE_DISABLE_AUTO_DOWNLOAD."
@@ -4536,7 +4536,7 @@
     "defaultMessage": "Desativar as transferências automáticas de atualizações"
   },
   "updateSection.disableAutoDownloadDesc": {
-    "defaultMessage": "Quando ativado, o Goose notificá-lo-á de novas versões, mas não as transferirá automaticamente."
+    "defaultMessage": "Quando ativado, o KarmX notificá-lo-á de novas versões, mas não as transferirá automaticamente."
   },
   "updateSection.downloadNow": {
     "defaultMessage": "Transferir Agora"

@@ -1200,7 +1200,13 @@ impl GooseAcpAgent {
         use goose_providers::model::ModelConfig;
 
         let config_info =
-            crate::providers::canonical_cost::configured_model_info(&req.provider, &req.model);
+            crate::providers::canonical_cost::declared_model_info(&req.provider, &req.model);
+        // Config-declared reasoning flag (custom providers aren't in the
+        // canonical registry, so the name check alone would report false).
+        let declared_reasoning = config_info
+            .as_ref()
+            .map(|info| info.reasoning)
+            .unwrap_or_default();
         // Config-declared prices carry the config's currency; without them the
         // response reports registry rates, which are USD.
         let currency = crate::providers::canonical_cost::display_currency(config_info.as_ref());
@@ -1254,7 +1260,23 @@ impl GooseAcpAgent {
                         })
                 });
 
-        Ok(CanonicalModelInfoResponse { model_info })
+        // The desktop must display the same effective limit as the agent, including
+        // explicit overrides and custom endpoints without pricing metadata.
+        let context_limit =
+            crate::context_limit::get_local_context_limit(&req.provider, &req.model).map_err(
+                |error| agent_client_protocol::Error::internal_error().data(error.to_string()),
+            )?;
+        let mut model_info = model_info.unwrap_or_else(|| CanonicalModelInfoDto {
+            provider: req.provider.clone(),
+            model: req.model.clone(),
+            reasoning: declared_reasoning || ModelConfig::new(&req.model).is_reasoning_model(),
+            currency,
+            ..Default::default()
+        });
+        model_info.context_limit = context_limit;
+        Ok(CanonicalModelInfoResponse {
+            model_info: Some(model_info),
+        })
     }
 }
 

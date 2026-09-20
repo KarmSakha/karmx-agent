@@ -1,0 +1,34 @@
+
+running 29 tests
+test agents::platform_extensions::context_engine::budget::tests::budget_halves_never_exceed_total ... ok
+test agents::platform_extensions::context_engine::budget::tests::combine_marks_truncation_and_distinguishes_empty ... ok
+test agents::platform_extensions::context_engine::budget::tests::combine_records_both_stages ... ok
+test agents::platform_extensions::context_engine::budget::tests::default_budget_matches_capture ... ok
+test agents::platform_extensions::context_engine::budget::tests::truncate_reports_flag ... ok
+test agents::platform_extensions::context_engine::budget::tests::truncate_respects_multibyte_boundary ... ok
+test agents::platform_extensions::context_engine::enhance::tests::builds_request_with_prompt_appended ... ok
+test agents::platform_extensions::context_engine::enhance::tests::classify_maps_transport_failures ... ok
+test agents::platform_extensions::context_engine::enhance::tests::instruction_requests_the_tag_format ... ok
+test agents::platform_extensions::context_engine::enhance::tests::parses_long_tag_variant ... ok
+test agents::platform_extensions::context_engine::enhance::tests::parses_short_tag ... ok
+test agents::platform_extensions::context_engine::enhance::tests::rejects_empty_tag_body ... ok
+test agents::platform_extensions::context_engine::enhance::tests::returns_none_when_absent ... ok
+test agents::platform_extensions::context_engine::rerank::tests::chunks_carry_timestamps_for_the_recency_tie_break ... ok
+test agents::platform_extensions::context_engine::rerank::tests::chunks_group_and_keep_all_content ... ok
+test agents::platform_extensions::context_engine::rerank::tests::empty_query_does_not_rerank ... ok
+test agents::platform_extensions::context_engine::rerank::tests::extracts_array_from_noisy_response ... ok
+test agents::platform_extensions::context_engine::rerank::tests::no_array_returns_none ... ok
+test agents::platform_extensions::context_engine::rerank::tests::oversized_single_message_kept_whole ... ok
+test agents::platform_extensions::context_engine::rerank::tests::rejects_non_integer_entries ... ok
+test agents::platform_extensions::context_engine::rerank::tests::request_substitutes_both_placeholders ... ok
+test agents::platform_extensions::context_engine::tests::budget_default_matches_capture ... ok
+test agents::platform_extensions::context_engine::tests::exposes_three_tools ... ok
+test agents::platform_extensions::context_engine::tests::tool_schemas_declare_required_args ... ok
+test agents::platform_extensions::context_engine::workspace::tests::empty_query_returns_nothing ... ok
+test agents::platform_extensions::context_engine::workspace::tests::gitignored_paths_are_skipped ... ok
+test agents::platform_extensions::context_engine::workspace::tests::indexes_and_finds_terms ... ok
+test agents::platform_extensions::context_engine::workspace::tests::missing_directory_is_an_error_not_empty_index ... ok
+test agents::platform_extensions::context_engine::workspace::tests::too_many_files_is_rejected ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 2345 filtered out; finished in 0.01s
+

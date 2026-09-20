@@ -1,0 +1,90 @@
+[
+  {
+    "case": "javascript_feature",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 51.6,
+    "verification_error": null
+  },
+  {
+    "case": "python_bug",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 25.4,
+    "verification_error": null
+  },
+  {
+    "case": "file_unicode",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 18.7,
+    "verification_error": null
+  },
+  {
+    "case": "frontend",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 54.2,
+    "verification_error": null
+  },
+  {
+    "case": "research",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 54.4,
+    "verification_error": null
+  },
+  {
+    "case": "sql",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 24.8,
+    "verification_error": null
+  },
+  {
+    "case": "csv_analysis",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 20.3,
+    "verification_error": null
+  },
+  {
+    "case": "multi_file_refactor",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 21.4,
+    "verification_error": null
+  },
+  {
+    "case": "shell_recovery",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 17.8,
+    "verification_error": null
+  },
+  {
+    "case": "documentation",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 29.4,
+    "verification_error": null
+  },
+  {
+    "case": "state_machine",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 22.0,
+    "verification_error": null
+  }
+]

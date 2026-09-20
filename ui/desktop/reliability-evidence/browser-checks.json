@@ -1,0 +1,47 @@
+{
+  "lucy_32k_frontend": {
+    "safe_text": true,
+    "create": true,
+    "complete": true,
+    "reload_persistence": true,
+    "delete": true,
+    "console_errors": 0
+  },
+  "bonsai_64k_frontend": {
+    "safe_text": true,
+    "create": true,
+    "complete": true,
+    "reload_persistence": true,
+    "delete": true,
+    "theme": true,
+    "console_errors": 0
+  },
+  "installed_desktop_browser": {
+    "model": "lucy",
+    "session": "20260919_39",
+    "heading": "Example Domain",
+    "link": "https://iana.org/domains/example",
+    "page_elements_success": true,
+    "context_display": "16k / 33k"
+  },
+  "installed_default_browser_before_batch_tuning": {
+    "model": "coder",
+    "session": "20260919_65",
+    "passed": true,
+    "heading": "Example Domain",
+    "link": "https://iana.org/domains/example",
+    "cold_start_approx_seconds": 120,
+    "context_display": "16k / 66k"
+  },
+  "installed_default_browser_after_batch_tuning": {
+    "model": "coder",
+    "session": "20260919_72",
+    "passed": true,
+    "prompt_tokens": 15902,
+    "prompt_eval_seconds": 16.67244,
+    "first_generation_seconds": 2.33822,
+    "heading": "Example Domain",
+    "link": "https://iana.org/domains/example",
+    "context_display": "16k / 66k"
+  }
+}

@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>karmX — features</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Inter";
+        font-style: normal;
+        font-weight: 500;
+        src: url("assets/fonts/inter-latin-500-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Inter";
+        font-style: normal;
+        font-weight: 800;
+        src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2");
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #07090b;
+      }
+
+      #stage {
+        --bg: #07090b;
+        --panel: #12151a;
+        --bar: #1a1e25;
+        --hero: #f5f5f7;
+        --dim: #c7c7cc;
+        --accent: #30d158;
+        --line: rgba(245, 245, 247, 0.14);
+        --mono: ui-monospace, "SF Mono", Menlo, monospace;
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--hero);
+        font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+      }
+
+      #world {
+        position: absolute;
+        inset: 0;
+      }
+
+      #glow-core {
+        position: absolute;
+        left: 520px;
+        top: 120px;
+        width: 980px;
+        height: 780px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(48, 209, 88, 0.2) 0%, rgba(48, 209, 88, 0) 68%);
+      }
+
+      #glow-cool {
+        position: absolute;
+        left: -80px;
+        top: -60px;
+        width: 640px;
+        height: 560px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(90, 120, 160, 0.14) 0%, transparent 70%);
+      }
+
+      #orbit {
+        position: absolute;
+        left: 980px;
+        top: 280px;
+        width: 520px;
+        height: 520px;
+        border: 2px solid rgba(48, 209, 88, 0.12);
+        border-radius: 50%;
+      }
+
+      #floor {
+        position: absolute;
+        left: -8%;
+        right: -8%;
+        bottom: -28%;
+        height: 58%;
+        background-image:
+          repeating-linear-gradient(90deg, rgba(245, 245, 247, 0.07) 0 1px, transparent 1px 72px),
+          repeating-linear-gradient(0deg, rgba(245, 245, 247, 0.07) 0 1px, transparent 1px 72px);
+        transform: perspective(900px) rotateX(74deg);
+        transform-origin: center top;
+        mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), transparent 78%);
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        padding: 96px 88px 72px;
+        opacity: 0;
+      }
+
+      #scene-open {
+        align-items: center;
+        text-align: center;
+        opacity: 1;
+      }
+
+      .kicker {
+        margin: 0 0 14px;
+        color: var(--accent);
+        font-size: 18px;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .head {
+        margin: 0 0 18px;
+        font-size: 44px;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        line-height: 1.08;
+      }
+
+      .sub {
+        margin: 0;
+        color: var(--dim);
+        font-size: 22px;
+        font-weight: 500;
+        max-width: 920px;
+        line-height: 1.35;
+      }
+
+      .open-mark {
+        margin: 0;
+        font-size: 132px;
+        font-weight: 800;
+        letter-spacing: -0.05em;
+        line-height: 0.92;
+      }
+
+      .open-sub {
+        margin: 18px 0 36px;
+        color: var(--dim);
+        font-size: 28px;
+        font-weight: 500;
+      }
+
+      .pills {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+      }
+
+      .pill {
+        padding: 12px 20px;
+        border: 2px solid var(--line);
+        border-radius: 999px;
+        background: rgba(18, 21, 26, 0.88);
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+
+      .grid-3,
+      .grid-2 {
+        display: grid;
+        gap: 22px;
+        width: 100%;
+        margin-top: 28px;
+      }
+
+      .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+
+      .card {
+        padding: 22px 24px 24px;
+        border: 2px solid var(--line);
+        border-radius: 18px;
+        background: rgba(18, 21, 26, 0.94);
+        box-shadow: 0 28px 60px rgba(0, 0, 0, 0.42);
+        min-height: 460px;
+      }
+
+      .card-h {
+        margin: 0 0 6px;
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+
+      .card-k {
+        margin: 0 0 18px;
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 15px;
+        font-weight: 500;
+      }
+
+      .hit {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 14px;
+        padding: 12px 14px;
+        border: 2px solid var(--line);
+        border-radius: 12px;
+        background: rgba(245, 245, 247, 0.03);
+      }
+
+      .hit-top {
+        display: flex;
+        justify-content: space-between;
+        font-size: 18px;
+        font-weight: 500;
+      }
+
+      .mono { font-family: var(--mono); }
+      .score { color: var(--accent); font-weight: 800; }
+
+      .bar {
+        height: 8px;
+        border-radius: 99px;
+        background: rgba(245, 245, 247, 0.1);
+        overflow: hidden;
+      }
+
+      .bar > i {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: var(--accent);
+        transform-origin: left center;
+      }
+
+      .budget {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .ring {
+        --p: 0;
+        width: 72px;
+        height: 72px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background: conic-gradient(#30d158 calc(var(--p) * 1%), rgba(245, 245, 247, 0.1) 0);
+      }
+
+      .ring-inner {
+        width: 48px;
+        height: 48px;
+        margin: 12px;
+        border-radius: 50%;
+        background: #12151a;
+      }
+
+      .en-from,
+      .en-to {
+        margin: 0;
+        padding: 14px 16px;
+        border-radius: 12px;
+        font-size: 20px;
+        font-weight: 500;
+        line-height: 1.35;
+      }
+
+      .en-from {
+        color: var(--dim);
+        background: rgba(245, 245, 247, 0.04);
+        margin-bottom: 14px;
+      }
+
+      .en-to {
+        color: var(--hero);
+        border: 2px solid rgba(48, 209, 88, 0.45);
+        background: rgba(48, 209, 88, 0.08);
+      }
+
+      .arrow {
+        margin: 0 0 14px;
+        color: var(--accent);
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .meter-wrap {
+        margin-top: 22px;
+      }
+
+      .meter-labels {
+        position: relative;
+        height: 24px;
+        margin-bottom: 8px;
+        color: var(--dim);
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .meter-labels span {
+        position: absolute;
+        top: 0;
+      }
+
+      .meter {
+        position: relative;
+        height: 28px;
+        border-radius: 99px;
+        background: rgba(245, 245, 247, 0.08);
+        overflow: hidden;
+      }
+
+      .meter-fill {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, #1f8a3c, var(--accent));
+        transform-origin: left center;
+      }
+
+      .ticks {
+        position: relative;
+        height: 12px;
+        margin-top: 6px;
+      }
+
+      .tick {
+        position: absolute;
+        top: 0;
+        width: 2px;
+        height: 16px;
+        background: rgba(245, 245, 247, 0.35);
+      }
+
+      .tick b {
+        position: absolute;
+        top: 22px;
+        left: 0;
+        color: var(--dim);
+        font-size: 16px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .tok {
+        margin: 18px 0 0;
+        font-size: 64px;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+      }
+
+      .tok span { color: var(--dim); font-size: 28px; font-weight: 500; }
+
+      .msg-col {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .msg {
+        padding: 14px 16px;
+        border: 2px solid var(--line);
+        border-radius: 12px;
+        background: rgba(18, 21, 26, 0.95);
+        font-size: 18px;
+        font-weight: 500;
+      }
+
+      .msg em {
+        color: var(--accent);
+        font-style: normal;
+        font-family: var(--mono);
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .summary {
+        min-height: 280px;
+        padding: 28px;
+        border: 2px solid rgba(48, 209, 88, 0.5);
+        border-radius: 18px;
+        background: rgba(48, 209, 88, 0.08);
+      }
+
+      .summary h3 {
+        margin: 0 0 12px;
+        font-size: 28px;
+        font-weight: 800;
+      }
+
+      .summary p {
+        margin: 0;
+        color: var(--dim);
+        font-size: 20px;
+        font-weight: 500;
+        line-height: 1.4;
+      }
+
+      .phase {
+        display: inline-block;
+        margin-top: 18px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #06210d;
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .agent {
+        min-height: 420px;
+      }
+
+      .agent-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .orb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        flex: 0 0 auto;
+      }
+
+      .orb-lead { background: #d97757; box-shadow: 0 0 16px rgba(217, 119, 87, 0.7); }
+      .orb-side { background: var(--accent); box-shadow: 0 0 16px rgba(48, 209, 88, 0.7); }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 18px 0 22px;
+      }
+
+      .chip {
+        padding: 8px 12px;
+        border: 2px solid var(--line);
+        border-radius: 999px;
+        color: var(--dim);
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .chip.on {
+        border-color: rgba(48, 209, 88, 0.55);
+        color: var(--hero);
+        background: rgba(48, 209, 88, 0.12);
+      }
+
+      .log {
+        font-family: var(--mono);
+        font-size: 18px;
+        line-height: 1.55;
+      }
+
+      .log .ok { color: var(--accent); }
+      .log .dim { color: var(--dim); }
+
+      .fusion-core {
+        position: absolute;
+        left: 50%;
+        top: 58%;
+        width: 88px;
+        height: 88px;
+        margin: -44px 0 0 -44px;
+        border-radius: 50%;
+        border: 2px solid rgba(48, 209, 88, 0.7);
+        background: radial-gradient(circle at 40% 35%, rgba(48, 209, 88, 0.45), #12151a 72%);
+        box-shadow: 0 0 40px rgba(48, 209, 88, 0.35);
+        z-index: 4;
+      }
+
+      .beam {
+        position: absolute;
+        left: 50%;
+        top: 58%;
+        width: 120px;
+        height: 6px;
+        margin-top: -3px;
+        border-radius: 99px;
+        background: var(--accent);
+        box-shadow: 0 0 18px rgba(48, 209, 88, 0.85);
+        transform-origin: left center;
+        z-index: 3;
+      }
+
+      #beam-l { margin-left: -164px; }
+      #beam-r { margin-left: 44px; }
+
+      .picker {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+        margin-top: 24px;
+        border: 2px solid var(--line);
+        border-radius: 18px;
+        overflow: hidden;
+        background: rgba(18, 21, 26, 0.96);
+        min-height: 460px;
+      }
+
+      .col-h {
+        padding: 18px 22px;
+        border-bottom: 2px solid var(--line);
+        background: var(--bar);
+        font-size: 20px;
+        font-weight: 800;
+      }
+
+      .col-h.live {
+        color: #06210d;
+        background: var(--accent);
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 22px;
+        border-bottom: 2px solid var(--line);
+        font-size: 20px;
+        font-weight: 500;
+      }
+
+      .row b {
+        display: block;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+
+      .row span {
+        color: var(--dim);
+        font-size: 16px;
+      }
+
+      .row-live {
+        background: rgba(48, 209, 88, 0.12);
+        border-color: rgba(48, 209, 88, 0.28);
+      }
+
+      .hint {
+        margin-top: 16px;
+        color: var(--dim);
+        font-family: var(--mono);
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .browser {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        grid-template-rows: 1fr 150px;
+        width: 100%;
+        height: 620px;
+        margin-top: 20px;
+        overflow: hidden;
+        border: 2px solid var(--line);
+        border-radius: 18px;
+        background: #0e1116;
+        box-shadow: 0 32px 70px rgba(0, 0, 0, 0.45);
+      }
+
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 42px;
+        padding: 0 16px;
+        border-bottom: 2px solid var(--line);
+        background: var(--bar);
+      }
+
+      .dots { display: flex; gap: 8px; }
+      .dots i { width: 12px; height: 12px; border-radius: 50%; }
+      .dot-r { background: #ff5f57; }
+      .dot-y { background: #febc2e; }
+      .dot-g { background: #28c840; }
+      .win-title {
+        flex: 1;
+        color: var(--dim);
+        font-size: 17px;
+        font-weight: 500;
+        text-align: center;
+      }
+
+      .page-side {
+        grid-row: 1 / 3;
+        padding: 18px 14px;
+        border-right: 2px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .side-item {
+        height: 12px;
+        border-radius: 6px;
+        background: rgba(245, 245, 247, 0.14);
+      }
+
+      .side-item.on {
+        width: 78%;
+        background: rgba(48, 209, 88, 0.45);
+      }
+
+      .page-main {
+        padding: 18px 20px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .stats { display: flex; gap: 10px; }
+
+      .stat {
+        flex: 1;
+        padding: 12px;
+        border: 2px solid var(--line);
+        border-radius: 12px;
+        background: rgba(245, 245, 247, 0.04);
+      }
+
+      .stat b {
+        display: block;
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+
+      .stat span {
+        color: var(--dim);
+        font-size: 15px;
+        font-weight: 500;
+      }
+
+      .chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        height: 120px;
+        padding: 8px 6px 0;
+      }
+
+      .chart i {
+        display: block;
+        flex: 1;
+        height: 100%;
+        border-radius: 6px 6px 0 0;
+        background: rgba(48, 209, 88, 0.55);
+        transform-origin: bottom center;
+      }
+
+      .console {
+        grid-column: 2;
+        border-top: 2px solid var(--line);
+        background: #0a0c10;
+        padding: 12px 16px;
+        font-family: var(--mono);
+        font-size: 16px;
+        line-height: 1.5;
+        color: var(--dim);
+      }
+
+      .console-h {
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .dom-tree { display: flex; gap: 8px; margin-top: 8px; }
+
+      .dom-node {
+        padding: 4px 10px;
+        border: 2px solid rgba(142, 200, 255, 0.4);
+        border-radius: 8px;
+        color: #8ec8ff;
+        font-size: 15px;
+        font-family: var(--mono);
+      }
+
+      #scene-lockup {
+        align-items: center;
+        text-align: center;
+      }
+
+      #lockup-mark {
+        margin: 0;
+        font-size: 148px;
+        font-weight: 800;
+        letter-spacing: -0.045em;
+        line-height: 1;
+      }
+
+      #lockup-sub {
+        margin: 16px 0 0;
+        color: var(--dim);
+        font-size: 32px;
+        font-weight: 500;
+      }
+
+      #hf-vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 90;
+        background: radial-gradient(ellipse at center, transparent 42%, rgba(0, 0, 0, 0.72) 100%);
+      }
+
+      #grain-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0.12;
+        background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-ig8r" id="stage" data-composition-id="karmx-terminal-motion" data-start="0" data-duration="38" data-fps="30" data-width="1920" data-height="1080">
+      <div data-hf-id="hf-d34p" id="world" class="clip" data-start="0" data-duration="38" data-track-index="0" data-layout-allow-overlap="" data-layout-allow-occlusion="">
+        <div data-hf-id="hf-cggc" id="glow-cool"></div>
+        <div data-hf-id="hf-4aiy" id="glow-core"></div>
+        <div data-hf-id="hf-n2sj" id="orbit"></div>
+        <div data-hf-id="hf-9136" id="floor" data-layout-allow-overflow=""></div>
+
+        <div data-hf-id="hf-35ab" id="scene-open" class="scene">
+          <p data-hf-id="hf-sgvq" class="open-mark">karm<span data-hf-id="hf-avgp" style="color:#30d158">X</span></p>
+          <p data-hf-id="hf-xe5e" class="open-sub">Your terminal coding agent — with new platform features</p>
+          <div data-hf-id="hf-c9cw" class="pills">
+            <div data-hf-id="hf-lrtz" id="pill-1" class="pill">Context engine</div>
+            <div data-hf-id="hf-jcrj" id="pill-2" class="pill">Predictive compaction</div>
+            <div data-hf-id="hf-h277" id="pill-3" class="pill">Local fusion</div>
+            <div data-hf-id="hf-axos" id="pill-4" class="pill">Any model</div>
+          </div>
+        </div>
+
+        <div data-hf-id="hf-cs0s" id="scene-context" class="scene">
+          <p data-hf-id="hf-75o3" class="kicker">In-process · not MCP</p>
+          <h2 data-hf-id="hf-7p62" class="head">Context engine</h2>
+          <p data-hf-id="hf-t4n5" class="sub">Budgeted workspace search, relevance ranking, and prompt rewrite — on the session’s own model.</p>
+          <div data-hf-id="hf-cm2s" class="grid-3">
+            <div data-hf-id="hf-1zvn" id="cx-1" class="card">
+              <p data-hf-id="hf-z6f2" class="card-k">codebase_retrieval</p>
+              <p data-hf-id="hf-7let" class="card-h">Find the files</p>
+              <div data-hf-id="hf-wq9e" id="hit-a" class="hit">
+                <div data-hf-id="hf-qicx" class="hit-top"><span data-hf-id="hf-c9an" class="mono">src/app.tsx</span><span data-hf-id="hf-pd8a" class="score">0.94</span></div>
+                <div data-hf-id="hf-ufsv" class="bar"><i data-hf-id="hf-s0fe" id="bar-a"></i></div>
+              </div>
+              <div data-hf-id="hf-ss5d" id="hit-b" class="hit">
+                <div data-hf-id="hf-tzl1" class="hit-top"><span data-hf-id="hf-2gz7" class="mono">preview.html</span><span data-hf-id="hf-s4f8" class="score">0.81</span></div>
+                <div data-hf-id="hf-c51b" class="bar"><i data-hf-id="hf-lupl" id="bar-b"></i></div>
+              </div>
+              <div data-hf-id="hf-s0hk" id="hit-c" class="hit">
+                <div data-hf-id="hf-v6i4" class="hit-top"><span data-hf-id="hf-k86l" class="mono">cart.ts</span><span data-hf-id="hf-mpqk" class="score">0.67</span></div>
+                <div data-hf-id="hf-bqqa" class="bar"><i data-hf-id="hf-l31s" id="bar-c"></i></div>
+              </div>
+              <div data-hf-id="hf-ula3" class="budget">
+                <div data-hf-id="hf-tbxo" id="ring-budget" class="ring"><div data-hf-id="hf-60x9" class="ring-inner"></div></div>
+                <div data-hf-id="hf-yeow">
+                  <b data-hf-id="hf-easc">20k</b>
+                  <div data-hf-id="hf-dfp3" style="color:var(--dim);font-size:16px;font-weight:500">character budget</div>
+                </div>
+              </div>
+            </div>
+            <div data-hf-id="hf-r4e0" id="cx-2" class="card">
+              <p data-hf-id="hf-sicq" class="card-k">rerank_context</p>
+              <p data-hf-id="hf-1zhx" class="card-h">Keep what matters</p>
+              <div data-hf-id="hf-sjq6" id="rk-1" class="hit">
+                <div data-hf-id="hf-us73" class="hit-top"><span data-hf-id="hf-975j">checkout total</span><span data-hf-id="hf-rwmo" class="score">1</span></div>
+                <div data-hf-id="hf-bcf9" class="bar"><i data-hf-id="hf-phiu" id="rk-bar-1"></i></div>
+              </div>
+              <div data-hf-id="hf-olm5" id="rk-2" class="hit">
+                <div data-hf-id="hf-vz46" class="hit-top"><span data-hf-id="hf-1017">cart reducer</span><span data-hf-id="hf-qppl" class="score">2</span></div>
+                <div data-hf-id="hf-e4kg" class="bar"><i data-hf-id="hf-jbt1" id="rk-bar-2"></i></div>
+              </div>
+              <div data-hf-id="hf-lmck" id="rk-3" class="hit">
+                <div data-hf-id="hf-vkt5" class="hit-top"><span data-hf-id="hf-t552">unrelated css</span><span data-hf-id="hf-byou" class="score" style="color:#c7c7cc">drop</span></div>
+                <div data-hf-id="hf-dq9f" class="bar"><i data-hf-id="hf-ik58" id="rk-bar-3"></i></div>
+              </div>
+            </div>
+            <div data-hf-id="hf-rw1t" id="cx-3" class="card">
+              <p data-hf-id="hf-yj4g" class="card-k">enhance_prompt</p>
+              <p data-hf-id="hf-uw7i" class="card-h">Make the ask specific</p>
+              <p data-hf-id="hf-3nu6" class="en-from">“fix the cart”</p>
+              <p data-hf-id="hf-64qq" class="arrow">→ enhanced</p>
+              <p data-hf-id="hf-7prv" class="en-to">Investigate checkout rounding in cart.ts against the preview DOM, then patch the total.</p>
+            </div>
+          </div>
+        </div>
+
+        <div data-hf-id="hf-9ayy" id="scene-compact" class="scene">
+          <p data-hf-id="hf-lqko" class="kicker">Background, not a stall</p>
+          <h2 data-hf-id="hf-pz5l" class="head">Predictive compaction</h2>
+          <p data-hf-id="hf-ada5" class="sub">Summarize while there is still headroom. Apply the ready summary before the window fills. Never wait on the hard limit.</p>
+          <div data-hf-id="hf-512a" class="tok"><span data-hf-id="hf-ldhz" id="tok-n">0</span> <span data-hf-id="hf-u11z">/ 262,144 tokens</span></div>
+          <div data-hf-id="hf-8c74" class="meter-wrap">
+            <div data-hf-id="hf-4it5" class="meter-labels"><span data-hf-id="hf-pdg7" style="left:0%">idle</span><span data-hf-id="hf-51zw" style="left:70%;margin-left:-28px">spawn</span><span data-hf-id="hf-f7jb" style="left:78%;margin-left:-22px">apply</span><span data-hf-id="hf-zu4g" style="right:0%">hard</span></div>
+            <div data-hf-id="hf-rq4r" class="meter"><i data-hf-id="hf-1nxi" id="meter-fill" class="meter-fill"></i></div>
+            <div data-hf-id="hf-895q" class="ticks">
+              <div data-hf-id="hf-6qcl" class="tick" style="left:0%"></div>
+              <div data-hf-id="hf-la6q" class="tick" style="left:70%"></div>
+              <div data-hf-id="hf-p1yi" class="tick" style="left:78%"></div>
+              <div data-hf-id="hf-ar8j" class="tick" style="left:99%"></div>
+            </div>
+          </div>
+          <div data-hf-id="hf-eomt" class="grid-2" style="margin-top:8px">
+            <div data-hf-id="hf-dmqy" class="msg-col">
+              <div data-hf-id="hf-856f" id="msg-1" class="msg"><em data-hf-id="hf-t204">user</em> · add stripe checkout</div>
+              <div data-hf-id="hf-63lm" id="msg-2" class="msg"><em data-hf-id="hf-aqjl">tool</em> · codebase_retrieval 48 spans</div>
+              <div data-hf-id="hf-v7r6" id="msg-3" class="msg"><em data-hf-id="hf-bzik">asst</em> · patch cart.ts + tests</div>
+              <div data-hf-id="hf-4yeb" id="msg-4" class="msg"><em data-hf-id="hf-wqnp">tool</em> · browser_preview 24 DOM</div>
+            </div>
+            <div data-hf-id="hf-coi2" id="sum-card" class="summary">
+              <h3 data-hf-id="hf-cizr">Ready summary</h3>
+              <p data-hf-id="hf-rnj6">Checkout work, cart rounding, preview connected. Continue from the patch — no stall on the user’s turn.</p>
+              <div data-hf-id="hf-a332" id="phase-chip" class="phase">apply · swap in</div>
+            </div>
+          </div>
+        </div>
+
+        <div data-hf-id="hf-19kv" id="scene-fusion" class="scene">
+          <p data-hf-id="hf-q6t1" class="kicker">Two models · one identity</p>
+          <h2 data-hf-id="hf-0j54" class="head">Local fusion</h2>
+          <p data-hf-id="hf-1kir" class="sub">A persistent lead + sidekick split. Different models, different context windows, independent compaction. The user still sees one agent.</p>
+          <div data-hf-id="hf-bil4" class="grid-2" style="position:relative">
+            <div data-hf-id="hf-zpjq" id="ag-lead" class="card agent">
+              <div data-hf-id="hf-osab" class="agent-bar"><i data-hf-id="hf-uxpn" class="orb orb-lead"></i><p data-hf-id="hf-uaip" class="card-h" style="margin:0">Lead · claude</p></div>
+              <div data-hf-id="hf-exrd" class="chips">
+                <span data-hf-id="hf-ml3a" class="chip on">user-facing</span>
+                <span data-hf-id="hf-l22p" class="chip on">judgement</span>
+                <span data-hf-id="hf-jalj" class="chip">authority actions</span>
+              </div>
+              <div data-hf-id="hf-vz3q" class="log">
+                <div data-hf-id="hf-tgoy">review the diff</div>
+                <div data-hf-id="hf-nfkg" class="dim">own the conversation</div>
+                <div data-hf-id="hf-1wup" class="ok">delegate mechanical work</div>
+              </div>
+              <div data-hf-id="hf-suvz" class="budget" style="margin-top:28px">
+                <div data-hf-id="hf-ej95" id="ring-lead" class="ring"><div data-hf-id="hf-xqe9" class="ring-inner"></div></div>
+                <div data-hf-id="hf-y7yw">
+                  <b data-hf-id="hf-mstg">own context</b>
+                  <div data-hf-id="hf-cuzh" style="color:var(--dim);font-size:16px;font-weight:500">compaction 70 / 78 / 100</div>
+                </div>
+              </div>
+            </div>
+            <div data-hf-id="hf-xe25" id="ag-side" class="card agent">
+              <div data-hf-id="hf-gfpv" class="agent-bar"><i data-hf-id="hf-1aro" class="orb orb-side"></i><p data-hf-id="hf-6srt" class="card-h" style="margin:0">Sidekick · custom</p></div>
+              <div data-hf-id="hf-4dp9" class="chips">
+                <span data-hf-id="hf-vk4z" class="chip on">persistent</span>
+                <span data-hf-id="hf-tlja" class="chip on">own window</span>
+                <span data-hf-id="hf-ovyi" class="chip">not a subagent</span>
+              </div>
+              <div data-hf-id="hf-st0a" class="log">
+                <div data-hf-id="hf-ybms">search + trace</div>
+                <div data-hf-id="hf-n6qu" class="dim">implement the patch</div>
+                <div data-hf-id="hf-mw4i" class="ok">survives across turns</div>
+              </div>
+              <div data-hf-id="hf-g0yn" class="budget" style="margin-top:28px">
+                <div data-hf-id="hf-gy9i" id="ring-side" class="ring"><div data-hf-id="hf-yxbc" class="ring-inner"></div></div>
+                <div data-hf-id="hf-x11t">
+                  <b data-hf-id="hf-1rsy">own model</b>
+                  <div data-hf-id="hf-8lo0" style="color:var(--dim);font-size:16px;font-weight:500">KARMX_SIDEKICK_MODEL</div>
+                </div>
+              </div>
+            </div>
+            <div data-hf-id="hf-5a8p" id="beam-l" class="beam"></div>
+            <div data-hf-id="hf-zita" id="fusion-core" class="fusion-core"></div>
+            <div data-hf-id="hf-d2vb" id="beam-r" class="beam"></div>
+          </div>
+        </div>
+
+        <div data-hf-id="hf-y4gp" id="scene-models" class="scene">
+          <p data-hf-id="hf-hyt9" class="kicker">Lead and sidekick independently</p>
+          <h2 data-hf-id="hf-9bfj" class="head">Pick any model</h2>
+          <p data-hf-id="hf-ypcj" class="sub">Anthropic, OpenAI, Ollama, or a custom OpenAI-compatible endpoint. Tab assigns the sidekick a different model from the lead.</p>
+          <div data-hf-id="hf-o9ry" class="picker">
+            <div data-hf-id="hf-xfcu">
+              <div data-hf-id="hf-xyy2" id="h-lead" class="col-h live">Lead</div>
+              <div data-hf-id="hf-6rzn" id="m1" class="row row-live"><div data-hf-id="hf-w8fr"><b data-hf-id="hf-w5xz">Claude</b><span data-hf-id="hf-s7n1">Anthropic · judgement</span></div></div>
+              <div data-hf-id="hf-g10j" id="m2" class="row"><div data-hf-id="hf-wmqs"><b data-hf-id="hf-365m">GPT-4.1</b><span data-hf-id="hf-yctz">OpenAI</span></div></div>
+              <div data-hf-id="hf-c2wi" id="m3" class="row"><div data-hf-id="hf-vftp"><b data-hf-id="hf-5aqr">Ollama</b><span data-hf-id="hf-ogq8">local · llama</span></div></div>
+              <div data-hf-id="hf-tb6t" id="m4" class="row"><div data-hf-id="hf-vu4q"><b data-hf-id="hf-qcmm">Custom</b><span data-hf-id="hf-r6jv">your OpenAI-compatible URL</span></div></div>
+            </div>
+            <div data-hf-id="hf-1043">
+              <div data-hf-id="hf-dfq2" id="h-side" class="col-h">Sidekick</div>
+              <div data-hf-id="hf-zjhq" id="s1" class="row"><div data-hf-id="hf-1ef4"><b data-hf-id="hf-f42d">Same as lead</b><span data-hf-id="hf-e5ng">inherit</span></div></div>
+              <div data-hf-id="hf-vldp" id="s2" class="row"><div data-hf-id="hf-c4s8"><b data-hf-id="hf-pl5y">Custom</b><span data-hf-id="hf-9eze">KARMX_SIDEKICK · your endpoint</span></div></div>
+              <div data-hf-id="hf-utpw" id="s3" class="row"><div data-hf-id="hf-bqh7"><b data-hf-id="hf-cxib">Ollama</b><span data-hf-id="hf-s181">fast local coder</span></div></div>
+              <div data-hf-id="hf-ib7f" id="s4" class="row"><div data-hf-id="hf-bc66"><b data-hf-id="hf-v3hu">Custom</b><span data-hf-id="hf-ddi2">any OpenAI-compatible</span></div></div>
+            </div>
+          </div>
+          <p data-hf-id="hf-bf7u" class="hint">↑↓ select · tab sidekick · enter confirm · @karmx / @kx</p>
+        </div>
+
+        <div data-hf-id="hf-lttx" id="scene-preview" class="scene">
+          <p data-hf-id="hf-pxv1" class="kicker">Rendered DOM + console</p>
+          <h2 data-hf-id="hf-mjij" class="head">Browser preview</h2>
+          <p data-hf-id="hf-7n28" class="sub">In-process page bridge. Not a screenshot guess — the real tree, console, and timing.</p>
+          <div data-hf-id="hf-i7so" class="browser">
+            <div data-hf-id="hf-hzxf" class="page-side">
+              <div data-hf-id="hf-m5p6" class="side-item on"></div>
+              <div data-hf-id="hf-mf9v" class="side-item"></div>
+              <div data-hf-id="hf-da2b" class="side-item"></div>
+              <div data-hf-id="hf-cvra" class="side-item"></div>
+            </div>
+            <div data-hf-id="hf-83pt" class="page-main">
+              <div data-hf-id="hf-vsa2" class="win-bar" style="margin:-18px -20px 8px;border:0;border-bottom:2px solid var(--line)">
+                <span data-hf-id="hf-r6mh" class="dots"><i data-hf-id="hf-6w8o" class="dot-r"></i><i data-hf-id="hf-o4iz" class="dot-y"></i><i data-hf-id="hf-9z3p" class="dot-g"></i></span>
+                <span data-hf-id="hf-8l5o" class="win-title">localhost:5173 · checkout</span>
+              </div>
+              <div data-hf-id="hf-rhep" class="stats">
+                <div data-hf-id="hf-xa0m" class="stat"><b data-hf-id="hf-lpar">24</b><span data-hf-id="hf-kc4a">DOM nodes</span></div>
+                <div data-hf-id="hf-tx7e" class="stat"><b data-hf-id="hf-e7ov">0</b><span data-hf-id="hf-92wy">errors</span></div>
+                <div data-hf-id="hf-ubif" class="stat"><b data-hf-id="hf-zheq">12ms</b><span data-hf-id="hf-58d0">bridge</span></div>
+              </div>
+              <div data-hf-id="hf-ntnc" class="chart">
+                <i data-hf-id="hf-lg6u" id="ch-1"></i><i data-hf-id="hf-hi2t" id="ch-2"></i><i data-hf-id="hf-gqf0" id="ch-3"></i><i data-hf-id="hf-47wj" id="ch-4"></i><i data-hf-id="hf-09si" id="ch-5"></i>
+              </div>
+              <div data-hf-id="hf-c88d" class="dom-tree">
+                <span data-hf-id="hf-d5wh" class="dom-node">html</span>
+                <span data-hf-id="hf-4do1" class="dom-node">main</span>
+                <span data-hf-id="hf-c4xm" class="dom-node">cart</span>
+              </div>
+            </div>
+            <div data-hf-id="hf-wbfv" class="console">
+              <div data-hf-id="hf-1xkd" class="console-h">Console</div>
+              <div data-hf-id="hf-s831" id="clog-1">[bridge] page connected</div>
+              <div data-hf-id="hf-iquw" id="clog-2">[dom] 24 nodes captured</div>
+              <div data-hf-id="hf-polq" id="clog-3">[console] 0 errors</div>
+            </div>
+          </div>
+        </div>
+
+        <div data-hf-id="hf-84j1" id="scene-lockup" class="scene">
+          <p data-hf-id="hf-azpt" id="lockup-mark">karm<span data-hf-id="hf-te0k" id="lockup-x" style="color:#30d158">X</span></p>
+          <p data-hf-id="hf-y9im" id="lockup-sub">Context. Compaction. Fusion. Any model.</p>
+        </div>
+      </div>
+
+      <div data-hf-id="hf-veiv" id="hf-vignette" data-start="0" data-duration="38" data-layout-allow-occlusion=""></div>
+      <div data-hf-id="hf-184s" id="grain-overlay" data-start="0" data-duration="38" data-layout-allow-occlusion=""></div>
+    </div>
+    <script>
+      (function () {
+        var tl = gsap.timeline({ paused: true });
+        var glowRepeat = Math.max(0, Math.floor(38 / 4) - 1);
+
+        gsap.set(["#scene-context", "#scene-compact", "#scene-fusion", "#scene-models", "#scene-preview", "#scene-lockup"], { autoAlpha: 0 });
+        gsap.set(["#sum-card", "#phase-chip", "#fusion-core", "#beam-l", "#beam-r"], { autoAlpha: 0 });
+        gsap.set(["#clog-1", "#clog-2", "#clog-3"], { autoAlpha: 0 });
+
+        tl.fromTo("#glow-core", { scale: 1 }, { scale: 1.08, duration: 4, ease: "sine.inOut", yoyo: true, repeat: glowRepeat }, 0);
+        tl.fromTo("#orbit", { rotation: 0 }, { rotation: 18, duration: 38, ease: "none" }, 0);
+
+        tl.fromTo(".open-mark", { autoAlpha: 0, y: 28, scale: 0.96 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.45, ease: "power4.out" }, 0);
+        tl.fromTo(".open-sub", { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.32, ease: "power3.out" }, 0.18);
+        tl.fromTo("#pill-1", { autoAlpha: 0, y: 12, scale: 0.92 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.28, ease: "power3.out" }, 0.4);
+        tl.fromTo("#pill-2", { autoAlpha: 0, y: 12, scale: 0.92 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.28, ease: "power3.out" }, 0.48);
+        tl.fromTo("#pill-3", { autoAlpha: 0, y: 12, scale: 0.92 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.28, ease: "power3.out" }, 0.56);
+        tl.fromTo("#pill-4", { autoAlpha: 0, y: 12, scale: 0.92 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.28, ease: "power3.out" }, 0.64);
+
+        tl.to("#scene-open", { autoAlpha: 0, duration: 0.12, ease: "power2.in" }, 2.32);
+        tl.fromTo("#scene-context", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.16, ease: "power2.out" }, 2.44);
+        tl.fromTo("#cx-1", { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.38, ease: "power4.out" }, 2.45);
+        tl.fromTo("#cx-2", { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.38, ease: "power4.out" }, 2.55);
+        tl.fromTo("#cx-3", { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.38, ease: "power4.out" }, 2.65);
+        tl.fromTo("#hit-a", { autoAlpha: 0, x: -16 }, { autoAlpha: 1, x: 0, duration: 0.28, ease: "power3.out" }, 2.7);
+        tl.fromTo("#hit-b", { autoAlpha: 0, x: -16 }, { autoAlpha: 1, x: 0, duration: 0.28, ease: "power3.out" }, 2.82);
+        tl.fromTo("#hit-c", { autoAlpha: 0, x: -16 }, { autoAlpha: 1, x: 0, duration: 0.28, ease: "power3.out" }, 2.94);
+        tl.fromTo("#bar-a", { scaleX: 0 }, { scaleX: 0.94, duration: 0.4, ease: "power3.out" }, 2.78);
+        tl.fromTo("#bar-b", { scaleX: 0 }, { scaleX: 0.81, duration: 0.4, ease: "power3.out" }, 2.9);
+        tl.fromTo("#bar-c", { scaleX: 0 }, { scaleX: 0.67, duration: 0.4, ease: "power3.out" }, 3.02);
+        tl.fromTo("#ring-budget", { "--p": 0 }, { "--p": 72, duration: 0.7, ease: "power3.out" }, 3.1);
+        tl.fromTo("#rk-bar-1", { scaleX: 0 }, { scaleX: 0.96, duration: 0.4, ease: "power3.out" }, 3.35);
+        tl.fromTo("#rk-bar-2", { scaleX: 0 }, { scaleX: 0.74, duration: 0.4, ease: "power3.out" }, 3.48);
+        tl.fromTo("#rk-bar-3", { scaleX: 0 }, { scaleX: 0.18, duration: 0.4, ease: "power3.out" }, 3.6);
+        tl.to("#rk-3", { autoAlpha: 0.35, duration: 0.25, ease: "power2.out" }, 4.2);
+        tl.fromTo("#cx-3 .en-to", { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.35, ease: "power3.out" }, 4.45);
+
+        tl.to("#scene-context", { autoAlpha: 0, duration: 0.12, ease: "power2.in" }, 8.5);
+        tl.fromTo("#scene-compact", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.16, ease: "power2.out" }, 8.62);
+
+        var tokens = { n: 0 };
+        tl.fromTo("#meter-fill", { scaleX: 0 }, { scaleX: 0.7, duration: 1.5, ease: "power2.in" }, 8.7);
+        tl.to(tokens, {
+          n: 183500,
+          duration: 1.5,
+          ease: "power2.in",
+          onUpdate: function () {
+            document.getElementById("tok-n").textContent = Math.round(tokens.n).toLocaleString("en-US");
+          },
+        }, 8.7);
+        tl.fromTo("#msg-1", { autoAlpha: 0, x: -18 }, { autoAlpha: 1, x: 0, duration: 0.22, ease: "power3.out" }, 8.85);
+        tl.fromTo("#msg-2", { autoAlpha: 0, x: -18 }, { autoAlpha: 1, x: 0, duration: 0.22, ease: "power3.out" }, 9.05);
+        tl.fromTo("#msg-3", { autoAlpha: 0, x: -18 }, { autoAlpha: 1, x: 0, duration: 0.22, ease: "power3.out" }, 9.25);
+        tl.fromTo("#msg-4", { autoAlpha: 0, x: -18 }, { autoAlpha: 1, x: 0, duration: 0.22, ease: "power3.out" }, 9.45);
+        tl.fromTo("#sum-card", { autoAlpha: 0, scale: 0.96, y: 16 }, { autoAlpha: 1, scale: 1, y: 0, duration: 0.4, ease: "power4.out" }, 10.15);
+        tl.to("#meter-fill", { scaleX: 0.78, duration: 0.7, ease: "power2.inOut" }, 10.4);
+        tl.to(tokens, {
+          n: 204000,
+          duration: 0.7,
+          ease: "power2.inOut",
+          onUpdate: function () {
+            document.getElementById("tok-n").textContent = Math.round(tokens.n).toLocaleString("en-US");
+          },
+        }, 10.4);
+        tl.fromTo("#phase-chip", { autoAlpha: 0, scale: 0.9 }, { autoAlpha: 1, scale: 1, duration: 0.25, ease: "power3.out" }, 11.05);
+        tl.to(["#msg-1", "#msg-2", "#msg-3", "#msg-4"], { autoAlpha: 0.22, y: -8, duration: 0.35, ease: "power2.in" }, 11.2);
+        tl.to("#meter-fill", { scaleX: 0.32, duration: 0.55, ease: "power3.inOut" }, 11.55);
+        tl.to(tokens, {
+          n: 84000,
+          duration: 0.55,
+          ease: "power3.inOut",
+          onUpdate: function () {
+            document.getElementById("tok-n").textContent = Math.round(tokens.n).toLocaleString("en-US");
+          },
+        }, 11.55);
+
+        tl.to("#scene-compact", { autoAlpha: 0, duration: 0.12, ease: "power2.in" }, 14.78);
+        tl.fromTo("#scene-fusion", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.16, ease: "power2.out" }, 14.9);
+        tl.fromTo("#ag-lead", { autoAlpha: 0, x: -40 }, { autoAlpha: 1, x: 0, duration: 0.42, ease: "power4.out" }, 14.95);
+        tl.fromTo("#ag-side", { autoAlpha: 0, x: 40 }, { autoAlpha: 1, x: 0, duration: 0.42, ease: "power4.out" }, 15.08);
+        tl.fromTo("#fusion-core", { autoAlpha: 0, scale: 0.6 }, { autoAlpha: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 15.4);
+        tl.fromTo("#beam-l", { autoAlpha: 0, scaleX: 0 }, { autoAlpha: 1, scaleX: 1, duration: 0.28, ease: "power2.out" }, 15.5);
+        tl.fromTo("#beam-r", { autoAlpha: 0, scaleX: 0 }, { autoAlpha: 1, scaleX: 1, duration: 0.28, ease: "power2.out" }, 15.5);
+        tl.fromTo("#ring-lead", { "--p": 0 }, { "--p": 64, duration: 0.7, ease: "power3.out" }, 15.7);
+        tl.fromTo("#ring-side", { "--p": 0 }, { "--p": 48, duration: 0.7, ease: "power3.out" }, 15.85);
+
+        tl.to("#scene-fusion", { autoAlpha: 0, duration: 0.12, ease: "power2.in" }, 22.48);
+        tl.fromTo("#scene-models", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.16, ease: "power2.out" }, 22.6);
+        tl.fromTo(".picker", { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.4, ease: "power4.out" }, 22.65);
+        tl.to("#m1", { backgroundColor: "rgba(48,209,88,0)", duration: 0.18 }, 24.1);
+        tl.to("#m4", { backgroundColor: "rgba(48,209,88,0.12)", duration: 0.18 }, 24.1);
+        tl.to("#h-lead", { backgroundColor: "#1a1e25", color: "#f5f5f7", duration: 0.2 }, 25.15);
+        tl.to("#h-side", { backgroundColor: "#30d158", color: "#06210d", duration: 0.2 }, 25.15);
+        tl.to("#s1", { backgroundColor: "rgba(48,209,88,0)", duration: 0.18 }, 25.4);
+        tl.to("#s2", { backgroundColor: "rgba(48,209,88,0.12)", duration: 0.18 }, 25.4);
+
+        tl.to("#scene-models", { autoAlpha: 0, duration: 0.12, ease: "power2.in" }, 29.08);
+        tl.fromTo("#scene-preview", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.16, ease: "power2.out" }, 29.2);
+        tl.fromTo(".browser", { autoAlpha: 0, y: 22, scale: 0.98 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.4, ease: "power4.out" }, 29.25);
+        tl.fromTo("#ch-1", { scaleY: 0.15 }, { scaleY: 0.55, duration: 0.32, ease: "power3.out" }, 29.5);
+        tl.fromTo("#ch-2", { scaleY: 0.15 }, { scaleY: 0.82, duration: 0.32, ease: "power3.out" }, 29.58);
+        tl.fromTo("#ch-3", { scaleY: 0.15 }, { scaleY: 0.4, duration: 0.32, ease: "power3.out" }, 29.66);
+        tl.fromTo("#ch-4", { scaleY: 0.15 }, { scaleY: 1, duration: 0.32, ease: "power3.out" }, 29.74);
+        tl.fromTo("#ch-5", { scaleY: 0.15 }, { scaleY: 0.68, duration: 0.32, ease: "power3.out" }, 29.82);
+        tl.fromTo("#clog-1", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.16 }, 30.05);
+        tl.fromTo("#clog-2", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.16 }, 30.28);
+        tl.fromTo("#clog-3", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.16 }, 30.5);
+
+        tl.to("#scene-preview", { autoAlpha: 0, duration: 0.12, ease: "power2.in" }, 34.28);
+        tl.fromTo("#scene-lockup", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.16, ease: "power2.out" }, 34.4);
+        tl.fromTo("#lockup-mark", { autoAlpha: 0, scale: 0.94, filter: "blur(12px)" }, { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: 0.55, ease: "power4.out" }, 34.45);
+        tl.fromTo("#lockup-sub", { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.32, ease: "power3.out" }, 34.7);
+        tl.fromTo(
+          "#lockup-x",
+          { textShadow: "0 0 0 rgba(48,209,88,0)" },
+          { textShadow: "0 0 48px rgba(48,209,88,0.5)", duration: 0.4, ease: "sine.out" },
+          34.9
+        );
+
+        tl.seek(0);
+        window.__timelines["karmx-terminal-motion"] = tl;
+      })();
+    </script>
+  </body>
+</html>

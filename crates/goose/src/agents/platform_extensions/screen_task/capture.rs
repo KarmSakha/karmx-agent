@@ -22,12 +22,16 @@ pub struct Capture {
 /// clicker's crop). Falls back to the whole display when no window resolves.
 pub fn grab(window: Option<Frame>) -> anyhow::Result<Capture> {
     let path = std::env::temp_dir().join(format!("karmx-screen-{}.png", std::process::id()));
-    let status = std::process::Command::new("/usr/sbin/screencapture")
+    let output = std::process::Command::new("/usr/sbin/screencapture")
         .args(["-x", path.to_string_lossy().as_ref()])
-        .status()
+        .output()
         .context("could not run screencapture")?;
-    if !status.success() {
-        bail!("screencapture exited {status}");
+    if !output.status.success() {
+        bail!(
+            "Screen capture failed ({}): {}",
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim()
+        );
     }
     crop(&path, window)
 }

@@ -1,6 +1,7 @@
 import { ScrollArea } from '../ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { View, ViewOptions } from '../../utils/navigationUtils';
+import AgentSettingsSection from './AgentSettingsSection';
 import ModelsSection from './models/ModelsSection';
 import ExternalBackendSection from './app/ExternalBackendSection';
 import AppSettingsSection from './app/AppSettingsSection';
@@ -99,6 +100,7 @@ export default function SettingsView({
       const sectionToTab: Record<string, string> = {
         update: 'app',
         models: 'models',
+        agent: 'agent',
         modes: 'chat',
         sharing: 'sharing',
         styles: 'chat',
@@ -174,6 +176,10 @@ export default function SettingsView({
                     <Bot className="h-4 w-4" />
                     {intl.formatMessage(i18n.tabModels)}
                   </TabsTrigger>
+                  <TabsTrigger value="agent" className="flex gap-2">
+                    <Bot className="h-4 w-4" />
+                    Agent
+                  </TabsTrigger>
                   {localInference && (
                     <TabsTrigger
                       value="local-inference"
@@ -224,6 +230,9 @@ export default function SettingsView({
               </div>
 
               <ScrollArea className="flex-1 px-2">
+                <TabsContent value="agent">
+                  <AgentSettingsSection />
+                </TabsContent>
                 <TabsContent
                   value="models"
                   className="mt-0 focus-visible:outline-none focus-visible:ring-0"

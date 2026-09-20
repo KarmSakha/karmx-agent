@@ -298,20 +298,7 @@ impl McpClientTrait for ContextEngineClient {
                     )]));
                 };
 
-                let msgs: Vec<rerank::Message> = raw
-                    .iter()
-                    .map(|c| rerank::Message {
-                        role: "chunk".to_string(),
-                        content: c
-                            .get("text")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("")
-                            .to_string(),
-                        timestamp_ms: c.get("timestamp_ms").and_then(|v| v.as_i64()).unwrap_or(0),
-                    })
-                    .collect();
-
-                let chunks = rerank::chunk_messages(&msgs, CHUNK_CHARS);
+                let chunks = independent_chunks(raw);
                 let before = chunks.len();
 
                 let provider = match self.get_provider().await {
@@ -333,7 +320,8 @@ impl McpClientTrait for ContextEngineClient {
                     };
 
                 tracing::debug!(args = %brief(&args), "reranking context");
-                let ranked = rerank::rerank(&provider, &model_config, query, chunks).await;
+                let (ranked, applied) =
+                    rerank::rerank(&provider, &model_config, query, chunks).await;
 
                 let body = ranked
                     .iter()
@@ -342,9 +330,10 @@ impl McpClientTrait for ContextEngineClient {
                     .join("\n\n---\n\n");
 
                 Ok(CallToolResult::success(vec![ContentBlock::text(format!(
-                    "kept {}/{} chunks (ranked)\n\n{}",
+                    "kept {}/{} chunks (ranking applied: {})\n\n{}",
                     ranked.len(),
                     before,
+                    applied,
                     if body.is_empty() {
                         "(nothing relevant)"
                     } else {
@@ -391,5 +380,37 @@ mod tests {
     #[test]
     fn budget_default_matches_capture() {
         assert_eq!(budget::DEFAULT_TOTAL_BUDGET, 20_000);
+    }
+}
+
+fn independent_chunks(raw: &[serde_json::Value]) -> Vec<rerank::Chunk> {
+    raw.iter()
+        .enumerate()
+        .map(|(i, c)| rerank::Chunk {
+            start: i,
+            end: i + 1,
+            timestamp_ms: c.get("timestamp_ms").and_then(|v| v.as_i64()).unwrap_or(0),
+            text: c
+                .get("text")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .chars()
+                .take(CHUNK_CHARS)
+                .collect(),
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod regression_tests {
+    use super::*;
+    #[test]
+    fn short_candidates_remain_independently_rankable() {
+        let input =
+            serde_json::json!([{"text":"returns"},{"text":"free shipping"},{"text":"blue UI"}]);
+        let chunks = independent_chunks(input.as_array().unwrap());
+        assert_eq!(chunks.len(), 3);
+        assert_eq!(chunks[1].text, "free shipping");
+        assert_eq!((chunks[1].start, chunks[1].end), (1, 2));
     }
 }

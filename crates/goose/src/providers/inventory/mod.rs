@@ -1137,7 +1137,10 @@ fn configured_models_to_inventory(
     let mut result: Vec<InventoryModel> = Vec::new();
     let mut seen_names: HashSet<String> = HashSet::new();
     for model in models {
-        let enriched = enriched_model(provider_family, &model.name, model.context_limit);
+        let mut enriched = enriched_model(provider_family, &model.name, model.context_limit);
+        if enriched.reasoning.is_none() {
+            enriched.reasoning = Some(model.reasoning);
+        }
         if seen_names.insert(enriched.name.clone()) {
             result.push(enriched);
         }
@@ -1169,7 +1172,20 @@ fn inventory_models_from_snapshot(
 
     match snapshot {
         Some(snapshot) if !snapshot.models.is_empty() || snapshot.last_updated_at.is_some() => {
-            snapshot.models.clone()
+            let mut models = snapshot.models.clone();
+            for model in &mut models {
+                let Some(declared) = configured_models.iter().find(|info| info.name == model.id)
+                else {
+                    continue;
+                };
+                if model.reasoning.is_none() {
+                    model.reasoning = Some(declared.reasoning);
+                }
+                if model.context_limit.is_none() {
+                    model.context_limit = declared.context_limit;
+                }
+            }
+            models
         }
         _ => configured_models_to_inventory(provider_family, configured_models),
     }
@@ -1354,6 +1370,19 @@ mod tests {
     }
 
     #[test]
+    fn configured_models_carry_declared_reasoning_flag() {
+        let mut reasoning_model = ModelInfo::new("lucy");
+        reasoning_model.reasoning = true;
+        let mut plain_model = ModelInfo::new("helper");
+        plain_model.reasoning = false;
+
+        let models = configured_models_to_inventory("karmx", &[reasoning_model, plain_model]);
+
+        assert_eq!(models[0].reasoning, Some(true));
+        assert_eq!(models[1].reasoning, Some(false));
+    }
+
+    #[test]
     fn databricks_v2_inventory_prefers_goose_model_ids_for_duplicate_names() {
         let models = enrich_model_ids_with_canonical(
             "databricks_v2",
@@ -1428,6 +1457,45 @@ mod tests {
             inventory_models_from_snapshot(Some(&snapshot), "anthropic", &configured_models, true);
 
         assert!(models.is_empty());
+    }
+
+    #[test]
+    fn inventory_snapshot_models_inherit_declared_reasoning_and_context() {
+        let mut declared = ModelInfo::new("lucy");
+        declared.reasoning = true;
+        declared.context_limit = Some(131072);
+        let configured_models = [declared];
+        let snapshot = InventorySnapshot {
+            models: vec![
+                InventoryModel {
+                    id: "lucy".to_string(),
+                    name: "lucy".to_string(),
+                    family: None,
+                    context_limit: None,
+                    reasoning: None,
+                    recommended: false,
+                },
+                InventoryModel {
+                    id: "other".to_string(),
+                    name: "other".to_string(),
+                    family: None,
+                    context_limit: None,
+                    reasoning: None,
+                    recommended: false,
+                },
+            ],
+            last_updated_at: Some(Utc::now()),
+            last_refresh_attempt_at: Some(Utc::now()),
+            last_refresh_error: None,
+        };
+
+        let models =
+            inventory_models_from_snapshot(Some(&snapshot), "karmx_lucy", &configured_models, true);
+
+        assert_eq!(models[0].reasoning, Some(true));
+        assert_eq!(models[0].context_limit, Some(131072));
+        assert_eq!(models[1].reasoning, None);
+        assert_eq!(models[1].context_limit, None);
     }
 
     #[test]

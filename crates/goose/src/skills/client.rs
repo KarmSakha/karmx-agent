@@ -1,8 +1,8 @@
 use super::discover_skills_with_config;
 use super::loaded_skill_context_with_args;
-use crate::agents::ToolCallContext;
 use crate::agents::extension::PlatformExtensionContext;
 use crate::agents::mcp_client::{Error, McpClientTrait};
+use crate::agents::ToolCallContext;
 use crate::config::Config;
 use async_trait::async_trait;
 use goose_sdk_types::custom_requests::{SourceEntry, SourceType};
@@ -510,11 +510,9 @@ mod tests {
         );
         let client = test_client(project.path(), "disabled-plugin", false);
 
-        assert!(
-            client
-                .get_instructions()
-                .is_none_or(|instructions| !instructions.contains("disabled-plugin-skill"))
-        );
+        assert!(client
+            .get_instructions()
+            .is_none_or(|instructions| !instructions.contains("disabled-plugin-skill")));
 
         let ctx = ToolCallContext::new("test".to_string(), None, None);
         let args = serde_json::from_value(serde_json::json!({
@@ -637,12 +635,10 @@ mod tests {
         .unwrap()
         .with_builtin_skills(false);
 
-        assert!(
-            client
-                .discover_skills()
-                .iter()
-                .all(|skill| skill.source_type != SourceType::BuiltinSkill)
-        );
+        assert!(client
+            .discover_skills()
+            .iter()
+            .all(|skill| skill.source_type != SourceType::BuiltinSkill));
 
         let ctx = ToolCallContext::new("test".to_string(), None, None);
         let args: JsonObject =

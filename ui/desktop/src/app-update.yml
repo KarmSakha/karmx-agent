@@ -1,4 +1,4 @@
 provider: github
-owner: aaif-goose
-repo: goose
-updaterCacheDirName: goose-updater
+owner: KarmSakha
+repo: karmx-agent
+updaterCacheDirName: karmx-updater

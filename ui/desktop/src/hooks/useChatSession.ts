@@ -110,7 +110,7 @@ export function useChatSession({
   const onFinish = useCallback(
     async (error?: string): Promise<void> => {
       if (error) {
-        toastError({ title: "Couldn't send message", msg: error });
+        toastError({ title: "Couldn't complete request", msg: error }, { autoClose: false });
       } else {
         try {
           const [notificationsEnabled, anyWindowFocused] = await Promise.all([

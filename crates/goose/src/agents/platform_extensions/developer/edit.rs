@@ -115,6 +115,20 @@ impl EditTools {
     ) -> CallToolResult {
         let path = resolve_path(&params.path, working_dir);
 
+        // A no-op edit reported as success sends a weak model into a retry loop
+        // (seen with a 26B local model: seven identical calls, each "Edited ...").
+        if params.before.is_empty() {
+            return CallToolResult::error(vec![visible_text(
+                "Nothing to replace: `before` is empty. Pass the exact existing text to replace, or use `write` to create or overwrite the file.".to_string(),
+            )]);
+        }
+        if params.before == params.after {
+            return CallToolResult::error(vec![visible_text(format!(
+                "No change made to {}: `before` and `after` are identical. Put the new text in `after`.",
+                params.path
+            ))]);
+        }
+
         let content = match fs::read_to_string(&path) {
             Ok(c) => c,
             Err(error) => {
@@ -412,6 +426,42 @@ mod tests {
         let content = fs::read_to_string(&path).unwrap();
         assert!(content.contains("println!(\"world\");"));
         assert!(!content.contains("println!(\"hello\");"));
+    }
+
+    #[test]
+    fn test_file_edit_identical_before_and_after_is_rejected() {
+        let dir = setup();
+        let path = dir.path().join("edit.txt");
+        fs::write(&path, "return total\n").unwrap();
+        let tools = EditTools::new();
+
+        let result = tools.file_edit(FileEditParams {
+            path: path.to_string_lossy().to_string(),
+            before: "return total".to_string(),
+            after: "return total".to_string(),
+        });
+
+        assert!(result.is_error.unwrap_or(false));
+        assert!(extract_text(&result).contains("identical"));
+        assert_eq!(fs::read_to_string(&path).unwrap(), "return total\n");
+    }
+
+    #[test]
+    fn test_file_edit_empty_before_is_rejected() {
+        let dir = setup();
+        let path = dir.path().join("edit.txt");
+        fs::write(&path, "content").unwrap();
+        let tools = EditTools::new();
+
+        let result = tools.file_edit(FileEditParams {
+            path: path.to_string_lossy().to_string(),
+            before: String::new(),
+            after: "inserted".to_string(),
+        });
+
+        assert!(result.is_error.unwrap_or(false));
+        assert!(extract_text(&result).contains("`before` is empty"));
+        assert_eq!(fs::read_to_string(&path).unwrap(), "content");
     }
 
     #[test]

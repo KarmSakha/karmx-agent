@@ -8,6 +8,7 @@ let cfg = {
   asar: true,
   extraResource: ['src/bin', 'src/images', 'src/app-update.yml'],
   icon: 'src/images/icon',
+  appBundleId: process.env.KARMX_BUNDLE_ID || 'com.karmsakha.karmx',
   // Windows specific configuration
   win32: {
     icon: 'src/images/icon.ico',
@@ -20,7 +21,7 @@ let cfg = {
   protocols: [
     {
       name: 'GooseProtocol',
-      schemes: ['goose'],
+      schemes: ['goose', 'karmx'],
     },
   ],
   // macOS Info.plist extensions for drag-and-drop support
@@ -36,25 +37,55 @@ let cfg = {
     ],
     // Usage descriptions for macOS TCC (Transparency, Consent, and Control)
     NSMicrophoneUsageDescription:
-      'Goose needs access to your microphone for voice dictation.',
+      'KarmX needs access to your microphone for voice dictation.',
     NSAppleEventsUsageDescription:
-      'Goose needs access to send Apple Events to control other apps on your behalf.',
+      'KarmX needs access to send Apple Events to control other apps on your behalf.',
   },
 };
 
 // macOS code signing and notarization via Electron Forge
-// Activated when APPLE_TEAM_ID is set (CI signing builds)
-if (process.env.APPLE_TEAM_ID) {
+// Signing is activated when APPLE_TEAM_ID is set (CI signing builds) or a
+// Developer ID identity is available in the keychain (local builds).
+const notaryProfile = process.env.KARMX_NOTARY_PROFILE;
+const hasAppleIdCreds = process.env.APPLE_ID && process.env.APPLE_ID_PASSWORD;
+const hasAscKeyCreds =
+  process.env.APPLE_API_KEY && process.env.APPLE_API_KEY_ID && process.env.APPLE_API_ISSUER;
+const shouldSign = Boolean(
+  process.env.APPLE_TEAM_ID ||
+    process.env.OSX_SIGN_IDENTITY ||
+    notaryProfile ||
+    hasAppleIdCreds ||
+    hasAscKeyCreds
+);
+
+if (shouldSign) {
   cfg.osxSign = {
     keychain: process.env.KEYCHAIN_PATH || undefined,
-    entitlements: 'entitlements.plist',
-    'entitlements-inherit': 'entitlements.plist',
+    identity: process.env.OSX_SIGN_IDENTITY || undefined,
+    optionsForFile: () => ({
+      hardenedRuntime: true,
+      entitlements: resolve(__dirname, 'entitlements.plist'),
+    }),
+    // Data resources are sealed by the enclosing bundle; only code needs its own signature.
+    ignore: (file) => /\.(pak|png|jpe?g|gif|webp|ico|icns|woff2?|ttf|otf|pdf|mp[34]|wasm)$/i.test(file),
   };
-  cfg.osxNotarize = {
-    appleId: process.env.APPLE_ID,
-    appleIdPassword: process.env.APPLE_ID_PASSWORD,
-    teamId: process.env.APPLE_TEAM_ID,
-  };
+
+  if (notaryProfile) {
+    // Credentials stored via `xcrun notarytool store-credentials`
+    cfg.osxNotarize = { keychainProfile: notaryProfile };
+  } else if (hasAppleIdCreds) {
+    cfg.osxNotarize = {
+      appleId: process.env.APPLE_ID,
+      appleIdPassword: process.env.APPLE_ID_PASSWORD,
+      teamId: process.env.APPLE_TEAM_ID,
+    };
+  } else if (hasAscKeyCreds) {
+    cfg.osxNotarize = {
+      key: process.env.APPLE_API_KEY,
+      keyId: process.env.APPLE_API_KEY_ID,
+      keyIssuer: process.env.APPLE_API_ISSUER,
+    };
+  }
 }
 
 module.exports = {
@@ -65,8 +96,8 @@ module.exports = {
       name: '@electron-forge/publisher-github',
       config: {
         repository: {
-          owner: process.env.GITHUB_OWNER || 'aaif-goose',
-          name: process.env.GITHUB_REPO || 'goose',
+          owner: process.env.GITHUB_OWNER || 'KarmSakha',
+          name: process.env.GITHUB_REPO || 'karmx-agent',
         },
         prerelease: false,
         draft: true,
@@ -82,6 +113,22 @@ module.exports = {
         options: {
           icon: 'src/images/icon.ico',
         },
+      },
+    },
+    {
+      name: '@electron-forge/maker-dmg',
+      platforms: ['darwin'],
+      config: {
+        format: 'ULFO',
+        window: {
+          size: { width: 640, height: 432 },
+        },
+        // Cline-style installer layout: app on the left, Applications on the right
+        contents: (opts: { appPath: string }) => [
+          { x: 140, y: 200, type: 'file', path: opts.appPath },
+          { x: 500, y: 200, type: 'link', path: '/Applications' },
+        ],
+        background: process.env.KARMX_DMG_BACKGROUND ?? 'src/images/dmg-background.png',
       },
     },
     {

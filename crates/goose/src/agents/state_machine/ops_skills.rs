@@ -3,28 +3,28 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use goose_sdk_types::custom_requests::{SourceEntry, SourceType};
 use rmcp::model::{CallToolResult, ContentBlock, ErrorData, JsonObject, Tool};
-use schemars::{JsonSchema, schema_for};
+use schemars::{schema_for, JsonSchema};
 use serde::Deserialize;
 use serde_json::Value;
 use tracing_futures::Instrument;
 
-use crate::agents::ExtensionManager;
 use crate::agents::state_machine::ops_toolcalling::{
-    ToolDisposition, emit_post_tool_use, pending_advertised_tool_requests, run_pre_tool_hooks,
-    tool_span,
+    emit_post_tool_use, pending_advertised_tool_requests, run_pre_tool_hooks, tool_span,
+    ToolDisposition,
 };
 use crate::agents::state_machine::{
-    ConversationEffect, Emitter, GooseEffect, Operation, OperationResult, SlashCommand, applied,
-    messages_since_kickoff, not_applicable, yielded_with,
+    applied, messages_since_kickoff, not_applicable, yielded_with, ConversationEffect, Emitter,
+    GooseEffect, Operation, OperationResult, SlashCommand,
 };
 use crate::agents::tool_execution::{CHAT_MODE_TOOL_SKIPPED_RESPONSE, DECLINED_RESPONSE};
+use crate::agents::ExtensionManager;
 use crate::config::GooseMode;
-use crate::conversation::Conversation;
 use crate::conversation::message::Message;
+use crate::conversation::Conversation;
 use crate::hooks::HookManager;
 use crate::session::Session;
 

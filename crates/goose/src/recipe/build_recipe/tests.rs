@@ -410,9 +410,9 @@ fn test_template_inheritance() {
     .unwrap();
     assert_eq!(parent_recipe.description, "Parent recipe");
     assert_eq!(
-            parent_recipe.prompt.unwrap(),
-            "show me the news for day: today\nWhat is the capital of France?\n\n    Feature is enabled.\n"
-        );
+        parent_recipe.prompt.unwrap(),
+        "show me the news for day: today\nWhat is the capital of France?\n\n    Feature is enabled.\n"
+    );
     assert_eq!(parent_recipe.parameters.as_ref().unwrap().len(), 2);
     assert_eq!(parent_recipe.parameters.as_ref().unwrap()[0].key, "date");
     assert_eq!(
@@ -430,9 +430,9 @@ fn test_template_inheritance() {
     assert_eq!(child_recipe.title, "Parent");
     assert_eq!(child_recipe.description, "Parent recipe");
     assert_eq!(
-            child_recipe.prompt.unwrap().trim(),
-            "show me the news for day: today\nWhat is the capital of Germany?\n\n    Feature is enabled."
-        );
+        child_recipe.prompt.unwrap().trim(),
+        "show me the news for day: today\nWhat is the capital of Germany?\n\n    Feature is enabled."
+    );
     assert_eq!(child_recipe.parameters.as_ref().unwrap().len(), 2);
     assert_eq!(child_recipe.parameters.as_ref().unwrap()[0].key, "date");
     assert_eq!(

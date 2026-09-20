@@ -356,6 +356,14 @@ impl GooseAcpAgent {
         self.on_delete_provider_secret(req).await
     }
 
+    #[custom_method(EnhancePromptRequest)]
+    async fn dispatch_enhance_prompt(
+        &self,
+        req: EnhancePromptRequest,
+    ) -> Result<EnhancePromptResponse, agent_client_protocol::Error> {
+        self.on_enhance_prompt(req).await
+    }
+
     #[custom_method(CanonicalModelInfoRequest)]
     async fn dispatch_canonical_model_info(
         &self,

@@ -3,7 +3,7 @@
 Working notes for repairing what the merges with `origin/main` lost. Delete this file
 before the branch merges.
 
-**Status: sections 1–3 are done.** `cargo test -p goose` is down to the 4 `jsonwebtoken`
+**Status: sections 1–3 are done.** `cargo test -p karmx` is down to the 4 `jsonwebtoken`
 lib failures and the 6 network-dependent `tests/providers.rs` failures, both environmental.
 `cargo test -p goose-cli` is fully green. Outside `state_machine/**` the diff against
 `origin/main` went from 50 files / +1688 / -1237 to 50 files / +1657 / **-620**; every
@@ -13,7 +13,7 @@ Two problems turned up during the work that were not merge damage:
 
 - `cargo build -p goose-cli` did not compile on this branch at all. `ActionRequiredData`
   gained a `ToolConfirmationResponse` variant but `session/export.rs` was never given the
-  arm, and the crate is not covered by `cargo test -p goose`. Fixed here, along with the
+  arm, and the crate is not covered by `cargo test -p karmx`. Fixed here, along with the
   missing `MessageContent::Error` arm.
 - `tests/schedule_tool_security.rs::parse_errors_do_not_reflect_recipe_contents` was
   failing. Extracting `ScheduleTool` replaced the parse-by-extension check with
@@ -23,7 +23,7 @@ Two problems turned up during the work that were not merge damage:
   wording, which `recipe_scheduling_lifecycle` depends on.
 - The platform-extension prompt snapshot had been regenerated without the `code-mode`
   feature, so it lost the `code_execution` section and only matched under
-  `cargo test -p goose`. Regenerated with the workspace feature set: it now differs from
+  `cargo test -p karmx`. Regenerated with the workspace feature set: it now differs from
   main by the `## scheduler` section alone. Run the workspace form before touching that
   snapshot again.
 - The scheduler extension contributed a bare `## scheduler` heading to every system prompt.
@@ -45,8 +45,8 @@ Work was lost in both directions:
 - the branch's own `MessageContent::Error` rendering in ACP and the markdown export was
   overwritten by a later merge taking main's side
 
-Nine tests fail because of this: 7 in `crates/goose/tests/agent.rs`, 2 in
-`crates/goose/tests/compaction.rs`. (The 4 `jsonwebtoken` failures in the lib and the 6 in
+Nine tests fail because of this: 7 in `crates/karmx/tests/agent.rs`, 2 in
+`crates/karmx/tests/compaction.rs`. (The 4 `jsonwebtoken` failures in the lib and the 6 in
 `tests/providers.rs` are environmental — no outbound network — and are not ours.)
 
 Patching the visible symptoms would leave us guessing about the rest, so the two big files
@@ -54,7 +54,7 @@ get rebuilt from `origin/main` and the state-machine integration is reapplied on
 
 ## 1. Rebuild from `origin/main` — done
 
-### `crates/goose/src/agents/agent.rs`
+### `crates/karmx/src/agents/agent.rs`
 
 Restore main's version, then reapply only:
 
@@ -88,7 +88,7 @@ over:
 - `stop_hook_context` losing `.with_working_dir(...)` (see section 2)
 - `command_starts_turn` inlined at the `/goal` `/grind` call site (see section 2)
 
-### `crates/goose/src/agents/reply_parts.rs`
+### `crates/karmx/src/agents/reply_parts.rs`
 
 Restore main's version, then reapply only the extraction that `ops_llm` calls:
 
@@ -120,7 +120,7 @@ Restore main's version (it has #10493's `is_user_visible` guard and `user_visibl
 projection in both render paths), then re-add just the `MessageContent::Error` arms and the
 `ActionRequiredData::ToolConfirmationResponse` arms.
 
-### `crates/goose/tests/agent.rs`, `crates/goose/tests/compaction.rs`, `crates/goose/src/agents/execute_commands.rs`
+### `crates/karmx/tests/agent.rs`, `crates/karmx/tests/compaction.rs`, `crates/karmx/src/agents/execute_commands.rs`
 
 Restore the deleted upstream tests and the `command_starts_turn` helper (with its test).
 `execute_commands.rs` keeps its branch changes otherwise: `is_known_slash_command`, the
@@ -131,14 +131,14 @@ recipe-persisting `resolve_command`, `Conversation::last`.
 - `stop_hook_context` gets `.with_working_dir(...)` back. It was the last caller, so
   `HookContext::working_dir` currently serialises as `null` for *every* hook event, not just
   Stop. Hook plugins read that field.
-- `crates/goose/src/providers/oauth.rs` — the `test_token_cache` rewrite is unrelated to
+- `crates/karmx/src/providers/oauth.rs` — the `test_token_cache` rewrite is unrelated to
   this branch. Revert it.
 - Comments deleted from non-state-machine tests (e.g. the audience note in
   `tests/compaction.rs::assert_conversation_compacted`) come back.
 
 ## 3. Re-land branch work a later merge dropped — done
 
-- `crates/goose/src/acp/server.rs` — `MessageContent::Error` as an agent message chunk, and
+- `crates/karmx/src/acp/server.rs` — `MessageContent::Error` as an agent message chunk, and
   `Error(CreditsExhausted)` routed through `prompt_error_from_message_content` so the
   desktop payment flow still fires. Today that function only matches `SystemNotification`,
   so a provider error under the state machine is invisible on desktop.
@@ -180,8 +180,8 @@ until those are dealt with.
 After each file:
 
 ```bash
-cargo test -p goose --test agent --test compaction
-cargo test -p goose --lib agents::state_machine
+cargo test -p karmx --test agent --test compaction
+cargo test -p karmx --lib agents::state_machine
 ```
 
 Green on all three is the evidence that the rebuild restored what the merge dropped. Then:
@@ -189,7 +189,7 @@ Green on all three is the evidence that the rebuild restored what the merge drop
 ```bash
 cargo fmt
 cargo clippy --all-targets -- -D warnings
-cargo test -p goose --no-fail-fast
+cargo test -p karmx --no-fail-fast
 ```
 
 Expect the 4 `jsonwebtoken` lib failures and the 6 network-dependent `tests/providers.rs`

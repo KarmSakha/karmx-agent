@@ -1,0 +1,91 @@
+[
+  {
+    "case": "javascript_feature",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 100.4,
+    "verification_error": null
+  },
+  {
+    "case": "file_unicode",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 33.3,
+    "verification_error": null,
+    "prompt_revision": "explicit BEGIN/END delimiters"
+  },
+  {
+    "case": "python_bug",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 46.6,
+    "verification_error": null
+  },
+  {
+    "case": "csv_analysis",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 39.9,
+    "verification_error": null
+  },
+  {
+    "case": "multi_file_refactor",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 39.1,
+    "verification_error": null
+  },
+  {
+    "case": "shell_recovery",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 39.1,
+    "verification_error": null
+  },
+  {
+    "case": "documentation",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 77.9,
+    "verification_error": null
+  },
+  {
+    "case": "state_machine",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 28.5,
+    "verification_error": null
+  },
+  {
+    "case": "frontend",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 212.2,
+    "verification_error": null
+  },
+  {
+    "case": "research",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 92.5,
+    "verification_error": null
+  },
+  {
+    "case": "sql",
+    "passed": true,
+    "timeout": false,
+    "exit": 0,
+    "seconds": 21.1,
+    "verification_error": null
+  }
+]

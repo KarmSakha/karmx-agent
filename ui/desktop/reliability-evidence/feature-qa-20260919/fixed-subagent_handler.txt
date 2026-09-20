@@ -1,0 +1,7 @@
+
+running 2 tests
+test agents::subagent_handler::tests::create_tool_notification_for_tool_request ... ok
+test agents::subagent_handler::tests::create_tool_notification_ignores_non_tool_request ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2378 filtered out; finished in 0.00s
+

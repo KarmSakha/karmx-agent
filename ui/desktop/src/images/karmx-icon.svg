@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs><linearGradient id="surface" x2="0.8" y2="1"><stop stop-color="#383630"/><stop offset="1" stop-color="#191a18"/></linearGradient><linearGradient id="copper" x2="1" y2="1"><stop stop-color="#efba98"/><stop offset="1" stop-color="#c87955"/></linearGradient></defs>
+<rect x="48" y="48" width="928" height="928" rx="216" fill="url(#surface)"/>
+<rect x="49" y="49" width="926" height="926" rx="215" fill="none" stroke="#ffffff" stroke-opacity=".13" stroke-width="2"/>
+<path d="M280 260H386V464L590 260H733L483 510L752 764H603L386 554V764H280Z" fill="#f7f3e9"/>
+<path d="M579 439L719 299L780 360L640 500Z" fill="url(#copper)"/>
+<path d="M644 549L784 689L723 750L583 610Z" fill="url(#copper)"/>
+</svg>

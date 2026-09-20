@@ -432,8 +432,7 @@ pub async fn transcribe_with_provider(
 }
 
 const MODEL_TRANSCRIPTION_TIMEOUT: Duration = Duration::from_secs(60);
-const TRANSCRIPTION_SYSTEM_PROMPT: &str =
-    "Transcribe the following audio exactly as spoken. Output only the transcription text, with no commentary, labels, formatting, or explanation.";
+const TRANSCRIPTION_SYSTEM_PROMPT: &str = "Transcribe the following audio exactly as spoken. Output only the transcription text, with no commentary, labels, formatting, or explanation.";
 
 pub async fn transcribe_with_model(audio_bytes: Vec<u8>, audio_format: &str) -> Result<String> {
     let config = Config::global();

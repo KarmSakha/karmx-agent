@@ -1,0 +1,90 @@
+[
+  {
+    "ts": "2026-09-19T06:38:53.332187+00:00",
+    "instructions": "Pick the installed skill that best matches the user's request, or 'none'.",
+    "choice": "none",
+    "status": 200,
+    "error": null,
+    "elapsed_ms": 1055
+  },
+  {
+    "ts": "2026-09-19T06:39:11.939176+00:00",
+    "instructions": "Pick the page element the instruction refers to, or 'none' when none match.",
+    "choice": "0",
+    "status": 200,
+    "error": null,
+    "elapsed_ms": 386
+  },
+  {
+    "ts": "2026-09-19T06:39:17.706689+00:00",
+    "instructions": "Pick the page element the instruction refers to, or 'none' when none match.",
+    "choice": "2",
+    "status": 200,
+    "error": null,
+    "elapsed_ms": 383
+  },
+  {
+    "ts": "2026-09-19T06:39:17.758192+00:00",
+    "instructions": "Pick the page element the instruction refers to, or 'none' when none match.",
+    "choice": "none",
+    "status": 200,
+    "error": null,
+    "elapsed_ms": 437
+  },
+  {
+    "ts": "2026-09-19T06:40:19.114113+00:00",
+    "instructions": "Pick the page element the instruction refers to, or 'none' when none match.",
+    "choice": "none",
+    "status": 200,
+    "error": null,
+    "elapsed_ms": 386
+  },
+  {
+    "ts": "2026-09-19T06:42:38.916372+00:00",
+    "instructions": "Pick the installed skill that best matches the user's request, or 'none'.",
+    "choice": "clicker",
+    "status": 200,
+    "error": null,
+    "elapsed_ms": 1003
+  },
+  {
+    "ts": "2026-09-19T06:43:46.569177+00:00",
+    "instructions": "Pick the installed skill that best matches the user's request, or 'none'.",
+    "choice": "none",
+    "status": 200,
+    "error": null,
+    "elapsed_ms": 393
+  },
+  {
+    "ts": "2026-09-19T06:46:22.511152+00:00",
+    "instructions": "Pick the installed skill that best matches the user's request, or 'none'.",
+    "choice": "none",
+    "status": 200,
+    "error": null,
+    "elapsed_ms": 1133
+  },
+  {
+    "ts": "2026-09-19T06:52:32.506240+00:00",
+    "instructions": "Pick the installed skill that best matches the user's request, or 'none'.",
+    "choice": "none",
+    "status": 200,
+    "error": null,
+    "elapsed_ms": 1099
+  },
+  {
+    "ts": "2026-09-19T06:52:52.974956+00:00",
+    "instructions": "Pick the installed skill that best matches the user's request, or 'none'.",
+    "choice": "none",
+    "status": 200,
+    "error": null,
+    "elapsed_ms": 435
+  },
+  {
+    "ts": "2026-09-19T06:53:20.221292+00:00",
+    "instructions": "Pick the installed skill that best matches the user's request, or 'none'.",
+    "choice": "none",
+    "status": 200,
+    "error": null,
+    "elapsed_ms": 378
+  }
+]

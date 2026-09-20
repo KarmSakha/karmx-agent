@@ -197,7 +197,10 @@ fn validate_optional_parameters(parameters: &Option<Vec<RecipeParameter>>) -> Re
         .collect();
 
     if !file_params_with_defaults.is_empty() {
-        return Err(anyhow::anyhow!("File parameters cannot have default values to avoid importing sensitive user files: {}", file_params_with_defaults.join(", ")));
+        return Err(anyhow::anyhow!(
+            "File parameters cannot have default values to avoid importing sensitive user files: {}",
+            file_params_with_defaults.join(", ")
+        ));
     }
 
     let optional_params_without_default_values: Vec<String> = params
@@ -211,7 +214,10 @@ fn validate_optional_parameters(parameters: &Option<Vec<RecipeParameter>>) -> Re
     if optional_params_without_default_values.is_empty() {
         Ok(())
     } else {
-        Err(anyhow::anyhow!("Optional parameters missing default values in the recipe: {}. Please provide defaults.", optional_params_without_default_values.join(", ")))
+        Err(anyhow::anyhow!(
+            "Optional parameters missing default values in the recipe: {}. Please provide defaults.",
+            optional_params_without_default_values.join(", ")
+        ))
     }
 }
 

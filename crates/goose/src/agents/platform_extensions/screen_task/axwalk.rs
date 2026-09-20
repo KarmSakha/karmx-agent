@@ -82,7 +82,7 @@ pub fn snapshot(display: &Frame) -> Option<AxInfo> {
     })
 }
 
-fn frontmost() -> Option<(String, i32)> {
+pub(super) fn frontmost() -> Option<(String, i32)> {
     use objc2_app_kit::NSWorkspace;
     let app = NSWorkspace::sharedWorkspace().frontmostApplication()?;
     let name = app

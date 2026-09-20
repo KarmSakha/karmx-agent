@@ -1,0 +1,54 @@
+[
+  {
+    "case": "skill",
+    "model": "jev-1.13.0",
+    "answer": {
+      "type": "choice",
+      "choice": "clicker",
+      "confidence": 0.78,
+      "probabilities": {
+        "react-specialist": 0.0,
+        "none": 0.15,
+        "clicker": 0.85
+      }
+    },
+    "expected": "clicker",
+    "pass": true,
+    "elapsed_ms": 1011
+  },
+  {
+    "case": "browser",
+    "model": "jev-1.13.0",
+    "answer": {
+      "type": "choice",
+      "choice": "confirm",
+      "confidence": 0.96,
+      "probabilities": {
+        "name": 0.0,
+        "none": 0.03,
+        "confirm": 0.97,
+        "save": 0.0
+      }
+    },
+    "expected": "confirm",
+    "pass": true,
+    "elapsed_ms": 980
+  },
+  {
+    "case": "screen",
+    "model": "jev-1.13.0",
+    "answer": {
+      "type": "choice",
+      "choice": "multiply",
+      "confidence": 1.0,
+      "probabilities": {
+        "divide": 0.0,
+        "multiply": 1.0,
+        "none": 0.0
+      }
+    },
+    "expected": "multiply",
+    "pass": true,
+    "elapsed_ms": 1038
+  }
+]

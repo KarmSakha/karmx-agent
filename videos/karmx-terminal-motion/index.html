@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>karmX — your terminal-based coding agent</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #000000;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #000000;
+      }
+      #karmx-main {
+        position: absolute;
+        inset: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-s1pe" id="root" data-composition-id="main" data-start="0" data-duration="38" data-fps="30" data-width="1920" data-height="1080">
+      <div data-hf-id="hf-fzsk" id="karmx-main" class="clip" data-composition-id="karmx-terminal-motion" data-composition-src="compositions/index.html" data-start="0" data-duration="38" data-track-index="0"></div>
+      <audio data-hf-id="hf-98ul" id="bgm" src="assets/audio/bgm.mp3" data-start="0" data-duration="38" data-track-index="10" data-volume="0.72" data-automation="{&quot;version&quot;:1,&quot;lanes&quot;:[{&quot;target&quot;:&quot;volume&quot;,&quot;points&quot;:[{&quot;t&quot;:0,&quot;v&quot;:0},{&quot;t&quot;:1.6,&quot;v&quot;:1,&quot;curve&quot;:0.3},{&quot;t&quot;:34.8,&quot;v&quot;:1},{&quot;t&quot;:38,&quot;v&quot;:0}]}]}" data-fx-chain="{&quot;version&quot;:1,&quot;nodes&quot;:[{&quot;type&quot;:&quot;highpass&quot;,&quot;id&quot;:&quot;n1&quot;,&quot;label&quot;:&quot;Remove Rumble&quot;,&quot;params&quot;:{&quot;frequency&quot;:70,&quot;q&quot;:0.707,&quot;poles&quot;:&quot;2&quot;}},{&quot;type&quot;:&quot;lowpass&quot;,&quot;id&quot;:&quot;n2&quot;,&quot;label&quot;:&quot;Darken Bed&quot;,&quot;params&quot;:{&quot;frequency&quot;:10500,&quot;q&quot;:0.707,&quot;poles&quot;:&quot;2&quot;}},{&quot;type&quot;:&quot;limiter&quot;,&quot;id&quot;:&quot;n3&quot;,&quot;label&quot;:&quot;Peak Ceiling&quot;,&quot;params&quot;:{&quot;limit&quot;:-1.5,&quot;attack&quot;:5,&quot;release&quot;:80,&quot;level_out&quot;:0}}]}"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

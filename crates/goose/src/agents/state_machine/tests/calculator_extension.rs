@@ -7,9 +7,9 @@ use rmcp::model::{
     InitializeResult, JsonObject, ListPromptsResult, ListToolsResult, Prompt, PromptMessage, Role,
     ServerCapabilities, ServerNotification, Tool,
 };
-use schemars::{JsonSchema, schema_for};
+use schemars::{schema_for, JsonSchema};
 use serde::Deserialize;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 

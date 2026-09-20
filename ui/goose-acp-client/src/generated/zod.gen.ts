@@ -970,6 +970,19 @@ export const zProviderSecretDeleteRequest_unstable = z.object({
     id: z.string()
 });
 
+export const zEnhancePromptRequest_unstable = z.object({
+    prompt: z.string(),
+    workingDir: z.string(),
+    sessionId: z.string().nullish().default(null),
+    recentContext: z.string().optional().default('')
+});
+
+export const zEnhancePromptResponse_unstable = z.object({
+    prompt: z.string(),
+    wasEnhanced: z.boolean(),
+    errorMessage: z.string().nullish()
+});
+
 /**
  * Look up canonical (bundled-registry) model info for a provider/model pair.
  */
@@ -2331,6 +2344,7 @@ export const zExtRequest = z.object({
             zProviderConfigAuthenticateRequest_unstable,
             zProviderSecretsListRequest_unstable,
             zProviderSecretDeleteRequest_unstable,
+            zEnhancePromptRequest_unstable,
             zCanonicalModelInfoRequest_unstable,
             zPreferencesReadRequest_unstable,
             zPreferencesSaveRequest_unstable,
@@ -2439,6 +2453,7 @@ export const zExtResponse = z.union([
                 zProviderConfigStatusResponse_unstable,
                 zProviderConfigChangeResponse_unstable,
                 zProviderSecretsListResponse_unstable,
+                zEnhancePromptResponse_unstable,
                 zCanonicalModelInfoResponse_unstable,
                 zPreferencesReadResponse_unstable,
                 zConfigReadResponse_unstable,

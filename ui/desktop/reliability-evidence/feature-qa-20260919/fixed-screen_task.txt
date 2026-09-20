@@ -1,0 +1,12 @@
+
+running 7 tests
+test agents::platform_extensions::screen_task::decide::tests::kind_options_stay_mutually_exclusive ... ok
+test agents::platform_extensions::screen_task::items::tests::ax_overlap_merges_into_ax_ocr ... ok
+test agents::platform_extensions::screen_task::items::tests::disjoint_sources_both_listed_and_indexed ... ok
+test agents::platform_extensions::screen_task::items::tests::region_clamps_far_offscreen_centers ... ok
+test agents::platform_extensions::screen_task::runner::tests::app_guard_rejects_the_wrong_foreground ... ok
+test agents::platform_extensions::screen_task::runner::tests::dry_run_senses_the_frontmost_app ... ignored, needs Screen Recording + Accessibility and a live Jev key
+test agents::platform_extensions::screen_task::tests::sensitive_goals_are_flagged ... ok
+
+test result: ok. 6 passed; 0 failed; 1 ignored; 0 measured; 2373 filtered out; finished in 0.00s
+

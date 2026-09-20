@@ -31,8 +31,8 @@ struct ModelRow {
     effort: ThinkingEffort,
 }
 
-/// Interactive `/model` overlay: type to search, ↑↓ to move, → to cycle
-/// thinking effort, tab to edit the sidekick, enter/← to confirm, esc to cancel.
+/// Interactive `/model` overlay: type to search, ↑↓ to move, tab/→ to cycle
+/// thinking effort, ⇧tab to edit the sidekick, enter/← to confirm, esc to cancel.
 pub fn run(cache: &Arc<RwLock<CompletionCache>>) -> Option<InputResult> {
     if !std::io::stdout().is_terminal() {
         return None;
@@ -84,7 +84,9 @@ fn collect_model_rows(
         if !seen.insert((provider.clone(), model.clone())) {
             return;
         }
-        let reasoning = ModelConfig::new(&model).is_reasoning_model();
+        let reasoning = goose::providers::canonical_cost::declared_model_info(&provider, &model)
+            .map(|info| info.reasoning)
+            .unwrap_or_else(|| ModelConfig::new(&model).is_reasoning_model());
         rows.push(ModelRow {
             provider,
             model,
@@ -237,6 +239,22 @@ fn run_overlay(rows: &mut [ModelRow], cache: &Arc<RwLock<CompletionCache>>) -> O
                 }
             }
             Key::Tab => {
+                let cycled = focus == Focus::Lead
+                    && matches!(list.get(selected), Some(ListEntry::Model(idx)) if rows[*idx].reasoning);
+                if cycled {
+                    if let Some(ListEntry::Model(idx)) = list.get(selected) {
+                        rows[*idx].effort = cycle_effort(rows[*idx].effort);
+                    }
+                } else {
+                    query.clear();
+                    focus = match focus {
+                        Focus::Lead => Focus::Sidekick,
+                        Focus::Sidekick => Focus::Lead,
+                    };
+                    selected = 0;
+                }
+            }
+            Key::BackTab => {
                 query.clear();
                 focus = match focus {
                     Focus::Lead => Focus::Sidekick,
@@ -457,7 +475,7 @@ fn draw(term: &mut Term, view: OverlayView<'_>) -> std::io::Result<usize> {
     ));
     lines.push(format!(
         "  {}",
-        style("↑↓ select  → reasoning  ←/enter confirm  tab sidekick  esc cancel").dim()
+        style("↑↓ select  tab/→ thinking  ←/enter confirm  ⇧tab sidekick  esc cancel").dim()
     ));
 
     for line in &lines {

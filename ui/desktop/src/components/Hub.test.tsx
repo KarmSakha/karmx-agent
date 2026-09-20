@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { act, render } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Hub from './Hub';
 import { IntlTestWrapper } from '../i18n/test-utils';
@@ -10,6 +10,7 @@ import { UserInput } from '../types/message';
 
 type ChatInputCapture = {
   draftRef?: { current: string };
+  suggestedPrompt?: string;
   handleSubmit: (input: UserInput) => void;
 };
 
@@ -80,6 +81,16 @@ describe('Hub', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     captured.chatInput = null;
+  });
+
+  it('adds a task starter to an existing draft without starting a session', async () => {
+    const draftRef = { current: DRAFT };
+    renderHub(draftRef);
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: /Understand/ })));
+    expect(draftRef.current).toContain(DRAFT);
+    expect(draftRef.current).toContain('Explore this project');
+    expect(captured.chatInput?.suggestedPrompt).toBe(draftRef.current);
+    expect(createSession).not.toHaveBeenCalled();
   });
 
   it('hands the draft to the input', () => {

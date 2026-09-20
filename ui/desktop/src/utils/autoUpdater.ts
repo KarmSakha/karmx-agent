@@ -342,8 +342,8 @@ export function setupAutoUpdater(tray?: Tray) {
   // Set the feed URL for GitHub releases
   const feedConfig = {
     provider: 'github' as const,
-    owner: 'aaif-goose',
-    repo: 'goose',
+    owner: process.env.GITHUB_OWNER || 'KarmSakha',
+    repo: process.env.GITHUB_REPO || 'karmx-agent',
     releaseType: 'release' as const,
   };
 
@@ -646,7 +646,7 @@ export function setupAutoUpdater(tray?: Tray) {
     // Show native notification
     const notification = new Notification({
       title: 'Update Ready',
-      body: `Version ${info.version} will be installed when you quit Goose. Click to install now.`,
+      body: `Version ${info.version} will be installed when you quit KarmX. Click to install now.`,
     });
     notification.show();
 
@@ -737,7 +737,7 @@ function updateTrayIcon(hasUpdate: boolean) {
     } else {
       iconPath = path.join(process.resourcesPath, 'images', 'iconTemplateUpdate.png');
     }
-    trayRef.setToolTip('Goose - Update Available');
+    trayRef.setToolTip('KarmX - Update Available');
   } else {
     // Use normal icon
     if (isDev) {
@@ -745,7 +745,7 @@ function updateTrayIcon(hasUpdate: boolean) {
     } else {
       iconPath = path.join(process.resourcesPath, 'images', 'iconTemplate.png');
     }
-    trayRef.setToolTip('Goose');
+    trayRef.setToolTip('KarmX');
   }
 
   const icon = nativeImage.createFromPath(iconPath);

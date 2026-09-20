@@ -67,14 +67,6 @@ pub(crate) fn resolve_pricing(provider: &str, model: &str) -> Option<Pricing> {
     }
 }
 
-/// [`ModelInfo`] for a pricing-declared model — custom provider config file
-/// first, then bundled definitions. Only models declaring both input and
-/// output prices qualify: partial pricing cannot be estimated correctly
-/// without silently pricing one direction at zero.
-pub(crate) fn configured_model_info(provider: &str, model: &str) -> Option<ModelInfo> {
-    custom_file_model_info(provider, model).or_else(|| bundled_model_info(provider, model))
-}
-
 /// The currency clients render alongside config-declared prices. Clients print
 /// this verbatim as a symbol, so the ISO codes configs commonly use (bundled
 /// definitions declare `USD`) are mapped to their symbol; anything else is
@@ -128,6 +120,20 @@ fn pricing_from_model_info(info: &ModelInfo) -> Option<Pricing> {
 /// Read the custom provider config file for `provider` from disk. Reads are
 /// live: price edits take effect without a restart.
 fn custom_file_model_info(provider: &str, model: &str) -> Option<ModelInfo> {
+    let config = custom_provider_config(provider)?;
+    full_pricing_model(&config, model)
+}
+
+/// Config-declared model metadata (reasoning flag, context limit) that is
+/// independent of pricing — the pricing-filtered lookups return `None` for
+/// free/self-hosted models and would hide these flags.
+pub fn declared_model_info(provider: &str, model: &str) -> Option<ModelInfo> {
+    custom_provider_config(provider)
+        .and_then(|config| config.models.iter().find(|m| m.name == model).cloned())
+        .or_else(|| bundled_model_entry(provider, model))
+}
+
+fn custom_provider_config(provider: &str) -> Option<DeclarativeProviderConfig> {
     let path = custom_provider_file_path(provider).ok()?;
     if !path.exists() {
         return None;
@@ -139,25 +145,29 @@ fn custom_file_model_info(provider: &str, model: &str) -> Option<ModelInfo> {
             return None;
         }
     };
-    let config = match deserialize_provider_config(&content) {
-        Ok(config) => config,
+    match deserialize_provider_config(&content) {
+        Ok(config) => Some(config),
         Err(e) => {
             warn!(provider = %provider, error = %e, "custom provider config failed to parse; cost fallback disabled");
-            return None;
+            None
         }
-    };
-    full_pricing_model(&config, model)
+    }
 }
 
-/// Bundled declarative provider definitions are embedded and immutable, so
-/// they are cached for the lifetime of the process.
-fn bundled_model_info(provider: &str, model: &str) -> Option<ModelInfo> {
+fn bundled_model_entry(provider: &str, model: &str) -> Option<ModelInfo> {
     static CONFIGS: OnceLock<Vec<DeclarativeProviderConfig>> = OnceLock::new();
     let configs = CONFIGS.get_or_init(|| fixed_provider_configs().unwrap_or_default());
     configs
         .iter()
         .find(|config| config.name == provider)
-        .and_then(|config| full_pricing_model(config, model))
+        .and_then(|config| config.models.iter().find(|m| m.name == model).cloned())
+}
+
+/// Bundled declarative provider definitions are embedded and immutable, so
+/// they are cached for the lifetime of the process.
+fn bundled_model_info(provider: &str, model: &str) -> Option<ModelInfo> {
+    bundled_model_entry(provider, model)
+        .filter(|info| info.input_token_cost.is_some() && info.output_token_cost.is_some())
 }
 
 /// A registry price that is unset or zero provides no usable rate signal
@@ -300,7 +310,7 @@ mod tests {
 
     #[test]
     fn bundled_provider_prices_are_respected() {
-        let info = configured_model_info("ovhcloud", "Qwen3-32B").unwrap();
+        let info = bundled_model_info("ovhcloud", "Qwen3-32B").unwrap();
         assert!((info.input_token_cost.unwrap() - 9e-8).abs() < 1e-12);
         let pricing = resolve_pricing("ovhcloud", "Qwen3-32B").unwrap();
         assert!((pricing.input.unwrap() - 0.09).abs() < 1e-9);

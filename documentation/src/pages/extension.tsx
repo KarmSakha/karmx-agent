@@ -11,7 +11,7 @@ export default function ExtensionRedirect(): JSX.Element {
 
   return (
     <div style={{ padding: '2rem', textAlign: 'center' }}>
-      Redirecting to Goose...
+      Redirecting to KarmX...
     </div>
   );
 }

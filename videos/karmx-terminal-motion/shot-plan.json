@@ -1,0 +1,119 @@
+{
+  "category": "kinetic-type",
+  "duration_s": 8,
+  "fps": 30,
+  "canvas": { "w": 1920, "h": 1080, "aspect": "16:9" },
+  "style": "Apple keynote product sting — pure-black stage, premium minimalism, huge confident grotesque typography with tight tracking, one phosphor-green accent, buttery power4.out ease-outs, subtle glow, product-reveal pacing",
+  "palette": ["#000000", "#F5F5F7", "#86868B", "#30D158"],
+  "font": "Inter",
+  "beats": [1.8, 3.4, 5.4, 7.0],
+  "export": "mp4",
+  "asset_needs": [],
+
+  "block": "focus-blur-resolve",
+  "customize": {
+    "note": "One full-duration .clip, four scene groups. Reuse-first: four registry components cover every named look; only the glow/caret/hold tweens are hand-authored vocabulary primitives (trivial GSAP, per motion-vocabulary.md).",
+    "components": {
+      "typed-prompt": {
+        "role": "scene 1 — the-prompt",
+        "text": "$ karmx run",
+        "cadence": "even 70ms/char (mechanical terminal, not human-chunked)",
+        "caret": "solid block caret, #30D158, 32x64px (0.5em x 1em), deterministic blink 0.53s integer cycle, caret rides the typing frontier",
+        "style": "bare line, no window chrome, no panel — pure-black stage"
+      },
+      "focus-blur-resolve": {
+        "role": "scene 2 — the-resolve (DOMINANT MOTIF)",
+        "text": "karmX",
+        "resolve": "from { opacity: 0, filter: blur(18px), scale: 0.96 } to crisp, 0.9s, power4.out",
+        "exit_blur": "do NOT use the block's blur-out exit — wordmark holds to final frame"
+      },
+      "motion-blur": {
+        "role": "scene 2 — outgoing terminal line smear",
+        "axis": "horizontal only: SVG feGaussianBlur stdDeviation (0,0) -> (28,0), one-sided ghost trail",
+        "pairing": "runs concurrently with focus-blur-resolve entrance so the line appears to become the wordmark"
+      },
+      "per-word-rise": {
+        "role": "scene 3 — the-tagline",
+        "words": ["your", "terminal-based", "coding", "agent"],
+        "rise": "per-word from { opacity: 0, y: +24, filter: blur(8px) }, 0.6s/word, stagger 0.12s, power4.out, settle soft, no exit"
+      }
+    },
+    "hand_authored_primitives": {
+      "glow": "textShadow tween on the X glyph only (own span): ignite 0 0 0 rgba(48,209,88,0) -> 0 0 60px rgba(48,209,88,0.55); breathe-down to 0 0 40px rgba(48,209,88,0.35); settle to whisper 0 0 18px rgba(48,209,88,0.15)",
+      "hold_breath": "wordmark scale 1.0 -> 1.015, sine.inOut, during scene 3; returns to 1.0 by 7.0s",
+      "caret_coda": "thin green block caret (26x44px) fades in after final tagline word, one deterministic blink on the 7.0s beat, fades out"
+    },
+    "typography": {
+      "family": "Inter (single family for the whole piece — terminal read comes from the $ prefix, dim prompt sigil, and green block caret, NOT a second mono font)",
+      "wordmark": { "size_px": 220, "weight": 800, "letter_spacing_em": -0.04, "color": "#F5F5F7", "x_glyph": "own span, same styling, carries the glow" },
+      "prompt_line": { "size_px": 64, "weight": 500, "letter_spacing_em": 0, "sigil": "$ in #86868B", "command": "karmx run in #F5F5F7" },
+      "tagline": { "size_px": 44, "weight": 500, "letter_spacing_em": -0.01, "color": "#86868B", "emphasis_word": "terminal-based in #F5F5F7 (color-only emphasis — no pulse; Apple calm)" }
+    },
+    "layout": {
+      "stage": "#000000 full-bleed; safe margins 96px sides / 54px top-bottom (5%); everything centered — all elements well inside safe area",
+      "prompt_line": "centered at (960, 490) — SAME anchor as the wordmark so the blur metamorphosis happens in place",
+      "wordmark": "centered at (960, 490), baseline ~y=560 (optical center floats above 540 because the tagline sits beneath)",
+      "tagline": "centered at (960, 660) — 100px below wordmark baseline",
+      "caret_coda_position": "immediately after the final tagline word's advance, baseline-aligned"
+    },
+    "palette_roles": { "stage": "#000000", "hero": "#F5F5F7", "dim": "#86868B", "accent": "#30D158 (caret + X glow ONLY — never anywhere else)" }
+  },
+
+  "content": {
+    "scenes": [
+      {
+        "id": "the-prompt",
+        "start": 0,
+        "end": 2.4,
+        "text": "$ karmx run",
+        "emphasis_words": ["karmx"],
+        "emotion": "anticipation, precision — a real shell waking up",
+        "block": "typed-prompt",
+        "primitives": ["typewriter", "fade_in"],
+        "motion": "typewriter: prompt group fades in at 0.15s (hook lands <0.5s — caret + $ visible by 0.3s); 11 chars type left-to-right at an even 70ms/char (0.30s -> 1.07s), green block caret riding the frontier and blinking on a deterministic 0.53s cycle; on the 1.8s beat the caret pulses once (scale 1->1.15->1, 0.3s sine.inOut, plus a 0 0 24px rgba(48,209,88,0.8) flash) — the command 'executes'; line holds, caret blinking, to 2.4s",
+        "layout": "Inter 500 64px centered at (960, 490); '$' #86868B, 'karmx run' #F5F5F7; caret 32x64px #30D158",
+        "beats": [0.2, 1.8]
+      },
+      {
+        "id": "the-resolve",
+        "start": 2.4,
+        "end": 4.6,
+        "text": "karmX",
+        "emphasis_words": ["X"],
+        "emotion": "reveal, quiet confidence",
+        "block": "focus-blur-resolve",
+        "supporting_blocks": ["motion-blur"],
+        "primitives": ["fade_blur", "glow"],
+        "motion": "THE dominant metamorphosis — the pattern interrupt changes exactly one thing (the line becomes the wordmark). Anticipated 0.1s: at 2.30s the terminal line smears out — motion-blur horizontal-only stdDeviation (0,0)->(28,0), letter-spacing 0->+0.06em, opacity 1->0, 0.55s power2.in, caret fading with it. At 2.40s the wordmark 'karmX' blur-resolves in place from { opacity: 0, blur: 18px, scale: 0.96 } to crisp, 0.9s power4.out — fully legible by 3.4s (legible hold 3.4->8.0 = 4.6s). On the 3.4s beat the capital X ignites its green glow (0.45s sine.out to 0 0 60px rgba(48,209,88,0.55)), then breathes down to 0 0 40px rgba(48,209,88,0.35) by 4.6s",
+        "layout": "Inter 800 220px, tracking -0.04em, #F5F5F7, centered at (960, 490); X in its own span carrying the glow",
+        "beats": [3.4]
+      },
+      {
+        "id": "the-tagline",
+        "start": 4.6,
+        "end": 6.6,
+        "text": "your terminal-based coding agent",
+        "emphasis_words": ["terminal-based"],
+        "emotion": "clarity, calm",
+        "block": "per-word-rise",
+        "primitives": ["word_reveal", "hold_breath"],
+        "motion": "word_reveal: 4 words rise beneath the wordmark, each from { opacity: 0, y: +24, blur: 8px }, 0.6s/word, stagger 0.12s, power4.out, starting 4.70s — all landed by 5.72s (cascade completes around the 5.4s beat); 'terminal-based' inks in #F5F5F7 against the gray — color-only emphasis, no pulse. Wordmark holds with a barely-there hold_breath (scale 1.0->1.015, sine.inOut, 4.6->6.6s)",
+        "layout": "Inter 500 44px, tracking -0.01em, #86868B, centered at (960, 660)",
+        "beats": [5.4]
+      },
+      {
+        "id": "the-settle",
+        "start": 6.6,
+        "end": 8.0,
+        "text": "karmX",
+        "emphasis_words": ["X"],
+        "emotion": "stillness, finality",
+        "block": null,
+        "primitives": ["glow", "hold_breath"],
+        "motion": "glow settle: the X textShadow eases from 0 0 40px rgba(48,209,88,0.35) to a whisper 0 0 18px rgba(48,209,88,0.15), 0.8s power2.inOut (6.6->7.4s); hold_breath returns the wordmark to scale 1.0 by 7.0s. Coda caret: a thin green block (26x44px) fades in after the last tagline word at 6.9s, blinks once on the 7.0s beat (off 7.00->7.08, on 7.13, deterministic steps), fades out 7.3->7.6s. Pure stillness 7.6->8.0 — NO exit tween; hold the final frame",
+        "layout": "wordmark + tagline hold their scene-3 positions; coda caret baseline-aligned after 'agent'",
+        "beats": [7.0]
+      }
+    ]
+  }
+}

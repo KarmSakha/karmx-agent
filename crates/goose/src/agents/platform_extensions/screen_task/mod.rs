@@ -68,6 +68,10 @@ impl ScreenTaskClient {
                         "type": "string",
                         "description": "What to achieve, in plain English: 'open discord and find the remote-jobs server'"
                     },
+                    "app": {
+                        "type": "string",
+                        "description": "For a task in one native app, supply its exact name (for example Calculator). Refuses to capture or act on any other foreground app. Omit only for intentional cross-app tasks."
+                    },
                     "steps": {
                         "type": "integer",
                         "description": "Max steps before stopping (default 12)"
@@ -164,7 +168,17 @@ impl ScreenTaskClient {
             }
             let cfg = runner::RunConfig {
                 goal,
-                steps: args.get("steps").and_then(|v| v.as_u64()).unwrap_or(12) as usize,
+                app: args
+                    .get("app")
+                    .and_then(|v| v.as_str())
+                    .map(str::trim)
+                    .filter(|v| !v.is_empty())
+                    .map(str::to_string),
+                steps: args
+                    .get("steps")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(12)
+                    .clamp(1, 100) as usize,
                 delay_ms: args
                     .get("delay_ms")
                     .and_then(|v| v.as_u64())
@@ -183,7 +197,7 @@ impl ScreenTaskClient {
                     .map(str::to_string),
             };
             let (traces, stop) = runner::run(&cfg).await;
-            if traces.is_empty() && cfg.dry_run {
+            if traces.is_empty() {
                 return CallToolResult::error(vec![ContentBlock::text(stop)]);
             }
             let mut out = String::from(if cfg.dry_run { "dry run:\n" } else { "" });
@@ -201,7 +215,11 @@ impl ScreenTaskClient {
                 ));
             }
             out.push_str(&stop);
-            CallToolResult::success(vec![ContentBlock::text(out)])
+            if stop.starts_with("stopping: done") || (cfg.dry_run && !traces.is_empty()) {
+                CallToolResult::success(vec![ContentBlock::text(out)])
+            } else {
+                CallToolResult::error(vec![ContentBlock::text(out)])
+            }
         }
     }
 }

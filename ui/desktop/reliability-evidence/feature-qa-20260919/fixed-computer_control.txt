@@ -1,0 +1,34 @@
+
+running 29 tests
+test agents::platform_extensions::computer_control::actions::tests::click_lowers_to_press_and_release ... ok
+test agents::platform_extensions::computer_control::actions::tests::click_requires_a_coordinate ... ok
+test agents::platform_extensions::computer_control::actions::tests::drag_emits_press_move_release ... ok
+test agents::platform_extensions::computer_control::actions::tests::drag_requires_both_ends ... ok
+test agents::platform_extensions::computer_control::actions::tests::right_click_uses_right_button ... ok
+test agents::platform_extensions::computer_control::actions::tests::screenshot_region_must_be_positive ... ok
+test agents::platform_extensions::computer_control::actions::tests::screenshot_with_region_sets_clip ... ok
+test agents::platform_extensions::computer_control::actions::tests::screenshot_without_region_has_no_clip ... ok
+test agents::platform_extensions::computer_control::actions::tests::scroll_direction_maps_to_signed_deltas ... ok
+test agents::platform_extensions::computer_control::actions::tests::scroll_needs_amount_and_direction ... ok
+test agents::platform_extensions::computer_control::actions::tests::to_cdp_validates_first ... ok
+test agents::platform_extensions::computer_control::actions::tests::type_emits_one_char_event_each ... ok
+test agents::platform_extensions::computer_control::actions::tests::type_rejects_empty_text ... ok
+test agents::platform_extensions::computer_control::actions::tests::unknown_action_type_is_rejected ... ok
+test agents::platform_extensions::computer_control::actions::tests::wait_needs_a_duration ... ok
+test agents::platform_extensions::computer_control::cdp::tests::attach_creates_own_page_and_routes_page_commands_to_it ... ok
+test agents::platform_extensions::computer_control::cdp::tests::connect_to_a_dead_websocket_errors ... ok
+test agents::platform_extensions::computer_control::cdp::tests::default_target_is_loopback_9222 ... ok
+test agents::platform_extensions::computer_control::cdp::tests::discover_fails_cleanly_when_nothing_listens ... ok
+test agents::platform_extensions::computer_control::cdp::tests::discovery_rejects_http_errors_even_with_valid_json ... ok
+test agents::platform_extensions::computer_control::cdp::tests::discovery_requires_websocket_endpoint ... ok
+test agents::platform_extensions::computer_control::cdp::tests::repeated_url_preserves_page_state ... ok
+test agents::platform_extensions::computer_control::elements::tests::local_match_needs_word_signal ... ok
+test agents::platform_extensions::computer_control::elements::tests::risky_flags_destructive_and_auth_targets ... ok
+test agents::platform_extensions::computer_control::elements::tests::table_lists_every_element ... ok
+test agents::platform_extensions::computer_control::tests::action_parsing_accepts_a_click ... ok
+test agents::platform_extensions::computer_control::tests::action_parsing_rejects_empty_and_malformed ... ok
+test agents::platform_extensions::computer_control::tests::attach_failure_is_reported_not_panicked ... ok
+test agents::platform_extensions::computer_control::tests::exposes_the_control_tool ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 2351 filtered out; finished in 0.03s
+

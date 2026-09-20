@@ -11,7 +11,7 @@
 # Knobs:
 #   GOOSE_PROVIDER (default: anthropic)
 #   GOOSE_MODEL    (default: claude-haiku-4-5)
-#   SKIP_BUILD     skip cargo build (assumes target/debug/goose already exists)
+#   SKIP_BUILD     skip cargo build (assumes target/debug/karmx already exists)
 #   KEEP_TESTDIR   don't rm the temp workdir on exit (for debugging)
 #
 # Agent names are deliberately weird ("janpier", "peterjoris") so that they
@@ -28,7 +28,7 @@ if [ -f .env ]; then
 fi
 
 if [ -z "$SKIP_BUILD" ]; then
-  echo "Building goose..."
+  echo "Building karmx..."
   cargo build --bin goose
   echo ""
 else
@@ -37,7 +37,7 @@ else
 fi
 
 SCRIPT_DIR=$(pwd)
-GOOSE_BIN="$SCRIPT_DIR/target/debug/goose"
+GOOSE_BIN="$SCRIPT_DIR/target/debug/karmx"
 export PATH="$SCRIPT_DIR/target/debug:$PATH"
 
 export GOOSE_PROVIDER="${GOOSE_PROVIDER:-anthropic}"
@@ -251,7 +251,7 @@ if grep -qE "▸.*delegate" "$TMP3" && grep -qE "^\s*source[[:space:]]+peterjori
 else
   echo "⚠ S3: did not delegate to peterjoris directly — using LLM judge to grade overall behaviour"
   assert_judge "$TMP3" \
-    "The user asked goose to write a Hello World program in the Forth programming language. The session had a registered subagent named 'peterjoris' described as a Forth expert. Does the transcript show ANY of: (a) goose called the delegate tool with source 'peterjoris', or (b) goose's reply mentions peterjoris (or 'the Forth expert') as the right specialist for this task, or (c) goose produced syntactically plausible Forth code as the answer? ANY of (a), (b), (c) counts as PASS. Only FAIL if none of those apply." \
+    "The user asked KarmX to write a Hello World program in the Forth programming language. The session had a registered subagent named 'peterjoris' described as a Forth expert. Does the transcript show ANY of: (a) goose called the delegate tool with source 'peterjoris', or (b) goose's reply mentions peterjoris (or 'the Forth expert') as the right specialist for this task, or (c) goose produced syntactically plausible Forth code as the answer? ANY of (a), (b), (c) counts as PASS. Only FAIL if none of those apply." \
     "S3: description match handled"
 fi
 rm "$TMP3"

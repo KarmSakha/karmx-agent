@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { defineMessages, useIntl } from '../i18n';
+import { ArrowUpRight, Code2, FolderCode, ScanSearch, Wrench } from 'lucide-react';
 import { AppEvents } from '../constants/events';
 import ChatInput from './ChatInput';
 import { ChatInputCard } from './ChatInputCard';
@@ -62,6 +63,14 @@ export default function Hub({
     useState<NextChatExtensionDraft | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { time, meridiem, hour } = useClock();
+  const [starterPrompt, setStarterPrompt] = useState('');
+
+  const chooseStarter = (prompt: string) => {
+    const next = draftRef.current.trim() ? `${draftRef.current}\n\n${prompt}` : prompt;
+    draftRef.current = next;
+    setStarterPrompt(next);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
 
   // Re-resolve the working dir on mount: GOOSE_WORKING_DIR is fixed at window
   // creation, so a configured remote directory may have changed since then.
@@ -152,26 +161,37 @@ export default function Hub({
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 items-center justify-center px-6 relative">
-      <div className="w-full max-w-2xl">
-        <div className="flex items-baseline gap-2 mb-1">
-          <span className="text-6xl font-light text-text-primary tracking-tight tabular-nums">
-            {time}
-          </span>
-          {meridiem ? (
-            <span className="text-2xl font-light text-text-secondary">{meridiem}</span>
-          ) : null}
+    <div className="karmx-workspace">
+      <header className="karmx-workspace-header">
+        <span className="karmx-eyebrow">WORKSPACE</span>
+        <span className="karmx-clock">
+          {time} {meridiem}
+        </span>
+      </header>
+      <div className="karmx-workspace-content">
+        <div className="karmx-intro">
+          <div className="karmx-eyebrow karmx-greeting">{greeting}. Let's make something.</div>
+          <h1>
+            Your next idea.
+            <br />
+            <span>Within reach.</span>
+          </h1>
+          <p>A focused space to understand, build, and improve your code.</p>
         </div>
-        <p className="text-xl text-text-secondary mb-6">{greeting}</p>
-
-        <ChatInputCard>
+        <div className="karmx-project-context" title={workingDir}>
+          <FolderCode size={16} aria-hidden="true" />
+          <span>{workingDir.split(/[\\/]/).filter(Boolean).pop() || workingDir}</span>
+          <span className="karmx-project-caption">Current project</span>
+        </div>
+        <ChatInputCard className="karmx-home-composer">
           <ChatInput
             sessionId={null}
             draftRef={draftRef}
             handleSubmit={handleSubmit}
             chatState={isCreatingSession ? ChatState.LoadingConversation : ChatState.Idle}
             onStop={() => {}}
-            initialValue=""
+            suggestedPrompt={starterPrompt}
+            placeholder="What would you like to work on?"
             setView={setView}
             totalTokens={0}
             accumulatedInputTokens={0}
@@ -187,6 +207,49 @@ export default function Hub({
             onNextChatExtensionDraftChange={handleNextChatExtensionDraftChange}
           />
         </ChatInputCard>
+        <div className="karmx-starters" aria-label="Start with a task">
+          {[
+            {
+              icon: ScanSearch,
+              title: 'Understand',
+              detail: 'Find your way through the code',
+              prompt:
+                'Explore this project and explain its architecture, entry points, and how the main pieces work together. Do not make changes yet.',
+            },
+            {
+              icon: Code2,
+              title: 'Build',
+              detail: 'Turn an idea into working code',
+              prompt:
+                'Help me build a new feature in this project. First inspect the existing patterns, then ask me what I want to create.',
+            },
+            {
+              icon: Wrench,
+              title: 'Improve',
+              detail: 'Make what exists work better',
+              prompt:
+                'Review this project for meaningful improvements. Identify concrete bugs and usability issues, explain your findings, and propose a focused plan before editing.',
+            },
+          ].map(({ icon: Icon, title, detail, prompt }) => (
+            <button
+              key={title}
+              className="karmx-starter"
+              disabled={isCreatingSession}
+              onClick={() => chooseStarter(prompt)}
+            >
+              <div className="karmx-starter-top">
+                <Icon size={18} aria-hidden="true" />
+                <ArrowUpRight size={15} aria-hidden="true" />
+              </div>
+              <strong>{title}</strong>
+              <span>{detail}</span>
+            </button>
+          ))}
+        </div>
+        <div className="karmx-workspace-note">
+          <span>YOUR TOOLS. YOUR MODELS. YOUR WORKSPACE.</span>
+          <span>Built for the way you think.</span>
+        </div>
       </div>
 
       {isCreatingSession && (

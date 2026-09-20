@@ -3,15 +3,15 @@ use rmcp::model::ElicitationAction;
 use serde_json::json;
 
 use super::calculator_extension::{
-    ADD, ADD_WITH_AUDIENCE, APP_ONLY, DIVIDE, REQUEST_VALUE, delayed_value, value,
+    delayed_value, value, ADD, ADD_WITH_AUDIENCE, APP_ONLY, DIVIDE, REQUEST_VALUE,
 };
-use super::pipeline::MAX_TURNS;
 use super::pipeline::MessageKind::{Agent, Confirmation, ToolCall, ToolResponse};
+use super::pipeline::MAX_TURNS;
 use super::test_pipeline;
-use crate::agents::AgentEvent;
 use crate::agents::tool_execution::{CHAT_MODE_TOOL_SKIPPED_RESPONSE, DECLINED_RESPONSE};
-use crate::config::GooseMode;
+use crate::agents::AgentEvent;
 use crate::config::permission::PermissionLevel;
+use crate::config::GooseMode;
 use crate::conversation::message::{Message, MessageContent};
 use crate::permission::Permission;
 

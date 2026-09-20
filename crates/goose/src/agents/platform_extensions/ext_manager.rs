@@ -11,7 +11,7 @@ use rmcp::model::{
     InitializeResult, JsonObject, ListPromptsResult, ListResourcesResult, ListToolsResult,
     ReadResourceResult, ServerCapabilities, ServerNotification, Tool, ToolAnnotations,
 };
-use schemars::{JsonSchema, schema_for};
+use schemars::{schema_for, JsonSchema};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
@@ -605,30 +605,24 @@ mod tests {
             .list_tools(&user_id, None, CancellationToken::default())
             .await
             .unwrap();
-        assert!(
-            user_tools
-                .tools
-                .iter()
-                .any(|tool| tool.name == MANAGE_EXTENSIONS_TOOL_NAME)
-        );
+        assert!(user_tools
+            .tools
+            .iter()
+            .any(|tool| tool.name == MANAGE_EXTENSIONS_TOOL_NAME));
 
         for session_id in [&subagent_id, "missing-session"] {
             let tools = client
                 .list_tools(session_id, None, CancellationToken::default())
                 .await
                 .unwrap();
-            assert!(
-                tools
-                    .tools
-                    .iter()
-                    .any(|tool| tool.name == SEARCH_AVAILABLE_EXTENSIONS_TOOL_NAME)
-            );
-            assert!(
-                tools
-                    .tools
-                    .iter()
-                    .all(|tool| tool.name != MANAGE_EXTENSIONS_TOOL_NAME)
-            );
+            assert!(tools
+                .tools
+                .iter()
+                .any(|tool| tool.name == SEARCH_AVAILABLE_EXTENSIONS_TOOL_NAME));
+            assert!(tools
+                .tools
+                .iter()
+                .all(|tool| tool.name != MANAGE_EXTENSIONS_TOOL_NAME));
         }
 
         let unknown_enable = manage(&client, "missing-session", "enable").await;

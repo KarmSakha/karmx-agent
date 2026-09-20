@@ -1,6 +1,7 @@
+import { getAcpClient } from '../acp/acpConnection';
 import { AppEvents } from '../constants/events';
 import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
-import { ArrowUp, Bug, ScrollText } from 'lucide-react';
+import { ArrowUp, Bug, ScrollText, WandSparkles, LoaderCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/Tooltip';
 import { Button } from './ui/button';
 import type { View } from '../utils/navigationUtils';
@@ -16,7 +17,7 @@ import { BottomMenuExtensionSelection } from './bottom_menu/BottomMenuExtensionS
 import { cn } from '../utils';
 import { AlertType, useAlerts } from './alerts';
 import { useModelAndProvider } from './ModelAndProviderContext';
-import { acpGetProviderDetails } from '../acp/providers';
+import { acpGetCanonicalModelInfo } from '../acp/providers';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { useFocusOnTyping } from '../hooks/useFocusOnTyping';
 import { toastError } from '../toasts';
@@ -31,12 +32,10 @@ import { detectInterruption } from '../utils/interruptionDetector';
 import { DiagnosticsModal } from './ui/Diagnostics';
 import type { Message } from '../types/message';
 import { getInitialWorkingDir } from '../utils/workingDir';
-import { getPredefinedModelsFromEnv } from './settings/models/predefinedModelsUtils';
 import { trackFileAttached, trackVoiceDictation, trackDiagnosticsOpened } from '../utils/analytics';
 import { getNavigationShortcutText } from '../utils/keyboardShortcuts';
-import { UserInput, ImageData } from '../types/message';
+import { UserInput, ImageData, getTextAndImageContent } from '../types/message';
 import { compressImageDataUrl } from '../utils/conversionUtils';
-import { fetchCanonicalModelInfo } from '../utils/canonical';
 import { getTextDirection } from '../utils/textDirection';
 import { defineMessages, useIntl } from '../i18n';
 import TurndownService from 'turndown';
@@ -82,8 +81,6 @@ const removeQueuedMessage = (messages: QueuedMessage[], messageId: string): Queu
   messages.filter((msg) => msg.id !== messageId);
 
 const MAX_IMAGES_PER_MESSAGE = 10;
-
-const TOKEN_LIMIT_DEFAULT = 128000; // used before a session has a backend-resolved limit
 
 const getContextAlertType = (totalTokens: number, tokenLimit: number): AlertType => {
   const percentage = tokenLimit ? (totalTokens / tokenLimit) * 100 : 0;
@@ -169,6 +166,8 @@ interface ChatInputProps {
   queueProcessingBlocked?: boolean;
   commandHistory?: string[];
   initialValue?: string;
+  suggestedPrompt?: string;
+  placeholder?: string;
   /**
    * Unsent input, held above the route outlet so it outlives the unmount.
    * Only New Chat passes it: every other chat stays mounted in
@@ -211,6 +210,8 @@ export default function ChatInput({
   queueProcessingBlocked = false,
   commandHistory = [],
   initialValue = '',
+  suggestedPrompt,
+  placeholder,
   draftRef,
   droppedFiles = [],
   onFilesProcessed,
@@ -242,6 +243,10 @@ export default function ChatInput({
   const [isFocused, setIsFocused] = useState(false);
   const [pastedImages, setPastedImages] = useState<PastedImage[]>([]);
   const [isFilePickerOpen, setIsFilePickerOpen] = useState(false);
+  const [enhancing, setEnhancing] = useState(false);
+  const latestDraft = useRef(displayValue);
+  latestDraft.current = displayValue;
+  const [enhancementNote, setEnhancementNote] = useState('');
 
   // Every path that puts text in the input goes through here, so the draft cannot
   // miss one: typing, dictation, link paste, history, file and mention insertion.
@@ -338,7 +343,13 @@ export default function ChatInput({
       setModelOverride(null);
     }
   }, [sessionModel, sessionProvider, configModel, configProvider, sessionId, modelOverride]);
-  const [tokenLimit, setTokenLimit] = useState<number>(TOKEN_LIMIT_DEFAULT);
+  const [tokenLimit, setTokenLimit] = useState<number>(0);
+  const [contextRevision, setContextRevision] = useState(0);
+  useEffect(() => {
+    const refresh = () => setContextRevision((value) => value + 1);
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
+  }, []);
   const [isTokenLimitLoaded, setIsTokenLimitLoaded] = useState(false);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [workingDirOverride, setWorkingDirOverride] = useState<string | null>(null);
@@ -553,6 +564,15 @@ export default function ChatInput({
     setHasUserTyped(false);
   }, [initialValue, draftRef]);
 
+  useEffect(() => {
+    if (!suggestedPrompt) return;
+    setValue(suggestedPrompt);
+    setDisplayValue(suggestedPrompt);
+    setHistoryIndex(-1);
+    setIsInGlobalHistory(false);
+    setHasUserTyped(true);
+  }, [suggestedPrompt]);
+
   // Handle recipe prompt updates
   useEffect(() => {
     // If recipe is accepted and we have an initial prompt, and no messages yet, and we haven't set it before
@@ -607,88 +627,46 @@ export default function ChatInput({
 
   useFocusOnTyping(textAreaRef, !isRecording);
 
-  // Load providers and get current model's token limit
-  const loadProviderDetails = async () => {
-    try {
-      if (sessionId) {
-        setTokenLimit(0);
-        setIsTokenLimitLoaded(false);
-        return;
-      }
-      setIsTokenLimitLoaded(false);
+  useEffect(() => {
+    let cancelled = false;
+    setTokenLimit(contextLimit ?? 0);
+    setIsTokenLimitLoaded(contextLimit !== undefined);
+    if (sessionId || contextLimit !== undefined) return;
 
-      // Use effective model/provider (includes overrides from in-session model changes),
-      // fall back to config defaults
-      let model = effectiveModel;
-      let provider = effectiveProvider;
-      if (!model || !provider) {
-        const configModelAndProvider = await getCurrentModelAndProvider();
-        model = configModelAndProvider.model;
-        provider = configModelAndProvider.provider;
-      }
-      if (!model || !provider) {
-        setIsTokenLimitLoaded(true);
-        return;
-      }
-
-      // Priority 1: Check predefined models from environment
-      const predefinedModels = getPredefinedModelsFromEnv();
-      const predefinedModel = predefinedModels.find((m) => m.name === model);
-      if (predefinedModel?.context_limit) {
-        setTokenLimit(predefinedModel.context_limit);
-        setIsTokenLimitLoaded(true);
-        return;
-      }
-
-      // Priority 2: Check canonical model info (source of truth)
-      const canonicalInfo = await fetchCanonicalModelInfo(provider, model);
-      if (canonicalInfo?.contextLimit) {
-        setTokenLimit(canonicalInfo.contextLimit);
-        setIsTokenLimitLoaded(true);
-        return;
-      }
-
-      // Priority 3: Fall back to provider metadata known_models (may be outdated)
-      const currentProvider = await acpGetProviderDetails(provider);
-      if (currentProvider?.metadata?.known_models) {
-        const modelConfig = currentProvider.metadata.known_models.find((m) => m.name === model);
-        if (modelConfig?.context_limit) {
-          setTokenLimit(modelConfig.context_limit);
+    void (async () => {
+      try {
+        const current =
+          effectiveModel && effectiveProvider
+            ? { model: effectiveModel, provider: effectiveProvider }
+            : await getCurrentModelAndProvider();
+        if (!current.model || !current.provider) return;
+        const info = await acpGetCanonicalModelInfo(current.provider, current.model);
+        if (!cancelled) {
+          setTokenLimit(info?.contextLimit ?? 0);
           setIsTokenLimitLoaded(true);
-          return;
         }
+      } catch (error) {
+        if (!cancelled) {
+          setTokenLimit(0);
+          setIsTokenLimitLoaded(true);
+        }
+        console.error('Could not resolve backend context limit', error);
       }
-
-      // Priority 4: Use default if nothing else found
-      setTokenLimit(TOKEN_LIMIT_DEFAULT);
-      setIsTokenLimitLoaded(true);
-    } catch (err) {
-      console.error('Error loading providers or token limit:', err);
-      // Set default limit on error
-      setTokenLimit(TOKEN_LIMIT_DEFAULT);
-      setIsTokenLimitLoaded(true);
-    }
-  };
-
-  // Initial load and refresh when model changes (effective model includes overrides,
-  // config model is the fallback for Hub/no-session contexts)
-  useEffect(() => {
-    loadProviderDetails();
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // getCurrentModelAndProvider is a context callback; model changes are the trigger.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effectiveModel, effectiveProvider, configModel, configProvider, sessionId]);
-
-  useEffect(() => {
-    if (contextLimit === undefined) {
-      if (sessionId) {
-        setTokenLimit(0);
-        setIsTokenLimitLoaded(false);
-      }
-      return;
-    }
-
-    setTokenLimit(contextLimit);
-    setIsTokenLimitLoaded(true);
-  }, [contextLimit, sessionId]);
+  }, [
+    contextLimit,
+    sessionId,
+    effectiveModel,
+    effectiveProvider,
+    configModel,
+    configProvider,
+    contextRevision,
+  ]);
 
   // Handle token usage alerts
   useEffect(() => {
@@ -1184,7 +1162,45 @@ export default function ChatInput({
     ]
   );
 
+  const enhanceDraft = async () => {
+    if (enhancing || isLoading || !displayValue.trim()) return;
+    const original = displayValue;
+    setEnhancing(true);
+    setEnhancementNote('');
+    try {
+      const client = await getAcpClient();
+      const result = await client.goose.promptsEnhance_unstable({
+        prompt: original,
+        workingDir: workingDir || getInitialWorkingDir(),
+        sessionId: sessionId ?? undefined,
+        recentContext: messages
+          .slice(-4)
+          .map((message) => getTextAndImageContent(message).textContent.slice(0, 1000))
+          .join('\n---\n'),
+      });
+      if (latestDraft.current !== original) {
+        setEnhancementNote('Your draft changed while enhancing. Your edits were preserved.');
+      } else if (result.wasEnhanced) {
+        applyInputValue(result.prompt);
+        setEnhancementNote('Prompt enhanced. Review it before sending.');
+      } else {
+        setEnhancementNote(
+          result.errorMessage || 'Enhancement unavailable. Your original draft is unchanged.'
+        );
+      }
+    } catch (error) {
+      setEnhancementNote(`Could not enhance. Your original draft is unchanged. ${String(error)}`);
+    } finally {
+      setEnhancing(false);
+    }
+  };
+
   const handleKeyDown = (evt: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (evt.ctrlKey && evt.key.toLowerCase() === 'p') {
+      evt.preventDefault();
+      void enhanceDraft();
+      return;
+    }
     if (mentionPopover.isOpen && mentionPopoverRef.current) {
       if (evt.key === 'ArrowDown') {
         evt.preventDefault();
@@ -1541,12 +1557,17 @@ export default function ChatInput({
       {/* Input row with inline action buttons wrapped in form */}
       <form onSubmit={onFormSubmit} className="relative">
         <div className="relative">
+          {enhancementNote && (
+            <p role="status" className="px-3 pt-2 text-xs text-text-secondary">
+              {enhancementNote}
+            </p>
+          )}
           <textarea
             data-testid="chat-input"
             autoFocus
             id="dynamic-textarea"
             dir={composerDir}
-            placeholder={isRecording ? '' : getNavigationShortcutText(intl)}
+            placeholder={isRecording ? '' : (placeholder ?? getNavigationShortcutText(intl))}
             value={displayValue}
             onChange={handleChange}
             onCompositionStart={handleCompositionStart}
@@ -1751,6 +1772,23 @@ export default function ChatInput({
               tokenLimit={tokenLimit}
               alerts={alerts}
             />
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              title="Enhance draft (Ctrl+P)"
+              aria-label="Enhance draft"
+              disabled={enhancing || isLoading || !displayValue.trim()}
+              onClick={() => void enhanceDraft()}
+            >
+              {enhancing ? (
+                <LoaderCircle className="w-4 h-4 animate-spin" />
+              ) : (
+                <WandSparkles className="w-4 h-4" />
+              )}
+              <span className="text-xs">Enhance</span>
+            </Button>
 
             {/* Right: extension selector */}
             <BottomMenuExtensionSelection

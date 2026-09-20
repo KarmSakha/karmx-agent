@@ -337,7 +337,11 @@ impl AppsManagerClient {
         let user_prompt = format!(
             "REQUESTED APP:\n{}\n\nEXISTING APPS: {}\n\nGenerate a unique name (lowercase with hyphens, not in existing apps), a brief description, complete HTML, and appropriate window size for this app.",
             prd,
-            if existing_names.is_empty() { "none" } else { &existing_names }
+            if existing_names.is_empty() {
+                "none"
+            } else {
+                &existing_names
+            }
         );
 
         let messages = vec![Message::user().with_text(&user_prompt)];
@@ -384,9 +388,7 @@ impl AppsManagerClient {
 
         let user_prompt = format!(
             "ORIGINAL PRD:\n{}\n\nCURRENT APP:\n```html\n{}\n```\n\nFEEDBACK: {}\n\nImplement the requested changes and return:\n1. Updated description\n2. Updated HTML implementing the feedback\n3. Updated PRD reflecting the current state of the app\n4. Optionally updated window size if appropriate",
-            existing_prd,
-            existing_html,
-            feedback
+            existing_prd, existing_html, feedback
         );
 
         let messages = vec![Message::user().with_text(&user_prompt)];

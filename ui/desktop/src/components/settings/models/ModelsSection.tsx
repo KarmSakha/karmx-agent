@@ -1,7 +1,11 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { View } from '../../../utils/navigationUtils';
 import ModelSettingsButtons from './subcomponents/ModelSettingsButtons';
-import { acpGetProviderDetails, acpReadDefaults } from '../../../acp/providers';
+import {
+  acpGetProviderDetails,
+  acpReadDefaults,
+  acpGetCanonicalModelInfo,
+} from '../../../acp/providers';
 import { modelAndProviderMessages, useModelAndProvider } from '../../ModelAndProviderContext';
 import { toastError } from '../../../toasts';
 
@@ -28,6 +32,12 @@ export default function ModelsSection({ setView }: ModelsSectionProps) {
   const intl = useIntl();
   const [provider, setProvider] = useState<string | null>(null);
   const [displayModelName, setDisplayModelName] = useState<string>('');
+  const [runtimeInfo, setRuntimeInfo] = useState<{
+    model: string;
+    provider: string;
+    context: number;
+    reasoning: boolean;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const {
     getCurrentModelDisplayName,
@@ -39,6 +49,18 @@ export default function ModelsSection({ setView }: ModelsSectionProps) {
   const loadModelData = useCallback(async () => {
     try {
       setIsLoading(true);
+      setRuntimeInfo(null);
+      const defaults = await acpReadDefaults();
+      if (defaults.providerId && defaults.modelId) {
+        const info = await acpGetCanonicalModelInfo(defaults.providerId, defaults.modelId);
+        if (info)
+          setRuntimeInfo({
+            model: defaults.modelId,
+            provider: defaults.providerId,
+            context: info.contextLimit,
+            reasoning: info.reasoning,
+          });
+      }
 
       // Get display name (alias if available, otherwise model name)
       const modelDisplayName = await getCurrentModelDisplayName();
@@ -106,6 +128,22 @@ export default function ModelsSection({ setView }: ModelsSectionProps) {
             <div className="animate-in fade-in duration-100">
               <h3 className="text-text-primary">{displayModelName}</h3>
               <h4 className="text-xs text-text-secondary">{provider}</h4>
+            </div>
+          )}
+          {runtimeInfo && (
+            <div className="karmx-model-runtime">
+              <span>
+                <small>MODEL ID</small>
+                <strong>{runtimeInfo.model}</strong>
+              </span>
+              <span>
+                <small>CONTEXT WINDOW</small>
+                <strong>{runtimeInfo.context.toLocaleString()} tokens</strong>
+              </span>
+              <span>
+                <small>REASONING</small>
+                <strong>{runtimeInfo.reasoning ? 'Supported' : 'Not reported'}</strong>
+              </span>
             </div>
           )}
           <ModelSettingsButtons setView={setView} />

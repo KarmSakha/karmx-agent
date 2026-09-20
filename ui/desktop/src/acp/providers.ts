@@ -173,14 +173,16 @@ export async function acpRefreshProviderDetails(
     };
   }
 
-  const readiness = await client.goose.providersReadinessCheck_unstable({ providerId });
-  throwIfAborted(signal);
-  if (!readiness.ready) {
-    return {
-      provider: providerEntryToDetails(entry),
-      connectionChecked: true,
-      readinessError: readiness.error ?? 'Provider is not ready',
-    };
+  if (entry.acp) {
+    const readiness = await client.goose.providersReadinessCheck_unstable({ providerId });
+    throwIfAborted(signal);
+    if (!readiness.ready) {
+      return {
+        provider: providerEntryToDetails(entry),
+        connectionChecked: true,
+        readinessError: readiness.error ?? 'Provider is not ready',
+      };
+    }
   }
 
   if (entry.supportsRefresh) {
@@ -188,12 +190,12 @@ export async function acpRefreshProviderDetails(
       providerIds: [providerId],
     });
     const provider = await waitForProviderInventoryRefresh(client, providerId, refresh, signal);
-    return { provider, connectionChecked: true, readinessError: null };
+    return { provider, connectionChecked: Boolean(entry.acp), readinessError: null };
   }
 
   return {
     provider: providerEntryToDetails(entry),
-    connectionChecked: true,
+    connectionChecked: Boolean(entry.acp),
     readinessError: null,
   };
 }

@@ -575,7 +575,7 @@ fn write_confined_file_with_hook(
 #[cfg(windows)]
 fn ensure_source_file_has_single_link(file: &fs::File, _metadata: &fs::Metadata) -> io::Result<()> {
     use std::os::windows::io::AsRawHandle;
-    use winapi::um::fileapi::{BY_HANDLE_FILE_INFORMATION, GetFileInformationByHandle};
+    use winapi::um::fileapi::{GetFileInformationByHandle, BY_HANDLE_FILE_INFORMATION};
 
     // SAFETY: BY_HANDLE_FILE_INFORMATION is a plain C data structure initialized before the call.
     let mut information: BY_HANDLE_FILE_INFORMATION = unsafe { std::mem::zeroed() };
@@ -649,11 +649,11 @@ fn windows_open_at_with_options(
     create_disposition: u32,
     create_options: u32,
 ) -> io::Result<fs::File> {
-    use ntapi::ntioapi::{IO_STATUS_BLOCK, NtCreateFile};
+    use ntapi::ntioapi::{NtCreateFile, IO_STATUS_BLOCK};
     use std::os::windows::ffi::OsStrExt;
     use std::os::windows::io::{AsRawHandle, FromRawHandle};
     use winapi::shared::ntdef::{
-        HANDLE, NT_SUCCESS, OBJ_CASE_INSENSITIVE, OBJECT_ATTRIBUTES, UNICODE_STRING,
+        HANDLE, NT_SUCCESS, OBJECT_ATTRIBUTES, OBJ_CASE_INSENSITIVE, UNICODE_STRING,
     };
     use winapi::um::winnt::{FILE_SHARE_DELETE, FILE_SHARE_READ, FILE_SHARE_WRITE};
 
@@ -882,11 +882,9 @@ mod tests {
         .expect_err("wrapped supporting-file limit was not enforced");
 
         assert_eq!(error.kind(), io::ErrorKind::InvalidData);
-        assert!(
-            error
-                .to_string()
-                .contains("exceeds the maximum size of 4 characters")
-        );
+        assert!(error
+            .to_string()
+            .contains("exceeds the maximum size of 4 characters"));
     }
 
     #[cfg(any(unix, windows))]
@@ -900,11 +898,9 @@ mod tests {
             .expect_err("oversized supporting file was accepted");
 
         assert_eq!(error.kind(), io::ErrorKind::InvalidData);
-        assert!(
-            error
-                .to_string()
-                .contains("exceeds the maximum size of 4 characters")
-        );
+        assert!(error
+            .to_string()
+            .contains("exceeds the maximum size of 4 characters"));
     }
 
     #[test]
@@ -927,11 +923,9 @@ mod tests {
             .expect_err("streaming size limit was not enforced");
 
         assert_eq!(error.kind(), io::ErrorKind::InvalidData);
-        assert!(
-            error
-                .to_string()
-                .contains("exceeds the maximum encoded size of 16 bytes")
-        );
+        assert!(error
+            .to_string()
+            .contains("exceeds the maximum encoded size of 16 bytes"));
         assert_eq!(bytes_read.get(), 17);
     }
 

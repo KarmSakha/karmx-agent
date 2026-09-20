@@ -120,9 +120,9 @@ pub async fn rerank(
     model_config: &ModelConfig,
     query: &str,
     chunks: Vec<Chunk>,
-) -> Vec<Chunk> {
+) -> (Vec<Chunk>, bool) {
     if chunks.len() <= 1 || query.trim().is_empty() {
-        return chunks;
+        return (chunks, false);
     }
 
     let original = chunks.clone();
@@ -130,11 +130,23 @@ pub async fn rerank(
     // fully qualified: this module defines its own `Message`
     let msg = crate::conversation::message::Message::user().with_text(request);
 
-    let response = match provider.complete(model_config, "", &[msg], &[]).await {
-        Ok((message, _usage)) => message.as_concat_text(),
-        Err(e) => {
+    let config = model_config.clone().with_max_tokens(Some(2048));
+    let response = match tokio::time::timeout(
+        std::time::Duration::from_secs(30),
+        provider.complete(
+            &config,
+            "Return only a JSON array of relevant chunk indices in relevance order.",
+            &[msg],
+            &[],
+        ),
+    )
+    .await
+    {
+        Ok(Ok((message, _usage))) => message.as_concat_text(),
+        Err(_) => return (original, false),
+        Ok(Err(e)) => {
             tracing::warn!("rerank failed, keeping original order: {e}");
-            return original;
+            return (original, false);
         }
     };
 
@@ -142,13 +154,13 @@ pub async fn rerank(
         Some(i) => i,
         None => {
             tracing::warn!("rerank response had no JSON index array, keeping original order");
-            return original;
+            return (original, false);
         }
     };
 
     if idx.is_empty() {
         tracing::info!("rerank excluded every chunk as irrelevant");
-        return Vec::new();
+        return (Vec::new(), true);
     }
 
     // validate + dedupe, preserving rank order
@@ -157,13 +169,13 @@ pub async fn rerank(
     for i in idx {
         if i < 0 || (i as usize) >= original.len() {
             tracing::warn!("rerank returned out-of-range index {i}, keeping original order");
-            return original;
+            return (original, false);
         }
         if seen.insert(i as usize) {
             ordered.push(original[i as usize].clone());
         }
     }
-    ordered
+    (ordered, true)
 }
 
 #[cfg(test)]

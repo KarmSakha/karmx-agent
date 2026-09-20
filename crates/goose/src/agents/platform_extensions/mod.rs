@@ -15,6 +15,7 @@ pub mod summarize;
 pub mod summon;
 pub mod todo;
 pub mod tom;
+pub mod web_search;
 
 use std::collections::HashMap;
 
@@ -290,6 +291,21 @@ pub static PLATFORM_EXTENSIONS: Lazy<HashMap<&'static str, PlatformExtensionDef>
                     Some(Box::new(
                         context_engine::ContextEngineClient::new(ctx).unwrap(),
                     ))
+                },
+            },
+        );
+
+        map.insert(
+            web_search::EXTENSION_NAME,
+            PlatformExtensionDef {
+                name: web_search::EXTENSION_NAME,
+                display_name: "Web Search",
+                description: "Search the web and read pages via Exa",
+                default_enabled: true,
+                unprefixed_tools: true,
+                hidden: false,
+                client_factory: |ctx| {
+                    Some(Box::new(web_search::WebSearchClient::new(ctx).unwrap()))
                 },
             },
         );

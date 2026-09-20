@@ -206,6 +206,11 @@
       "responseType": "EmptyResponse"
     },
     {
+      "method": "_goose/unstable/prompts/enhance",
+      "requestType": "EnhancePromptRequest_unstable",
+      "responseType": "EnhancePromptResponse_unstable"
+    },
+    {
       "method": "_goose/unstable/providers/canonical-model-info",
       "requestType": "CanonicalModelInfoRequest_unstable",
       "responseType": "CanonicalModelInfoResponse_unstable"

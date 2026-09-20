@@ -1,4 +1,4 @@
-export default function Goose({ className = "" }) {
+export default function KarmX({ className = "" }) {
   return (
     <svg
       width="24"

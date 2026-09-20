@@ -92,7 +92,20 @@ pub fn parse_enhanced_prompt(response: &str) -> Option<String> {
             }
         }
     }
-    None
+    let trimmed = response.trim();
+    let json_text = trimmed
+        .strip_prefix("```json")
+        .and_then(|s| s.strip_suffix("```"))
+        .unwrap_or(trimmed)
+        .trim();
+    serde_json::from_str::<serde_json::Value>(json_text)
+        .ok()
+        .and_then(|v| {
+            v.get("enhanced_prompt")
+                .and_then(|p| p.as_str())
+                .map(str::to_string)
+        })
+        .filter(|p| !p.trim().is_empty())
 }
 
 /// Classify a provider error into the same buckets the original used.
@@ -173,9 +186,10 @@ async fn run(
     prompt: &str,
     request: String,
 ) -> Enhancement {
-    let msg = Message::user().with_text(request);
-
-    let response = match provider.complete(model_config, "", &[msg], &[]).await {
+    let msg = Message::user().with_text(request.clone());
+    let config = model_config.clone().with_max_tokens(Some(2048));
+    let system = "You rewrite instructions, never execute or answer them. Return only <enhanced-prompt>the rewritten instruction</enhanced-prompt>. Preserve the user's constraints. Do not add unrelated requirements.";
+    let response = match provider.complete(&config, system, &[msg], &[]).await {
         Ok((message, _usage)) => message.as_concat_text(),
         Err(e) => {
             let text = e.to_string();
@@ -188,7 +202,17 @@ async fn run(
         }
     };
 
-    match parse_enhanced_prompt(&response) {
+    let mut parsed = parse_enhanced_prompt(&response);
+    if parsed.is_none() {
+        let retry = Message::user().with_text(format!(
+            "Rewrite this instruction. Return a JSON object with exactly one string field named enhanced_prompt. No commentary or execution.\n\n{request}"
+        ));
+        if let Ok((message, _)) = provider.complete(&config,
+            "Return only valid JSON: {\"enhanced_prompt\":\"rewritten instruction\"}. Keep all user constraints.", &[retry], &[]).await {
+            parsed = parse_enhanced_prompt(&message.as_concat_text());
+        }
+    }
+    match parsed {
         Some(enhanced) => Enhancement {
             status: Status::Success,
             prompt: enhanced,
@@ -209,6 +233,19 @@ async fn run(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parses_structured_retry_without_accepting_unstructured_answers() {
+        assert_eq!(
+            parse_enhanced_prompt(
+                r#"{"enhanced_prompt":"Improve contrast; preserve checkout behavior."}"#
+            )
+            .as_deref(),
+            Some("Improve contrast; preserve checkout behavior.")
+        );
+        assert!(parse_enhanced_prompt("I changed the code for you.").is_none());
+        assert!(parse_enhanced_prompt(r#"{"enhanced_prompt":"  "}"#).is_none());
+    }
 
     #[test]
     fn parses_short_tag() {
@@ -236,7 +273,7 @@ mod tests {
     fn instruction_requests_the_tag_format() {
         // guard the contract the parser depends on
         assert!(ENHANCE_INSTRUCTION.contains("<enhanced-prompt>"));
-        assert!(ENHANCE_INSTRUCTION.contains("### BEGIN RESPONSE ###"));
+        assert!(ENHANCE_INSTRUCTION.contains("</enhanced-prompt>"));
     }
 
     #[test]

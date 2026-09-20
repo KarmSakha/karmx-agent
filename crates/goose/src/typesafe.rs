@@ -17,7 +17,7 @@ use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 const ENDPOINT: &str = "https://api.typesafe.ai/v1/systemone";
-const MODEL: &str = "jev-latest";
+const MODEL: &str = "jev-1.13.0";
 const QUESTION_ID: &str = "decision";
 const RETRY_DELAY: Duration = Duration::from_millis(800);
 const RETRY_JITTER_MS: u64 = 200;
@@ -85,11 +85,9 @@ impl JevClient {
             log_decision("batch", &failure, started.elapsed());
         } else {
             for (id, answer) in &answers {
-                log_decision(
-                    id,
-                    &Outcome::ok(200, answer.choice.clone()),
-                    started.elapsed(),
-                );
+                let mut outcome = Outcome::ok(200, answer.choice.clone());
+                outcome.confidence = Some(answer.confidence);
+                log_decision(id, &outcome, started.elapsed());
             }
         }
         (!answers.is_empty()).then_some(answers)
@@ -156,8 +154,15 @@ impl JevClient {
                         return Outcome::status(status);
                     }
                     return match extract_choice(&payload) {
-                        Some(choice) => Outcome::ok(status, choice),
+                        Some(choice) => {
+                            let mut result = Outcome::ok(status, choice);
+                            result.confidence = payload
+                                .pointer("/answers/decision/confidence")
+                                .and_then(Value::as_f64);
+                            result
+                        }
                         None => Outcome {
+                            confidence: None,
                             choice: None,
                             status: Some(status),
                             error: Some("no choice".to_string()),
@@ -234,6 +239,7 @@ pub struct Answer {
 }
 
 struct Outcome {
+    confidence: Option<f64>,
     choice: Option<String>,
     status: Option<u16>,
     error: Option<String>,
@@ -242,6 +248,7 @@ struct Outcome {
 impl Outcome {
     fn ok(status: u16, choice: String) -> Self {
         Self {
+            confidence: None,
             choice: Some(choice),
             status: Some(status),
             error: None,
@@ -250,6 +257,7 @@ impl Outcome {
 
     fn status(status: u16) -> Self {
         Self {
+            confidence: None,
             choice: None,
             status: Some(status),
             error: None,
@@ -258,6 +266,7 @@ impl Outcome {
 
     fn error(error: impl Into<String>) -> Self {
         Self {
+            confidence: None,
             choice: None,
             status: None,
             error: Some(error.into()),
@@ -340,14 +349,8 @@ fn extract_answers(payload: &Value) -> BTreeMap<String, Answer> {
         };
         let confidence = value
             .get("confidence")
-            .or_else(|| value.get("probability"))
             .and_then(|c| c.as_f64())
-            .or_else(|| {
-                value
-                    .get("probabilities")
-                    .and_then(|p| p.get(choice))
-                    .and_then(|c| c.as_f64())
-            })
+            .filter(|c| c.is_finite() && (0.0..=1.0).contains(c))
             .unwrap_or(0.0);
         out.insert(
             id.clone(),
@@ -397,6 +400,8 @@ fn log_decision(instructions: &str, outcome: &Outcome, elapsed: Duration) {
         "ts": chrono::Utc::now().to_rfc3339(),
         "instructions": instructions,
         "choice": outcome.choice,
+        "confidence": outcome.confidence,
+        "model": MODEL,
         "status": outcome.status,
         "error": outcome.error,
         "elapsed_ms": elapsed.as_millis(),
@@ -420,6 +425,15 @@ fn log_decision(instructions: &str, outcome: &Outcome, elapsed: Duration) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn confidence_is_not_inferred_from_winning_probability() {
+        let answers =
+            extract_answers(&json!({"answers":{"x":{"choice":"a","probabilities":{"a":0.99}}}}));
+        assert_eq!(answers["x"].confidence, 0.0);
+        let answers = extract_answers(&json!({"answers":{"x":{"choice":"a","confidence":2.0}}}));
+        assert_eq!(answers["x"].confidence, 0.0);
+    }
 
     #[test]
     fn extract_reads_the_choice_answer() {

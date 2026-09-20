@@ -1,0 +1,297 @@
+{
+  "id": "20260919_80",
+  "name": "Context regression QA",
+  "provider_name": "karmx_lucy",
+  "parent_session_id": null,
+  "conversation": [
+    {
+      "id": "msg_158c02e9-fa85-40f5-9d76-03b103ae1f6a",
+      "role": "user",
+      "created": 1789802415,
+      "content": [
+        {
+          "type": "text",
+          "text": "Context regression QA: call context_engine rerank_context with query \"What is the domestic shipping price?\" and these three separate chunks in this order: \"Cafeteria serves mango pudding on Friday.\", \"Domestic shipping price is 49900 paise.\", \"The office printer uses blue toner.\" Report the actual kept count and ranking applied status from the tool. Then use retrieve_context on /tmp/karmx-app-e2e/workspace to find the current free shipping threshold and policy ID. No shell or file reads outside that fixture."
+        }
+      ],
+      "metadata": {
+        "userVisible": true,
+        "agentVisible": true
+      }
+    },
+    {
+      "id": "msg_6f9e12fb-b27d-4f2b-aedd-e1c34e5f53ee",
+      "role": "user",
+      "created": 1789802416,
+      "content": [
+        {
+          "type": "text",
+          "text": "<turn-context>\n<current-time>2026-09-19 12:50:00 +05:30</current-time>\n<working-directory>/Users/yamankhetan</working-directory>\n\n<skill-suggestion>context-manager \u2014 Expert in managing the \"Memory\" of AI systems. Specializes in Vector Databases (RAG), Short/Long-term memory architectur</skill-suggestion>\n</turn-context>"
+        }
+      ],
+      "metadata": {
+        "userVisible": false,
+        "agentVisible": true,
+        "turnContext": true
+      }
+    },
+    {
+      "id": "chatcmpl-tG5BdAkpCyIXXTe2WkOJUwjoSlob2NB9",
+      "role": "assistant",
+      "created": 1789802444,
+      "content": [
+        {
+          "type": "toolRequest",
+          "id": "owdisuJsUrEz25F1JCStm4brTpvvY0DN",
+          "toolCall": {
+            "status": "success",
+            "value": {
+              "name": "rerank_context",
+              "arguments": {
+                "query": "What is the domestic shipping price?",
+                "chunks": [
+                  {
+                    "text": "Cafeteria serves mango pudding on Friday.",
+                    "timestamp_ms": 1000
+                  },
+                  {
+                    "text": "Domestic shipping price is 49900 paise.",
+                    "timestamp_ms": 2000
+                  },
+                  {
+                    "text": "The office printer uses blue toner.",
+                    "timestamp_ms": 3000
+                  }
+                ]
+              }
+            }
+          },
+          "_meta": {
+            "goose.toolCall.providerIndex": 0,
+            "goose_extension": "context_engine"
+          }
+        }
+      ],
+      "metadata": {
+        "userVisible": true,
+        "agentVisible": true,
+        "inference": {
+          "provider": "karmx_lucy",
+          "requestedModel": "lucy"
+        },
+        "usage": {
+          "inputTokens": 15999,
+          "outputTokens": 317,
+          "totalTokens": 16316,
+          "cacheReadTokens": 0,
+          "elapsedMs": 36074,
+          "timeToFirstTokenMs": 24631
+        }
+      }
+    },
+    {
+      "id": "msg_5929d10a-6dd7-40ba-92cb-c7c7b45c3af5",
+      "role": "user",
+      "created": 1789802444,
+      "content": [
+        {
+          "type": "toolResponse",
+          "id": "owdisuJsUrEz25F1JCStm4brTpvvY0DN",
+          "toolResult": {
+            "status": "success",
+            "value": {
+              "resultType": "complete",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "kept 3/3 chunks (ranking applied: true)\n\nDomestic shipping price is 49900 paise.\n\n---\n\nCafeteria serves mango pudding on Friday.\n\n---\n\nThe office printer uses blue toner."
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "metadata": {
+        "userVisible": true,
+        "agentVisible": true
+      }
+    },
+    {
+      "id": "msg_3909aea7-28f2-46be-bbee-a69b5d542bc4",
+      "role": "assistant",
+      "created": 1789802444,
+      "content": [
+        {
+          "type": "toolRequest",
+          "id": "JH7dlqZqCLkWGYqxALXPEhJFQy8KH7Aa",
+          "toolCall": {
+            "status": "success",
+            "value": {
+              "name": "codebase_retrieval",
+              "arguments": {
+                "query": "free shipping threshold policy ID",
+                "directory": "/tmp/karmx-app-e2e/workspace"
+              }
+            }
+          },
+          "_meta": {
+            "goose.toolCall.providerIndex": 1,
+            "goose_extension": "context_engine"
+          }
+        }
+      ],
+      "metadata": {
+        "userVisible": true,
+        "agentVisible": true,
+        "inference": {
+          "provider": "karmx_lucy",
+          "requestedModel": "lucy"
+        }
+      }
+    },
+    {
+      "id": "msg_040b0e0c-9b6b-43b9-9a1d-d5ff5ddc2dbe",
+      "role": "user",
+      "created": 1789802444,
+      "content": [
+        {
+          "type": "toolResponse",
+          "id": "JH7dlqZqCLkWGYqxALXPEhJFQy8KH7Aa",
+          "toolResult": {
+            "status": "success",
+            "value": {
+              "resultType": "complete",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The following code sections were retrieved:\n\ndocs/returns.md:1 (score 6)\nReturns policy is separate from shipping. Return window: 17 calendar days.\n\nsrc/shipping.py:1 (score 6)\n\"\"\"Shipping cost policy for the ORBIT store.\"\"\"\n\nsrc/shipping.py:2 (score 5)\nPOLICY_ID = 'ORBIT-7319'\n\nsrc/shipping.py:3 (score 5)\ndef shipping_cents(country, subtotal_cents):\n\n\n[files indexed: 3 | hits: 4 | truncated: false]"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "metadata": {
+        "userVisible": true,
+        "agentVisible": true
+      }
+    },
+    {
+      "id": "chatcmpl-XnbaRKnFrrN3oQskRlYXQmJwoMVfTbfK",
+      "role": "assistant",
+      "created": 1789802453,
+      "content": [
+        {
+          "type": "text",
+          "text": "The first retrieval didn't surface the threshold value. Let me search more specifically for the threshold.\n\n"
+        }
+      ],
+      "metadata": {
+        "userVisible": true,
+        "agentVisible": true,
+        "inference": {
+          "provider": "karmx_lucy",
+          "requestedModel": "lucy"
+        },
+        "usage": {
+          "inputTokens": 16511,
+          "outputTokens": 125,
+          "totalTokens": 16636,
+          "cacheReadTokens": 16315,
+          "elapsedMs": 2450,
+          "timeToFirstTokenMs": 1037
+        }
+      }
+    },
+    {
+      "id": "msg_96809763-4776-4ff3-8ec4-ca8ce9212908",
+      "role": "assistant",
+      "created": 1789802455,
+      "content": [
+        {
+          "type": "toolRequest",
+          "id": "xh3WPTSu88jRGQTUuuq7wu7qKmm2p0xL",
+          "toolCall": {
+            "status": "success",
+            "value": {
+              "name": "codebase_retrieval",
+              "arguments": {
+                "query": "free shipping threshold cents",
+                "directory": "/tmp/karmx-app-e2e/workspace"
+              }
+            }
+          },
+          "_meta": {
+            "goose.toolCall.providerIndex": 0,
+            "goose_extension": "context_engine"
+          }
+        }
+      ],
+      "metadata": {
+        "userVisible": true,
+        "agentVisible": true,
+        "inference": {
+          "provider": "karmx_lucy",
+          "requestedModel": "lucy"
+        }
+      }
+    },
+    {
+      "id": "msg_8c89e7cb-386f-4838-b52c-13673671949e",
+      "role": "user",
+      "created": 1789802455,
+      "content": [
+        {
+          "type": "toolResponse",
+          "id": "xh3WPTSu88jRGQTUuuq7wu7qKmm2p0xL",
+          "toolResult": {
+            "status": "success",
+            "value": {
+              "resultType": "complete",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The following code sections were retrieved:\n\nsrc/shipping.py:3 (score 6)\ndef shipping_cents(country, subtotal_cents):\n\nsrc/shipping.py:1 (score 5)\n\"\"\"Shipping cost policy for the ORBIT store.\"\"\"\n\nsrc/shipping.py:4 (score 5)\nif country == 'IN' and subtotal_cents >= 275000:\n\ndocs/returns.md:1 (score 3)\nReturns policy is separate from shipping. Return window: 17 calendar days.\n\n\n[files indexed: 3 | hits: 4 | truncated: false]"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "metadata": {
+        "userVisible": true,
+        "agentVisible": true
+      }
+    },
+    {
+      "id": "chatcmpl-HlE0V3LPVqEQZTDNswIPNiAJWRLHxjar",
+      "role": "assistant",
+      "created": 1789802456,
+      "content": [
+        {
+          "type": "text",
+          "text": "**`rerank_context` result:**\n- **Kept count:** 3/3 chunks (all were retained)\n- **Ranking applied:** true\n\n**Ranking order (highest relevance first):**\n1. `\"Domestic shipping price is 49900 paise.\"` \u2014 directly answers the query\n2. `\"Cafeteria serves mango pudding on Friday.\"` \u2014 second-ranked\n3. `\"The office printer uses blue toner.\"` \u2014 third-ranked\n\nAll three chunks were kept; the top-ranked chunk was placed first, followed by the remaining two in their original relative order.\n\n---\n\n**`codebase_retrieval` result from `/tmp/karmx-app-e2e/workspace`:**\n\n- **Policy ID:** `ORBIT-7319` (from `src/shipping.py`)\n- **Free shipping threshold:** Subtotal \u2265 **275,000 cents** (\u20b92,750) for country code `'IN'` \u2014 the relevant line in `src/shipping.py` reads:\n\n```python\nif country == 'IN' and subtotal_cents >= 275000:\n```\n\nThis is the condition that triggers free shipping for domestic (India) orders. Returns are handled separately (17-calendar-day window) per `docs/returns.md`."
+        }
+      ],
+      "metadata": {
+        "userVisible": true,
+        "agentVisible": true,
+        "inference": {
+          "provider": "karmx_lucy",
+          "requestedModel": "lucy"
+        },
+        "usage": {
+          "inputTokens": 16782,
+          "outputTokens": 397,
+          "totalTokens": 17179,
+          "cacheReadTokens": 16635,
+          "elapsedMs": 5337,
+          "timeToFirstTokenMs": 908
+        }
+      }
+    }
+  ]
+}

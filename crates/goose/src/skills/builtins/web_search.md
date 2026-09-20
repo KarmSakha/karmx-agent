@@ -5,6 +5,8 @@ description: Search the web and extract page content using DuckDuckGo (no API ke
 
 ## Requirements
 
+- If the `web_search` / `web_fetch` tools are available, prefer them — they are
+  backed by Exa and need no shell commands.
 - `uv` must be installed (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
 - No API key required for the default DuckDuckGo path
 

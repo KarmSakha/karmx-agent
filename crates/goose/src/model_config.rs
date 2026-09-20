@@ -135,6 +135,14 @@ fn base_model_config_from_user_config(
         supports_vision: None,
         request_headers: None,
     };
+    // Custom providers declare reasoning in their config; the name check in
+    // is_reasoning_model() can't see it otherwise, so thinking effort would
+    // never reach OpenAI-compatible self-hosted endpoints.
+    if model.reasoning.is_none() {
+        model.reasoning =
+            crate::providers::canonical_cost::declared_model_info(provider_name, model_name)
+                .map(|info| info.reasoning);
+    }
     if provider_name != goose_providers::azure_foundry::AZURE_FOUNDRY_PROVIDER_NAME {
         model.normalize_effort_suffix();
     }
@@ -222,12 +230,12 @@ fn parse_yaml_bool_config(key: &str, value: serde_yaml::Value) -> Result<bool> {
         serde_yaml::Value::Bool(value) => Ok(value),
         serde_yaml::Value::Number(value) => parse_bool_config(key, &value.to_string()),
         serde_yaml::Value::String(value) => parse_bool_config(key, &value),
-        other => {
-            Err(anyhow!(
+        other => Err(anyhow!(
             "Invalid value for '{key}': '{}' - must be one of: 1, true, yes, on, 0, false, no, off",
-            serde_yaml::to_string(&other).unwrap_or_else(|_| "<unprintable>".to_string()).trim()
-        ))
-        }
+            serde_yaml::to_string(&other)
+                .unwrap_or_else(|_| "<unprintable>".to_string())
+                .trim()
+        )),
     }
 }
 

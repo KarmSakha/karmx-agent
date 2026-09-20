@@ -121,8 +121,8 @@ const AppLayoutContent: React.FC<AppLayoutContentProps> = ({ activeSessions }) =
         </Button>
       </div>
 
-      {/* Main content with navigation. Shared white canvas; the sidebar is a
-          rounded outlined card floating on it with breathing room. */}
+      {/* Main content with navigation. Sidebar sits flush against the left
+          edge, separated from the canvas by a hairline (Cline-style chrome). */}
       <div className="flex flex-1 w-full h-full min-h-0 flex-row">
         <motion.div
           key="nav"
@@ -132,9 +132,9 @@ const AppLayoutContent: React.FC<AppLayoutContentProps> = ({ activeSessions }) =
             isDragging ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 40 }
           }
           style={{ height: '100%' }}
-          className="relative flex-shrink-0 overflow-hidden h-full p-2"
+          className="relative flex-shrink-0 overflow-hidden h-full"
         >
-          <div className="w-full h-full overflow-hidden rounded-xl border border-border-primary">
+          <div className="w-full h-full overflow-hidden border-r border-border-primary">
             <Navigation />
           </div>
           {isNavExpanded && (

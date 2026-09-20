@@ -51,8 +51,7 @@ pub fn process_tool_response(
                                     // If file writing fails, include original content with warning
                                     let warning = format!(
                                         "Warning: Failed to write large response to file: {}. Showing full content instead.\n\n{}",
-                                        e,
-                                        text_content.text
+                                        e, text_content.text
                                     );
                                     processed_contents.push(ContentBlock::text(warning));
                                 }

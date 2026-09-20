@@ -23,6 +23,8 @@ pub struct PageElement {
     pub kind: String,
     #[serde(default)]
     pub text: String,
+    #[serde(default)]
+    pub href: String,
     pub x: i64,
     pub y: i64,
     #[serde(default, rename = "inVp")]
@@ -41,13 +43,17 @@ const COLLECT_JS: &str = r#"(() => {
     if (r.width < 2 || r.height < 2) continue;
     const s = getComputedStyle(el);
     if (s.visibility === 'hidden' || s.display === 'none') continue;
-    const text = (el.getAttribute('aria-label') || el.innerText || el.value ||
+    const labelledBy = (el.getAttribute('aria-labelledby') || '').split(/\s+/)
+      .map(id => document.getElementById(id)?.textContent || '').join(' ').trim();
+    const labels = [...(el.labels || [])].map(label => label.textContent || '').join(' ').trim();
+    const text = (el.getAttribute('aria-label') || labelledBy || labels || el.innerText ||
+      ((el.type === 'checkbox' || el.type === 'radio' || el.type === 'password') ? '' : el.value) ||
       el.getAttribute('title') || el.getAttribute('placeholder') || '')
       .trim().replace(/\s+/g, ' ').slice(0, 80);
     out.push({
       i: out.length, tag: el.tagName.toLowerCase(),
       kind: el.getAttribute('type') || el.getAttribute('role') || '',
-      text,
+      text, href: el.tagName === "A" ? el.href : "",
       x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2),
       inVp: r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.right <= innerWidth,
     });
@@ -81,10 +87,10 @@ pub async fn get_page_elements(client: &CdpClient) -> Result<Vec<PageElement>, S
 /// The `page_elements` output: one line per element with everything a model
 /// needs to refer back to it or aim a coordinate at it.
 pub fn format_table(elements: &[PageElement]) -> String {
-    let mut lines = vec!["#i | tag | kind | text | x,y | viewport".to_string()];
+    let mut lines = vec!["#i | tag | kind | text | x,y | viewport | href".to_string()];
     for el in elements {
         lines.push(format!(
-            "{:>3} | {} | {} | {} | {},{} | {}",
+            "{:>3} | {} | {} | {} | {},{} | {} | {}",
             el.index,
             el.tag,
             el.kind,
@@ -92,6 +98,7 @@ pub fn format_table(elements: &[PageElement]) -> String {
             el.x,
             el.y,
             if el.in_viewport { "yes" } else { "no" },
+            el.href,
         ));
     }
     lines.join("\n")
@@ -108,7 +115,7 @@ pub async fn resolve_target<'a>(
     if let Some(jev) = crate::typesafe::JevClient::shared() {
         let options: BTreeMap<String, String> = elements
             .iter()
-            .take(60)
+            .take(120)
             .map(|el| (el.index.to_string(), describe(el)))
             .chain(std::iter::once((
                 "none".to_string(),
@@ -116,24 +123,26 @@ pub async fn resolve_target<'a>(
             )))
             .collect();
         let state = json!({ "instruction": target });
-        if let Some(choice) = jev
-            .decision(
-                JEV_INSTRUCTIONS,
-                &state,
-                &options,
-                Instant::now() + JEV_BUDGET,
-            )
-            .await
-        {
-            if choice == "none" {
-                return None;
-            }
-            if let Ok(index) = choice.parse::<usize>() {
-                if let Some(el) = elements.iter().find(|el| el.index == index) {
-                    return Some(el);
-                }
-            }
+        let questions = BTreeMap::from([(
+            "target".to_string(),
+            crate::typesafe::Question {
+                instructions: JEV_INSTRUCTIONS.to_string(),
+                criteria: options,
+            },
+        )]);
+        let answers = jev
+            .decide_all(&state, &questions, Instant::now() + JEV_BUDGET)
+            .await?;
+        let answer = answers.get("target")?;
+        // An uncertain remote judgment must not silently become a guessed click.
+        if answer.confidence < 0.5 || answer.choice == "none" {
+            return None;
         }
+        return answer
+            .choice
+            .parse::<usize>()
+            .ok()
+            .and_then(|index| elements.iter().find(|el| el.index == index));
     }
     local_match(target, elements)
 }
@@ -278,6 +287,7 @@ mod tests {
             tag: tag.to_string(),
             kind: kind.to_string(),
             text: text.to_string(),
+            href: String::new(),
             x: 0,
             y: 0,
             in_viewport: true,

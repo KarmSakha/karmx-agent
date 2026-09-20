@@ -1,6 +1,6 @@
-# Building goose Desktop on Linux
+# Building karmx Desktop on Linux
 
-This guide covers building the goose Desktop application from source on various Linux distributions.
+This guide covers building the karmx Desktop application from source on various Linux distributions.
 
 ## Prerequisites
 
@@ -40,7 +40,7 @@ To build from source in Termux:
 
 ```bash
 pkg install rust cmake protobuf clang build-essential
-cargo build --release -p goose-cli --bin goose --no-default-features --features portable-default
+cargo build --release -p goose-cli --bin karmx --no-default-features --features portable-default
 ```
 
 > **Note:** The musl/portable build disables `local-inference` (V8) and
@@ -60,15 +60,15 @@ Original PR: https://github.com/aaif-goose/goose/pull/3890
 ### 1. Clone and Setup
 ```bash
 git clone https://github.com/aaif-goose/goose.git
-cd goose
+cd karmx
 ```
 
 ### 2. Build
 
-Build Goose CLI:
+Build KarmX CLI:
 
 ```bash
-cargo build --release -p goose-cli --bin goose
+cargo build --release -p goose-cli --bin karmx
 ```
 
 This command should give you a list of possible packages in the
@@ -83,9 +83,9 @@ cargo test -p
 cd ui/desktop
 pnpm install
 
-# Copy the goose binary to the expected location
+# Copy the karmx binary to the expected location
 mkdir -p src/bin
-cp ../../target/release/goose src/bin/
+cp ../../target/release/karmx src/bin/
 ```
 
 ### 4. Build the Application
@@ -115,7 +115,7 @@ pnpm run make
 
 #### From Build Directory
 ```bash
-./out/goose-linux-x64/goose
+./out/goose-linux-x64/karmx
 ```
 
 #### Install DEB Package (if built)
@@ -142,14 +142,14 @@ These are harmless and don't affect functionality. To suppress them, create a la
 
 ```bash
 #!/bin/bash
-cd /path/to/goose/ui/desktop/out/goose-linux-x64
-./goose 2>&1 | grep -v "GLib-GObject" | grep -v "browser_main_loop"
+cd /path/to/karmx/ui/desktop/out/goose-linux-x64
+./karmx 2>&1 | grep -v "GLib-GObject" | grep -v "browser_main_loop"
 ```
 
-#### Goose Binary Not Found
-If you see "Goose binary not found", ensure you've:
-1. Built the Rust binary: `cargo build --release -p goose-cli --bin goose`
-2. Copied it to the right location: `cp ../../target/release/goose src/bin/`
+#### KarmX Binary Not Found
+If you see "KarmX binary not found", ensure you've:
+1. Built the Rust binary: `cargo build --release -p goose-cli --bin karmx`
+2. Copied it to the right location: `cp ../../target/release/karmx src/bin/`
 3. Rebuilt the application: `pnpm run make`
 
 ### Distribution-Specific Notes
@@ -180,32 +180,32 @@ Building as Snap packages is not currently supported but may be added in the fut
 
 For active development:
 
-1. **Backend changes**: Rebuild with `cargo build --release -p goose-cli --bin goose` and copy the binary
+1. **Backend changes**: Rebuild with `cargo build --release -p goose-cli --bin karmx` and copy the binary
 2. **Frontend changes**: Use `pnpm run start` for hot reload during development
 3. **Full rebuild**: Run the complete build process above
 
 ## Creating System Integration
 
 ### Desktop Entry
-Create `~/.local/share/applications/goose.desktop`:
+Create `~/.local/share/applications/karmx.desktop`:
 ```ini
 [Desktop Entry]
-Name=goose AI Agent
+Name=karmx AI Agent
 Comment=Local AI agent for development tasks
-Exec=/path/to/goose/ui/desktop/out/goose-linux-x64/goose %U
-Icon=/path/to/goose/ui/desktop/out/goose-linux-x64/resources/app.asar.unpacked/src/images/icon.png
+Exec=/path/to/karmx/ui/desktop/out/goose-linux-x64/karmx %U
+Icon=/path/to/karmx/ui/desktop/out/goose-linux-x64/resources/app.asar.unpacked/src/images/icon.png
 Terminal=false
 Type=Application
 Categories=Development;Utility;
 StartupNotify=true
-MimeType=x-scheme-handler/goose
+MimeType=x-scheme-handler/karmx
 ```
 
 ### System-wide Installation
 To install system-wide:
 ```bash
-sudo cp -r out/goose-linux-x64 /opt/goose
-sudo ln -s /opt/goose/goose /usr/local/bin/goose-gui
+sudo cp -r out/goose-linux-x64 /opt/karmx
+sudo ln -s /opt/karmx/karmx /usr/local/bin/goose-gui
 ```
 
 ## Contributing

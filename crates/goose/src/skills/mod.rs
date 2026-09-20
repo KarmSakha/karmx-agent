@@ -8,12 +8,12 @@ pub mod client;
 pub(crate) mod router;
 mod supporting_files;
 
-pub use client::{EXTENSION_NAME, SkillsClient};
+pub use client::{SkillsClient, EXTENSION_NAME};
 pub(crate) use supporting_files::{
     create_source_file, load_supporting_file, read_source_file, write_source_file,
 };
 
-use crate::config::{Config, paths::Paths};
+use crate::config::{paths::Paths, Config};
 use crate::plugins::discovery::PluginScope;
 use crate::plugins::{
     configured_project_plugin_skill_dirs, enabled_plugin_skill_dirs_with_config,

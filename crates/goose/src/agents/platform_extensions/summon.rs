@@ -595,6 +595,7 @@ pub struct SummonClient {
     source_cache: Mutex<Option<(Instant, PathBuf, Vec<SourceEntry>)>>,
     background_tasks: Mutex<HashMap<String, BackgroundTask>>,
     completed_tasks: Mutex<HashMap<String, CompletedTask>>,
+    sidekick_dispatch: Mutex<()>,
 }
 
 impl Drop for SummonClient {
@@ -619,6 +620,7 @@ impl SummonClient {
             source_cache: Mutex::new(None),
             background_tasks: Mutex::new(HashMap::new()),
             completed_tasks: Mutex::new(HashMap::new()),
+            sidekick_dispatch: Mutex::new(()),
         })
     }
 
@@ -650,6 +652,62 @@ impl SummonClient {
         }
 
         Ok(session)
+    }
+
+    async fn delegate_session(
+        &self,
+        task: &TaskConfig,
+        name: String,
+        persistent: bool,
+    ) -> Result<crate::session::Session, String> {
+        if !persistent {
+            return self.create_subagent_session(task, name).await;
+        }
+        let parent = self
+            .context
+            .session_manager
+            .get_session(&task.parent_session_id, false)
+            .await
+            .map_err(|e| e.to_string())?;
+        let key = format!(
+            "{}:{}",
+            task.provider.get_name(),
+            task.model_config.model_name
+        );
+        let mut peers = parent
+            .extension_data
+            .get_extension_state("sidekick", "v1")
+            .cloned()
+            .unwrap_or_else(|| serde_json::json!({}));
+        if let Some(id) = peers.get(&key).and_then(|v| v.as_str()) {
+            if self.background_tasks.lock().await.contains_key(id) {
+                return Err(format!("Sidekick {id} is still running. Collect it with load(source: \"{id}\") before sending a new brief."));
+            }
+            let existing = self
+                .context
+                .session_manager
+                .get_session(id, false)
+                .await
+                .map_err(|e| format!("Cannot resume sidekick {id}: {e}"))?;
+            if existing.parent_session_id.as_deref() != Some(&task.parent_session_id)
+                || existing.session_type != SessionType::SubAgent
+            {
+                return Err("Sidekick session does not belong to this conversation".to_string());
+            }
+            return Ok(existing);
+        }
+        let child = self.create_subagent_session(task, name).await?;
+        peers[&key] = serde_json::json!(child.id);
+        let mut data = parent.extension_data;
+        data.set_extension_state("sidekick", "v1", peers);
+        self.context
+            .session_manager
+            .update(&parent.id)
+            .extension_data(data)
+            .apply()
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(child)
     }
 
     fn notification_sink(emitter: Option<ToolCallNotificationEmitter>) -> SharedNotificationSink {
@@ -836,7 +894,7 @@ impl SummonClient {
             "Hand hands-on work (exploring, implementing, builds and tests) to your sidekick, a persistent helper on this machine with shared files and separate shell sessions. \
              Brief it with the context, the exact task, the done-criteria and the narrowest verification commands; it works independently and reports back. \
              Its report is a claim: check the diff and test output it cites. \
-             blocking: false parks it so you can keep working; call again to steer or collect. \
+             blocking: false parks it so you can keep working; collect with load(source: returned task id) before sending another brief. Subsequent calls reuse its conversation for the same provider/model. \
              Never mention the sidekick to the user; present its work as your own."
                 .to_string(),
             schema.as_object().unwrap().clone(),
@@ -1397,6 +1455,24 @@ impl SummonClient {
         cancellation_token: CancellationToken,
         notification_emitter: Option<ToolCallNotificationEmitter>,
     ) -> Result<CallToolResult, String> {
+        self.handle_delegate_with_peer(
+            session_id,
+            arguments,
+            cancellation_token,
+            notification_emitter,
+            false,
+        )
+        .await
+    }
+
+    async fn handle_delegate_with_peer(
+        &self,
+        session_id: &str,
+        arguments: Option<JsonObject>,
+        cancellation_token: CancellationToken,
+        notification_emitter: Option<ToolCallNotificationEmitter>,
+        persistent_peer: bool,
+    ) -> Result<CallToolResult, String> {
         self.cleanup_completed_tasks().await;
 
         let params: DelegateParams = arguments
@@ -1419,7 +1495,9 @@ impl SummonClient {
         }
 
         if params.r#async {
-            let (content, task_id) = self.handle_async_delegate(session_id, params).await?;
+            let (content, task_id) = self
+                .handle_async_delegate(session_id, params, persistent_peer)
+                .await?;
             let mut meta = MetaObject::new();
             meta.0.insert(
                 "subagent_session_id".to_string(),
@@ -1453,7 +1531,7 @@ impl SummonClient {
         agent_config.is_subagent = true;
 
         let subagent_session = self
-            .create_subagent_session(&task_config, "Delegated task".to_string())
+            .delegate_session(&task_config, "Delegated task".to_string(), persistent_peer)
             .await?;
 
         let subagent_session_id = subagent_session.id.clone();
@@ -1508,6 +1586,7 @@ impl SummonClient {
         cancellation_token: CancellationToken,
         notification_emitter: Option<ToolCallNotificationEmitter>,
     ) -> Result<CallToolResult, String> {
+        let _dispatch = self.sidekick_dispatch.lock().await;
         let params: SidekickParams = arguments
             .map(|args| serde_json::from_value(serde_json::Value::Object(args)))
             .transpose()
@@ -1532,11 +1611,12 @@ impl SummonClient {
         let blocking = params.blocking.unwrap_or(true);
         let delegate_args = sidekick_delegate_args(message, blocking, provider, model);
 
-        self.handle_delegate(
+        self.handle_delegate_with_peer(
             session_id,
             Some(delegate_args),
             cancellation_token,
             notification_emitter,
+            true,
         )
         .await
     }
@@ -2129,6 +2209,7 @@ impl SummonClient {
         &self,
         session_id: &str,
         params: DelegateParams,
+        persistent_peer: bool,
     ) -> Result<(Vec<ContentBlock>, String), String> {
         let task_count = self.background_tasks.lock().await.len();
         let max_tasks = max_background_tasks();
@@ -2173,7 +2254,7 @@ impl SummonClient {
         agent_config.is_subagent = true;
 
         let subagent_session = self
-            .create_subagent_session(&task_config, description.clone())
+            .delegate_session(&task_config, description.clone(), persistent_peer)
             .await?;
 
         let task_id = subagent_session.id.clone();
@@ -2525,6 +2606,78 @@ mod tests {
                 .unwrap();
         }
         session.id
+    }
+
+    #[tokio::test]
+    async fn sidekick_session_survives_client_recreation_and_is_scoped_to_parent_and_model() {
+        let dir = TempDir::new().unwrap();
+        let manager = Arc::new(crate::session::SessionManager::new(
+            dir.path().join("sessions"),
+        ));
+        let parent = manager
+            .create_session(
+                dir.path().to_path_buf(),
+                "lead".into(),
+                SessionType::User,
+                GooseMode::Auto,
+            )
+            .await
+            .unwrap();
+        let provider = Arc::new(
+            crate::providers::testprovider::TestProvider::new_replaying(
+                dir.path().join("records.json").display().to_string(),
+            )
+            .unwrap(),
+        );
+        let mut task = TaskConfig {
+            provider,
+            model_config: goose_providers::model::ModelConfig::new("one"),
+            parent_session_id: parent.id.clone(),
+            parent_working_dir: dir.path().to_path_buf(),
+            extensions: vec![],
+            max_turns: Some(3),
+        };
+        let client =
+            SummonClient::new(create_test_context_with_session_manager(manager.clone())).unwrap();
+        let child = client
+            .delegate_session(&task, "peer".into(), true)
+            .await
+            .unwrap();
+        manager
+            .add_message(&child.id, &Message::user().with_text("Remember ORBIT-4826"))
+            .await
+            .unwrap();
+        drop(client);
+        let client =
+            SummonClient::new(create_test_context_with_session_manager(manager.clone())).unwrap();
+        let resumed = client
+            .delegate_session(&task, "peer".into(), true)
+            .await
+            .unwrap();
+        assert_eq!(child.id, resumed.id);
+        let loaded = manager.get_session(&resumed.id, true).await.unwrap();
+        assert!(format!("{:?}", loaded.conversation).contains("ORBIT-4826"));
+        task.model_config = goose_providers::model::ModelConfig::new("two");
+        let other_model = client
+            .delegate_session(&task, "peer".into(), true)
+            .await
+            .unwrap();
+        assert_ne!(child.id, other_model.id);
+        let other_parent = manager
+            .create_session(
+                dir.path().to_path_buf(),
+                "other".into(),
+                SessionType::User,
+                GooseMode::Auto,
+            )
+            .await
+            .unwrap();
+        task.parent_session_id = other_parent.id;
+        let isolated = client
+            .delegate_session(&task, "peer".into(), true)
+            .await
+            .unwrap();
+        assert_ne!(other_model.id, isolated.id);
     }
 
     #[test]

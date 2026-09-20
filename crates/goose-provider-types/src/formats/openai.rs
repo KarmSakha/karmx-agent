@@ -1737,6 +1737,12 @@ pub fn create_request_for_model_with_options(
         model_config
             .thinking_effort()
             .and_then(|effort| xai_reasoning_effort_for_thinking(&model_name, effort))
+    } else if model_config.reasoning == Some(true) {
+        // Custom OpenAI-compatible providers (llama.cpp, etc.) flag reasoning
+        // in their config rather than by name; forward a generic effort.
+        // Name-detected reasoning models (e.g. grok-4.20) that accept no
+        // effort param must not reach this branch.
+        model_config.thinking_effort().map(generic_reasoning_effort)
     } else {
         None
     };
@@ -1915,6 +1921,20 @@ pub fn openai_reasoning_effort_for_thinking(
         .iter()
         .find(|level| supported.contains(level))
         .map(|level| (*level).to_string())
+}
+
+/// Generic `reasoning_effort` for providers outside the OpenAI/xAI name lists
+/// — e.g. llama.cpp serving reasoning-capable models. "none" disables
+/// thinking; `High`/`Max` map to "xhigh" because llama.cpp chat templates
+/// (Qwen3.x, PrismML ternary) accept xhigh but reject "high" with a 500.
+fn generic_reasoning_effort(effort: ThinkingEffort) -> String {
+    match effort {
+        ThinkingEffort::Off => "none",
+        ThinkingEffort::Low => "low",
+        ThinkingEffort::Medium => "medium",
+        ThinkingEffort::High | ThinkingEffort::Max => "xhigh",
+    }
+    .to_string()
 }
 
 pub(crate) fn openai_reasoning_efforts_for_model(model_name: &str) -> &'static [&'static str] {
@@ -5459,6 +5479,49 @@ data: [DONE]"#;
                 "{model}"
             );
         }
+    }
+
+    #[test]
+    fn test_create_request_forwards_effort_to_config_flagged_reasoning_model() {
+        for (effort, expected) in [
+            (ThinkingEffort::Off, "none"),
+            (ThinkingEffort::Low, "low"),
+            (ThinkingEffort::Medium, "medium"),
+            (ThinkingEffort::High, "xhigh"),
+            (ThinkingEffort::Max, "xhigh"),
+        ] {
+            let mut model_config = ModelConfig::new("lucy").with_thinking_effort(effort);
+            model_config.reasoning = Some(true);
+            let payload = create_request(
+                &model_config,
+                "system prompt",
+                &[],
+                &[],
+                &ImageFormat::OpenAi,
+                false,
+            )
+            .unwrap();
+            assert_eq!(
+                payload.get("reasoning_effort"),
+                Some(&json!(expected)),
+                "{effort}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_create_request_sends_no_effort_for_unflagged_custom_model() {
+        let model_config = ModelConfig::new("lucy").with_thinking_effort(ThinkingEffort::High);
+        let payload = create_request(
+            &model_config,
+            "system prompt",
+            &[],
+            &[],
+            &ImageFormat::OpenAi,
+            false,
+        )
+        .unwrap();
+        assert!(payload.get("reasoning_effort").is_none());
     }
 
     #[test]

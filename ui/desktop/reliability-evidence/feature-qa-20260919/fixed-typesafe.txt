@@ -1,0 +1,9 @@
+
+running 4 tests
+test typesafe::tests::confidence_is_not_inferred_from_winning_probability ... ok
+test typesafe::tests::env_file_key_is_parsed_when_env_var_is_unset ... ok
+test typesafe::tests::env_var_beats_env_file ... ok
+test typesafe::tests::extract_reads_the_choice_answer ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 2376 filtered out; finished in 0.00s
+

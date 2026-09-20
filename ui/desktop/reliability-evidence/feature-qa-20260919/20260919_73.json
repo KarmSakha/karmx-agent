@@ -1,0 +1,901 @@
+[
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "Browser interaction QA. Open http://127.0.0.1:8771 using page_elements/browser_task/computer_control. Fill QA Name with exactly ORBIT Browser, check QA Confirm, and click Save QA. Verify the Saved QA status. Then follow View QA Details and report its reference code. Use real browser actions, not shell/HTTP requests or JavaScript injection. Only interact with this disposable local test page."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "<turn-context>\n<current-time>2026-09-19 12:08:00 +05:30</current-time>\n<working-directory>/Users/yamankhetan</working-directory>\n</turn-context>"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "KCokz58PLz7ixrgU7X55zW0YEQY2sBGw",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "page_elements",
+            "arguments": {
+              "url": "http://127.0.0.1:8771",
+              "launch": true
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "computer_control"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "KCokz58PLz7ixrgU7X55zW0YEQY2sBGw",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "page: KarmX QA Form\nurl: http://127.0.0.1:8771/\n\nVisible text:\nKarmX QA Form\nQA NameQA ConfirmSave QA\n\nNot saved\n\nView QA Details\n\n#i | tag | kind | text | x,y | viewport | href\n  0 | input |  | QA Name | 281,198 | yes | \n  1 | input | checkbox | on | 440,200 | yes | \n  2 | button |  | Save QA | 637,198 | yes | \n  3 | a |  | View QA Details | 124,320 | yes | http://127.0.0.1:8771/details"
+              }
+            ],
+            "isError": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Page is live at http://127.0.0.1:8771. I can see the QA Name input, QA Confirm checkbox, Save QA button, and the View QA Details link. Now filling the form.\n\n"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "OhHCcKrRm6yWPxDvKKVHatpttLGcUwgf",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "browser_task",
+            "arguments": {
+              "instruction": "type ORBIT Browser into the QA Name input field",
+              "text": "ORBIT Browser",
+              "url": "http://127.0.0.1:8771"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "computer_control"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "OhHCcKrRm6yWPxDvKKVHatpttLGcUwgf",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "type element 0 (input \"QA Name\") at (281,198)\n\npage: KarmX QA Form\nurl: http://127.0.0.1:8771/\n\nscreenshot: 57235 bytes (png)"
+              }
+            ],
+            "isError": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Name filled. Now checking the QA Confirm checkbox and clicking Save QA.\n\n"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "CiA6Ka5UQN5CM5JVN1TMxIgPAJGQQxKa",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "browser_task",
+            "arguments": {
+              "instruction": "click the QA Confirm checkbox",
+              "url": "http://127.0.0.1:8771"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "computer_control"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "CiA6Ka5UQN5CM5JVN1TMxIgPAJGQQxKa",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "could not resolve \"click the QA Confirm checkbox\" to a page element \u2014 pick an index or coordinates from the table and call computer_control:\n\n#i | tag | kind | text | x,y | viewport | href\n  0 | input |  | QA Name | 281,198 | yes | \n  1 | input | checkbox | on | 440,200 | yes | \n  2 | button |  | Save QA | 637,198 | yes | \n  3 | a |  | View QA Details | 124,320 | yes | http://127.0.0.1:8771/details"
+              }
+            ],
+            "isError": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "2KxoGOWEb3xFnCEGjeZ8LNLAmHgZ9eoH",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "browser_task",
+            "arguments": {
+              "instruction": "click the Save QA button",
+              "confirm": true,
+              "url": "http://127.0.0.1:8771"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 1,
+          "goose_extension": "computer_control"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "2KxoGOWEb3xFnCEGjeZ8LNLAmHgZ9eoH",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "click element 2 (button \"Save QA\") at (637,198)\n\npage: KarmX QA Form\nurl: http://127.0.0.1:8771/\n\nscreenshot: 54538 bytes (png)"
+              }
+            ],
+            "isError": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Save clicked, but the checkbox click failed to resolve by text. I'll click it at its coordinates, then save again.\n\n"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "Ca23XEppMl935nO5EH3WPWL7DacmYwHG",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "computer_control",
+            "arguments": {
+              "actions": [
+                {
+                  "action_type": "click",
+                  "coordinate": {
+                    "x": 440,
+                    "y": 200
+                  }
+                }
+              ],
+              "url": "http://127.0.0.1:8771"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "computer_control"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "Ca23XEppMl935nO5EH3WPWL7DacmYwHG",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "performed 1 action(s):\n  - click at (440,200)\n\npage: KarmX QA Form\nurl: http://127.0.0.1:8771/\n\nscreenshot: 53614 bytes (png)"
+              }
+            ],
+            "isError": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Checkbox checked. Now saving the QA to trigger validation.\n\n"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "MDHyLbfbxmOhVLhvA3JQTas1jbGMNdiM",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "browser_task",
+            "arguments": {
+              "instruction": "click the Save QA button",
+              "confirm": true,
+              "url": "http://127.0.0.1:8771"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "computer_control"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "MDHyLbfbxmOhVLhvA3JQTas1jbGMNdiM",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "click element 2 (button \"Save QA\") at (637,198)\n\npage: KarmX QA Form\nurl: http://127.0.0.1:8771/\n\nscreenshot: 54438 bytes (png)"
+              }
+            ],
+            "isError": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Now verifying the saved status on the page.\n\n"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "Di5eyqK7iw5x4gbIuy3dbWoKQvczm7QQ",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "page_elements",
+            "arguments": {
+              "url": "http://127.0.0.1:8771"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "computer_control"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "Di5eyqK7iw5x4gbIuy3dbWoKQvczm7QQ",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "page: KarmX QA Form\nurl: http://127.0.0.1:8771/\n\nVisible text:\nKarmX QA Form\nQA NameQA ConfirmSave QA\n\nNot saved\n\nView QA Details\n\n#i | tag | kind | text | x,y | viewport | href\n  0 | input |  | QA Name | 281,198 | yes | \n  1 | input | checkbox | on | 440,200 | yes | \n  2 | button |  | Save QA | 637,198 | yes | \n  3 | a |  | View QA Details | 124,320 | yes | http://127.0.0.1:8771/details"
+              }
+            ],
+            "isError": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Status still reads \"Not saved\". Let me inspect the rendered page more closely with a screenshot region to see what the save status actually shows.\n\n"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "S1I5RnBuD7WY8s1NC3nLS1hGgxPugHVR",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "computer_control",
+            "arguments": {
+              "actions": [
+                {
+                  "action_type": "screenshot",
+                  "region": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 750,
+                    "height": 400
+                  }
+                }
+              ],
+              "url": "http://127.0.0.1:8771"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "computer_control"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "S1I5RnBuD7WY8s1NC3nLS1hGgxPugHVR",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "performed 1 action(s):\n  - screenshot\n\npage: KarmX QA Form\nurl: http://127.0.0.1:8771/\n\nscreenshot: 53538 bytes (png)"
+              }
+            ],
+            "isError": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "qccSGfOth3j4reU7guQcJ3aiRmk09eED",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "browser_preview",
+            "arguments": {
+              "url": "http://127.0.0.1:8771"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "browser_preview"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "qccSGfOth3j4reU7guQcJ3aiRmk09eED",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "preview_id: 127.0.0.1:61580\nproxy: http://127.0.0.1:61580\ntarget: http://127.0.0.1:8771\n\nDOM elements captured: 0\n\nConsole output (0 lines):\n\nLoad http://127.0.0.1:61580 in a browser to exercise the app; captured DOM and console output will be returned on your next call."
+              }
+            ],
+            "isError": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "PpbpaVMjYnGzZqKbajZEut0lxWsYHEDh",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "browser_preview",
+            "arguments": {
+              "url": "http://127.0.0.1:8771"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "browser_preview"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "PpbpaVMjYnGzZqKbajZEut0lxWsYHEDh",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "preview_id: 127.0.0.1:61971\nproxy: http://127.0.0.1:61971\ntarget: http://127.0.0.1:8771\n\nDOM elements captured: 0\n\nConsole output (0 lines):\n\nLoad http://127.0.0.1:61971 in a browser to exercise the app; captured DOM and console output will be returned on your next call."
+              }
+            ],
+            "isError": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "The preview needs the page loaded through it. Let me load the proxy URL in the browser, then re-capture.\n\n"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "slnUmZ0t4M3xhaQpmUY73Vo3XSDa1wkM",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "browser_task",
+            "arguments": {
+              "instruction": "navigate to http://127.0.0.1:61971",
+              "url": "http://127.0.0.1:61971"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "computer_control"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "slnUmZ0t4M3xhaQpmUY73Vo3XSDa1wkM",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "could not resolve \"navigate to http://127.0.0.1:61971\" to a page element \u2014 pick an index or coordinates from the table and call computer_control:\n\n#i | tag | kind | text | x,y | viewport | href\n  0 | input |  | QA Name | 281,168 | yes | \n  1 | input | checkbox | on | 440,170 | yes | \n  2 | button |  | Save QA | 637,168 | yes | \n  3 | a |  | View QA Details | 124,290 | yes | http://127.0.0.1:61971/details\n  4 | button |  | Send element | 947,813 | yes | \n  5 | button |  | Send console errors (0) | 1095,813 | yes | "
+              }
+            ],
+            "isError": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Page loaded through the proxy. Now capturing the rendered DOM to verify the save status.\n\n"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "l0YqoJT0dyw3cUeraeQFW7ydAQYFbMTw",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "browser_preview",
+            "arguments": {
+              "url": "http://127.0.0.1:8771"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "browser_preview"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "l0YqoJT0dyw3cUeraeQFW7ydAQYFbMTw",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "preview_id: 127.0.0.1:62658\nproxy: http://127.0.0.1:62658\ntarget: http://127.0.0.1:8771\n\nDOM elements captured: 0\n\nConsole output (0 lines):\n\nLoad http://127.0.0.1:62658 in a browser to exercise the app; captured DOM and console output will be returned on your next call."
+              }
+            ],
+            "isError": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "PaywgU7UBBlKb8Fp40kPflxRPeAl7fpX",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "browser_task",
+            "arguments": {
+              "instruction": "open the proxy preview page in a new tab",
+              "url": "http://127.0.0.1:62658"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "computer_control"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "PaywgU7UBBlKb8Fp40kPflxRPeAl7fpX",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "navigation to http://127.0.0.1:62658 failed: Chrome did not respond to Page.navigate within 15 seconds"
+              }
+            ],
+            "isError": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "ZckjMLbjjf6DVRpbAsudfwBFq0ILro5x",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "page_elements",
+            "arguments": {
+              "launch": true,
+              "url": "http://127.0.0.1:8771"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "computer_control"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "ZckjMLbjjf6DVRpbAsudfwBFq0ILro5x",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "navigation to http://127.0.0.1:8771 failed: Chrome did not respond to Page.navigate within 15 seconds"
+              }
+            ],
+            "isError": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "The browser is stuck on the dead proxy tab. Navigating back to the real test page.\n\n"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "mQ6ShIQHspMU52jbrfxGJS6vUmG06apj",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "browser_task",
+            "arguments": {
+              "instruction": "navigate to the QA form",
+              "url": "http://127.0.0.1:8771"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "computer_control"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "mQ6ShIQHspMU52jbrfxGJS6vUmG06apj",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "Could not attach to a browser on port 9222: Chrome discovery at http://127.0.0.1:9222/json/version returned an HTTP error\n\nRetry with launch: true to have this tool start Chrome, or start it yourself with --remote-debugging-port=9222"
+              }
+            ],
+            "isError": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Chrome's debug connection dropped. Relaunching it.\n\n"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "saqpAiKn6INpHT5nAtlLEYoLr81ZA92C",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "browser_task",
+            "arguments": {
+              "instruction": "navigate to the QA form",
+              "launch": true,
+              "url": "http://127.0.0.1:8771"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "computer_control"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "saqpAiKn6INpHT5nAtlLEYoLr81ZA92C",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "navigation to http://127.0.0.1:8771 failed: Chrome did not respond to Page.navigate within 15 seconds"
+              }
+            ],
+            "isError": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Chrome is starting. Waiting a moment before retrying navigation.\n\n"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "toolRequest",
+        "id": "wChzJoEVs95lHMIeaD2DwOziUEImUZ5A",
+        "toolCall": {
+          "status": "success",
+          "value": {
+            "name": "browser_task",
+            "arguments": {
+              "instruction": "wait a moment"
+            }
+          }
+        },
+        "_meta": {
+          "goose.toolCall.providerIndex": 0,
+          "goose_extension": "computer_control"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "toolResponse",
+        "id": "wChzJoEVs95lHMIeaD2DwOziUEImUZ5A",
+        "toolResult": {
+          "status": "success",
+          "value": {
+            "resultType": "complete",
+            "content": [
+              {
+                "type": "text",
+                "text": "Could not attach to a browser on port 9222: Chrome discovery at http://127.0.0.1:9222/json/version returned an HTTP error\n\nRetry with launch: true to have this tool start Chrome, or start it yourself with --remote-debugging-port=9222"
+              }
+            ],
+            "isError": true
+          }
+        }
+      }
+    ]
+  }
+]

@@ -5,7 +5,7 @@ use std::{collections::HashSet, sync::Arc};
 
 use async_stream::try_stream;
 use futures::stream::StreamExt;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use tracing::debug;
 
 use super::super::agents::Agent;
@@ -15,7 +15,7 @@ use crate::agents::extension_manager::{get_tool_owner, recover_mangled_tool_name
 use crate::agents::platform_extensions::code_execution;
 use crate::config::{Config, GooseMode};
 use crate::conversation::message::{Message, MessageContent, MessageUsage, ToolRequest};
-use crate::conversation::{Conversation, fix_conversation, merge_consecutive_messages_for_request};
+use crate::conversation::{fix_conversation, merge_consecutive_messages_for_request, Conversation};
 #[cfg(test)]
 use crate::providers::base::stream_from_single_message;
 use crate::providers::base::{MessageStream, Provider};
@@ -27,6 +27,50 @@ use goose_providers::conversation::token_usage::{CostSource, ProviderStats, Prov
 use goose_providers::model::ModelConfig;
 use rmcp::model::{ErrorData, Tool};
 use tracing::warn;
+
+fn provider_idle_timeout() -> std::time::Duration {
+    let seconds = Config::global()
+        .get_param::<u64>("GOOSE_PROVIDER_IDLE_TIMEOUT_SECONDS")
+        .ok()
+        .filter(|value| *value > 0)
+        .unwrap_or(120);
+    std::time::Duration::from_secs(seconds)
+}
+
+fn provider_timeout_error(timeout: std::time::Duration) -> ProviderError {
+    ProviderError::ExecutionError(format!(
+        "The model stopped responding for {} seconds. Check the model server or switch models, then retry. For slow local models, increase KARMX_PROVIDER_IDLE_TIMEOUT_SECONDS.", timeout.as_secs()
+    ))
+}
+
+async fn wait_for_provider<T>(
+    future: impl std::future::Future<Output = T>,
+    timeout: std::time::Duration,
+) -> Result<T, ProviderError> {
+    tokio::time::timeout(timeout, future)
+        .await
+        .map_err(|_| provider_timeout_error(timeout))
+}
+
+fn bounded_provider_stream(
+    mut stream: MessageStream,
+    timeout: std::time::Duration,
+) -> MessageStream {
+    Box::pin(try_stream! {
+        let mut deadline = tokio::time::Instant::now() + timeout;
+        loop {
+            let next = tokio::time::timeout_at(deadline, stream.next()).await
+                .map_err(|_| provider_timeout_error(timeout))?;
+            let Some(item) = next else { break };
+            let item = item?;
+            // Empty transport heartbeats are not model progress.
+            if item.0.as_ref().is_some_and(|message| !message.content.is_empty()) || item.1.is_some() {
+                deadline = tokio::time::Instant::now() + timeout;
+            }
+            yield item;
+        }
+    })
+}
 
 async fn enhance_model_error(
     error: ProviderError,
@@ -436,7 +480,8 @@ pub(crate) async fn stream_response_from_provider(
         model_config.with_default_thinking_effort(Config::global().get_goose_thinking_effort());
     let request_started = std::time::Instant::now();
     debug!("WAITING_LLM_STREAM_START");
-    let stream_result = crate::session_context::with_session_id(
+    let idle_timeout = provider_idle_timeout();
+    let stream_request = crate::session_context::with_session_id(
         Some(session_id.clone()),
         provider.stream(
             &model_config,
@@ -444,12 +489,17 @@ pub(crate) async fn stream_response_from_provider(
             messages_for_provider.messages(),
             &tools,
         ),
-    )
-    .await;
+    );
+    let stream_result = if provider.manages_own_context() {
+        stream_request.await
+    } else {
+        wait_for_provider(stream_request, idle_timeout).await?
+    };
     debug!("WAITING_LLM_STREAM_END");
 
     // If there was an error creating the stream, return a stream that yields that error
     let mut stream = match stream_result {
+        Ok(s) if !provider.manages_own_context() => bounded_provider_stream(s, idle_timeout),
         Ok(s) => s,
         Err(e) => {
             let enhanced_error = enhance_model_error(e, &provider, config.toolshim).await;
@@ -500,7 +550,7 @@ pub(crate) async fn stream_response_from_provider(
                             tokio::time::sleep(delay).await;
                         }
 
-                        stream = match crate::session_context::with_session_id(
+                        stream = match wait_for_provider(crate::session_context::with_session_id(
                             Some(session_id.clone()),
                             provider.stream(
                                 &model_config,
@@ -508,10 +558,10 @@ pub(crate) async fn stream_response_from_provider(
                                 messages_for_provider.messages(),
                                 &tools,
                             ),
-                        )
-                        .await
+                        ), idle_timeout)
+                        .await?
                         {
-                            Ok(stream) => stream,
+                            Ok(stream) => bounded_provider_stream(stream, idle_timeout),
                             Err(error) => {
                                 Err(enhance_model_error(error, &provider, config.toolshim).await)?
                             }
@@ -1373,11 +1423,9 @@ mod tests {
     #[tokio::test]
     async fn toolshim_provider_stream_preserves_provider_message_id() -> anyhow::Result<()> {
         let provider = Arc::new(ToolshimMessageIdProvider {
-            messages: vec![
-                Message::assistant()
-                    .with_id("provider-toolshim-id")
-                    .with_text("hello"),
-            ],
+            messages: vec![Message::assistant()
+                .with_id("provider-toolshim-id")
+                .with_text("hello")],
         });
         let mut stream = stream_response_from_provider(
             provider,
@@ -1406,8 +1454,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn categorize_tool_requests_keeps_thinking_when_not_previously_streamed() {
+    #[tokio::test]
+    async fn categorize_tool_requests_keeps_thinking_when_not_previously_streamed() {
         let agent = crate::agents::Agent::new();
         let tool = Tool::new("test_tool", "a test tool", object!({ "type": "object" }));
         let mut response = Message::assistant()
@@ -1434,8 +1482,8 @@ mod tests {
         ));
     }
 
-    #[test]
-    fn categorize_tool_requests_drops_replayed_thinking_after_streaming() {
+    #[tokio::test]
+    async fn categorize_tool_requests_drops_replayed_thinking_after_streaming() {
         let agent = crate::agents::Agent::new();
         let tool = Tool::new("test_tool", "a test tool", object!({ "type": "object" }));
         let response = Message::assistant()
@@ -1456,8 +1504,8 @@ mod tests {
         ));
     }
 
-    #[test]
-    fn categorize_tool_requests_excludes_assistant_only_text_from_user_events() {
+    #[tokio::test]
+    async fn categorize_tool_requests_excludes_assistant_only_text_from_user_events() {
         let agent = crate::agents::Agent::new();
         let assistant_only = TextContent::new("assistant-only")
             .with_annotations(Annotations::default().with_audience(vec![Role::Assistant]));
@@ -1470,16 +1518,14 @@ mod tests {
 
         assert_eq!(response.as_concat_text(), "assistant-only\nuser-visible");
         assert_eq!(filtered_message.as_concat_text(), "user-visible");
-        assert!(
-            filtered_message
-                .content
-                .iter()
-                .any(|content| matches!(content, MessageContent::Thinking(_)))
-        );
+        assert!(filtered_message
+            .content
+            .iter()
+            .any(|content| matches!(content, MessageContent::Thinking(_))));
     }
 
-    #[test]
-    fn categorize_tool_requests_skips_externally_dispatched_and_preserves_marker() {
+    #[tokio::test]
+    async fn categorize_tool_requests_skips_externally_dispatched_and_preserves_marker() {
         // External requests must (1) survive coercion with goose.external_dispatch
         // intact, (2) be excluded from dispatch, (3) stay in filtered_message.
         use crate::conversation::message::TOOL_META_EXTERNAL_DISPATCH_KEY;
@@ -1534,20 +1580,16 @@ mod tests {
             merged.contains_key("ui"),
             "registry tool meta keys were dropped; merged tool_meta = {merged:?}"
         );
-        assert!(
-            filtered_message.content[1]
-                .as_tool_request()
-                .is_some_and(ToolRequest::was_executed_externally)
-        );
-        assert!(
-            filtered_message.content[1]
-                .as_tool_request()
-                .is_some_and(|request| request.tool_call.is_ok())
-        );
+        assert!(filtered_message.content[1]
+            .as_tool_request()
+            .is_some_and(ToolRequest::was_executed_externally));
+        assert!(filtered_message.content[1]
+            .as_tool_request()
+            .is_some_and(|request| request.tool_call.is_ok()));
     }
 
-    #[test]
-    fn categorize_tool_requests_rejects_unadvertised_executable_tools() {
+    #[tokio::test]
+    async fn categorize_tool_requests_rejects_unadvertised_executable_tools() {
         let agent = crate::agents::Agent::new();
         let response = Message::assistant()
             .with_tool_request(
@@ -1563,11 +1605,9 @@ mod tests {
             agent.categorize_tool_requests(&response, &[], &[], false);
 
         assert_eq!(tool_requests.len(), 2);
-        assert!(
-            tool_requests
-                .iter()
-                .all(|request| request.tool_call.is_err())
-        );
+        assert!(tool_requests
+            .iter()
+            .all(|request| request.tool_call.is_err()));
         assert_eq!(
             filtered_message
                 .content
@@ -1578,8 +1618,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn categorize_tool_requests_dispatches_advertised_tools() {
+    #[tokio::test]
+    async fn categorize_tool_requests_dispatches_advertised_tools() {
         let agent = crate::agents::Agent::new();
         let regular_tool = Tool::new(
             "regular_tool",
@@ -1620,8 +1660,8 @@ mod tests {
         assert_eq!(tool_requests.len(), 3);
     }
 
-    #[test]
-    fn categorize_tool_requests_canonicalizes_mangled_unprefixed_tool_name() {
+    #[tokio::test]
+    async fn categorize_tool_requests_canonicalizes_mangled_unprefixed_tool_name() {
         // GLM's documented reproduction (#9486): a default Developer-extension
         // tool is advertised unprefixed ("shell"), owner only in metadata, and
         // the model emits "developer.shell". This must be rewritten to the
@@ -1662,8 +1702,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn categorize_tool_requests_canonicalizes_mangled_non_extension_manager_tool_name() {
+    #[tokio::test]
+    async fn categorize_tool_requests_canonicalizes_mangled_non_extension_manager_tool_name() {
         // recipe__final_output is appended by Agent::list_tools outside the
         // extension manager (see #9486 review); it must recover the same way.
         let agent = crate::agents::Agent::new();
@@ -1692,8 +1732,8 @@ mod tests {
         assert_eq!(tool_call.name, "recipe__final_output");
     }
 
-    #[test]
-    fn categorize_tool_requests_rejects_unrecoverable_unadvertised_name() {
+    #[tokio::test]
+    async fn categorize_tool_requests_rejects_unrecoverable_unadvertised_name() {
         let agent = crate::agents::Agent::new();
         let tool = Tool::new(
             "shell",
@@ -1722,8 +1762,8 @@ mod tests {
         assert!(tool_call.message.contains("totally_unknown_tool"));
     }
 
-    #[test]
-    fn categorize_tool_requests_dedups_duplicate_ids_in_provider_order() {
+    #[tokio::test]
+    async fn categorize_tool_requests_dedups_duplicate_ids_in_provider_order() {
         // A malformed provider repeats id "dup". The first occurrence wins, the
         // later duplicate is dropped from both the dispatch bucket and the
         // filtered (history) message, and unique ids are kept.
@@ -2196,5 +2236,61 @@ mod duplicate_tool_tests {
 
         let error = ensure_unique_tool_names(&tools).unwrap_err();
         assert_eq!(error.to_string(), "multiple tools registered 'duplicate'");
+    }
+}
+
+#[cfg(test)]
+mod reliability_timeout_tests {
+    use super::*;
+    use std::time::Duration;
+
+    #[tokio::test]
+    async fn provider_start_is_bounded() {
+        let error = wait_for_provider(std::future::pending::<()>(), Duration::from_millis(10))
+            .await
+            .unwrap_err();
+        assert!(matches!(error, ProviderError::ExecutionError(_)));
+        assert!(error.to_string().contains("switch models"));
+    }
+
+    #[tokio::test]
+    async fn stalled_stream_stops_after_delivering_available_items() {
+        let source =
+            futures::stream::once(async { Ok((None, None)) }).chain(futures::stream::pending());
+        let mut stream = bounded_provider_stream(Box::pin(source), Duration::from_millis(10));
+        assert!(stream.next().await.unwrap().is_ok());
+        assert!(matches!(
+            stream.next().await.unwrap(),
+            Err(ProviderError::ExecutionError(_))
+        ));
+        assert!(stream.next().await.is_none());
+    }
+
+    #[tokio::test]
+    async fn empty_heartbeats_do_not_hide_a_stalled_model() {
+        let source = futures::stream::unfold(0, |count| async move {
+            if count == 20 {
+                return None;
+            }
+            tokio::time::sleep(Duration::from_millis(2)).await;
+            Some((Ok((None, None)), count + 1))
+        });
+        let mut stream = bounded_provider_stream(Box::pin(source), Duration::from_millis(10));
+        while let Some(item) = stream.next().await {
+            if let Err(error) = item {
+                assert!(matches!(error, ProviderError::ExecutionError(_)));
+                return;
+            }
+        }
+        panic!("empty heartbeats must not reset the inactivity deadline");
+    }
+
+    #[tokio::test]
+    async fn finished_stream_is_not_reported_as_timeout() {
+        let mut stream = bounded_provider_stream(
+            Box::pin(futures::stream::empty()),
+            Duration::from_millis(10),
+        );
+        assert!(stream.next().await.is_none());
     }
 }
