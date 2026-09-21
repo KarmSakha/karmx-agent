@@ -225,6 +225,7 @@ static INLINE_TOKEN_RE: LazyLock<Regex> = LazyLock::new(|| {
 pub struct MarkdownBuffer {
     buffer: String,
     checkpoint: ScanCheckpoint,
+    complete_lines: bool,
 }
 
 /// Scan progress carried across `push` calls: `pos` is a line-start byte
@@ -284,6 +285,13 @@ impl MarkdownBuffer {
         Self::default()
     }
 
+    pub fn with_complete_lines(complete_lines: bool) -> Self {
+        Self {
+            complete_lines,
+            ..Self::default()
+        }
+    }
+
     /// Add a chunk of markdown text to the buffer.
     ///
     /// Returns any content that is safe to render, or None if the buffer
@@ -292,6 +300,11 @@ impl MarkdownBuffer {
     pub fn push(&mut self, chunk: &str) -> Option<String> {
         self.buffer.push_str(chunk);
         let safe_end = self.find_safe_end();
+
+        // A live status redraw must start below the response, never on a partial line.
+        if self.complete_lines && !self.buffer[..safe_end].ends_with('\n') {
+            return None;
+        }
 
         if safe_end > 0 {
             // SAFETY: safe_end is always at a valid UTF-8 char boundary because:
@@ -316,7 +329,11 @@ impl MarkdownBuffer {
     /// even if markdown constructs are unclosed.
     pub fn flush(&mut self) -> String {
         self.checkpoint = ScanCheckpoint::default();
-        std::mem::take(&mut self.buffer)
+        let mut remaining = std::mem::take(&mut self.buffer);
+        if self.complete_lines && !remaining.is_empty() && !remaining.ends_with('\n') {
+            remaining.push('\n');
+        }
+        remaining
     }
 
     /// Byte offset where the buffer's "mutable tail" begins: the trailing
@@ -593,6 +610,21 @@ impl MarkdownBuffer {
 mod tests {
     use super::*;
     use test_case::test_case;
+
+    #[test]
+    fn live_status_preserves_partial_response_lines() {
+        let mut buffer = MarkdownBuffer::with_complete_lines(true);
+        assert_eq!(buffer.push("Smoke "), None);
+        assert_eq!(buffer.push("response "), None);
+        assert_eq!(
+            buffer.push("complete.\n"),
+            Some("Smoke response complete.\n".into())
+        );
+        assert_eq!(buffer.push("Final **word"), None);
+        assert_eq!(buffer.push("**"), None);
+        assert_eq!(buffer.flush(), "Final **word**\n");
+        assert_eq!(buffer.flush(), "");
+    }
 
     /// Process chunks through the buffer and return all outputs (skipping None, including flush)
     fn stream(chunks: &[&str]) -> Vec<String> {

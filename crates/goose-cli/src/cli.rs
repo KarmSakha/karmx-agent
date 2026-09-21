@@ -807,6 +807,12 @@ enum Command {
     #[command(about = "Configure karmx settings")]
     Configure {},
 
+    #[command(about = "Show or save the startup context profile shared with the desktop app")]
+    Context {
+        #[arg(value_parser = ["compact", "default", "auto"], help = "compact: fewer tools and shorter prompts; default: full context; auto: provider default")]
+        profile: Option<String>,
+    },
+
     /// Display karmx configuration information
     #[command(about = "Display karmx information")]
     Info {
@@ -1381,6 +1387,7 @@ pub struct InputConfig {
 fn get_command_name(command: &Option<Command>) -> &'static str {
     match command {
         Some(Command::Configure {}) => "configure",
+        Some(Command::Context { .. }) => "context",
         Some(Command::Doctor {}) => "doctor",
         Some(Command::Info { .. }) => "info",
         Some(Command::Mcp { .. }) => "mcp",
@@ -2800,6 +2807,9 @@ pub async fn cli() -> anyhow::Result<()> {
             Ok(())
         }
         Some(Command::Configure {}) => handle_configure().await,
+        Some(Command::Context { profile }) => {
+            crate::commands::context::handle_context(profile.as_deref())
+        }
         Some(Command::Doctor {}) => crate::commands::doctor::handle_doctor().await,
         Some(Command::Info { verbose, check }) => handle_info(verbose, check).await,
         Some(Command::Mcp { server }) => handle_mcp_command(server).await,

@@ -1,8 +1,10 @@
 mod builder;
 mod completion;
+mod controls;
 pub mod editor;
 mod elicitation;
 mod input;
+mod live_status;
 mod model_picker;
 mod output;
 mod paste;
@@ -820,6 +822,21 @@ impl CliSession {
             InputResult::New => {
                 history.save(editor);
                 self.handle_new().await?;
+            }
+            InputResult::Resume(id) => {
+                history.save(editor);
+                if let Err(error) = self.handle_resume(id).await {
+                    output::render_error(&error.to_string());
+                }
+                editor.set_helper(Some(GooseCompleter::new(self.completion_cache.clone())));
+            }
+            InputResult::Tools => {
+                self.handle_tools().await?;
+            }
+            InputResult::Context => {
+                if let Err(error) = self.handle_context_details().await {
+                    output::render_error(&error.to_string());
+                }
             }
             InputResult::PromptCommand(opts) => {
                 history.save(editor);
@@ -1654,6 +1671,30 @@ impl CliSession {
             max_turns: self.max_turns,
             retry_config: self.retry_config.clone(),
         };
+        let mut live_status = if interactive && !is_json_mode && !is_stream_json_mode {
+            let provider = self.agent.provider().await?;
+            let model = self
+                .agent
+                .model_config_for_session(&self.session_id)
+                .await?;
+            Some(live_status::LiveStatus {
+                model: format!("{}/{}", provider.get_name(), model.model_name),
+                context_limit: goose::context_limit::get_context_limit(
+                    provider.as_ref(),
+                    &model.model_name,
+                )
+                .await
+                .ok(),
+                tool_count: self.agent.list_tools(&self.session_id, None).await.len(),
+                usage: self
+                    .get_session()
+                    .await
+                    .map(|session| session.usage)
+                    .unwrap_or_default(),
+            })
+        } else {
+            None
+        };
         let user_message = self
             .messages
             .last()
@@ -1666,6 +1707,10 @@ impl CliSession {
         });
         let _drop_handle = AbortOnDropHandle::new(handle);
 
+        let run_started = Instant::now();
+        if let Some(status) = &live_status {
+            output::show_live_status(&status.render("Waiting for model", 0.0, 0));
+        }
         let mut stream = self
             .agent
             .reply(
@@ -1677,13 +1722,17 @@ impl CliSession {
 
         let mut progress_bars = output::McpSpinners::new();
         let cancel_token_clone = cancel_token.clone();
-        let mut markdown_buffer = streaming_buffer::MarkdownBuffer::new();
+        let mut markdown_buffer =
+            streaming_buffer::MarkdownBuffer::with_complete_lines(interactive);
         let mut prompted_credits_urls: HashSet<String> = HashSet::new();
         let mut thinking_header_shown = false;
-        let run_started = Instant::now();
         let mut first_token_at: Option<Instant> = None;
         let mut last_usage: Option<ProviderUsage> = None;
         let mut stream_error = None;
+        let mut active_tools: HashMap<String, String> = HashMap::new();
+        let mut completed_tools = 0usize;
+        let mut activity = "Waiting for model".to_string();
+        let mut activity_tick = tokio::time::interval(Duration::from_millis(500));
 
         use futures::StreamExt;
         loop {
@@ -1691,6 +1740,24 @@ impl CliSession {
                 result = stream.next() => {
                     match result {
                         Some(Ok(AgentEvent::Message(message))) => {
+                            for content in &message.content {
+                                match content {
+                                    MessageContent::ToolRequest(request) => {
+                                        if let Ok(call) = &request.tool_call {
+                                            active_tools.insert(request.id.clone(), call.name.to_string());
+                                        }
+                                    }
+                                    MessageContent::ToolResponse(response) => {
+                                        if active_tools.remove(&response.id).is_some() {
+                                            completed_tools += 1;
+                                        }
+                                        activity = "Waiting for model".to_string();
+                                    }
+                                    MessageContent::Thinking(_) => activity = "Reasoning".to_string(),
+                                    MessageContent::Text(_) => activity = "Writing response".to_string(),
+                                    _ => {}
+                                }
+                            }
                             if first_token_at.is_none() && message_has_text(&message) {
                                 first_token_at = Some(Instant::now());
                             }
@@ -1824,10 +1891,18 @@ impl CliSession {
                                         interactive,
                                         &mut prompted_credits_urls,
                                     );
+                                    if let Some(status) = &live_status {
+                                        output::show_live_status(&status.render(&activity, run_started.elapsed().as_secs_f64(), completed_tools));
+                                    }
                                 }
                             }
                         }
                         Some(Ok(AgentEvent::Usage(usage))) => {
+                            if let Some(status) = &mut live_status {
+                                status.usage = usage.usage.clone();
+                                status.tool_count = self.agent.list_tools(&self.session_id, None).await.len();
+                                output::show_live_status(&status.render(&activity, run_started.elapsed().as_secs_f64(), completed_tools));
+                            }
                             last_usage = Some(usage);
                         }
                         Some(Ok(AgentEvent::MessageUsage { .. })) => {}
@@ -1874,7 +1949,22 @@ impl CliSession {
                     }
                     break;
                 }
+                _ = activity_tick.tick(), if live_status.is_some() => {
+                    if let Some(status) = &live_status {
+                        let label = if active_tools.is_empty() {
+                            activity.clone()
+                        } else {
+                            let mut names = active_tools.values().cloned().collect::<Vec<_>>();
+                            names.sort();
+                            format!("Running {}", names.join(", "))
+                        };
+                        output::show_live_status(&status.render(&safe_truncate(&label, 80), run_started.elapsed().as_secs_f64(), completed_tools));
+                    }
+                }
             }
+        }
+        if interactive {
+            output::hide_thinking();
         }
 
         let terminal_error = headless_run_error(
@@ -1970,6 +2060,13 @@ impl CliSession {
             println!();
             if self.stats {
                 print_run_stats(run_started, first_token_at, last_usage.as_ref());
+            } else if interactive {
+                print_interactive_stats(
+                    run_started,
+                    first_token_at,
+                    last_usage.as_ref(),
+                    completed_tools,
+                );
             }
         }
 
@@ -2251,6 +2348,17 @@ impl CliSession {
             .get_param::<bool>("GOOSE_CLI_SHOW_COST")
             .unwrap_or(false);
 
+        println!(
+            "  {}",
+            console::style(format!(
+                "{}/{} · session {} · /resume /tools /context",
+                provider.get_name(),
+                model_config.model_name,
+                self.session_id
+            ))
+            .dim()
+        );
+
         let provider_name = config
             .get_goose_provider()
             .unwrap_or_else(|_| "unknown".to_string());
@@ -2261,9 +2369,15 @@ impl CliSession {
 
         match self.get_session().await {
             Ok(metadata) => {
-                let total_tokens = metadata.usage.total_tokens.unwrap_or(0) as usize;
-
-                output::display_context_usage(total_tokens, context_limit, sidekick.clone());
+                if let Some(total_tokens) = metadata
+                    .usage
+                    .total_tokens
+                    .and_then(|tokens| usize::try_from(tokens).ok())
+                {
+                    output::display_context_usage(total_tokens, context_limit, sidekick.clone());
+                } else {
+                    println!("  Context usage unreported · model limit {context_limit} tokens");
+                }
 
                 if show_cost {
                     output::display_cost_usage(
@@ -2274,7 +2388,7 @@ impl CliSession {
                 }
             }
             Err(_) => {
-                output::display_context_usage(0, context_limit, sidekick);
+                println!("  Context usage unavailable · model limit {context_limit} tokens");
             }
         }
 
@@ -2473,6 +2587,31 @@ fn print_run_stats(
             eprintln!("  Draft model: {model}");
         }
     }
+}
+
+fn print_interactive_stats(
+    started: Instant,
+    first_token: Option<Instant>,
+    usage: Option<&ProviderUsage>,
+    completed_tools: usize,
+) {
+    let first = first_token
+        .map(|time| format!("{:.1}s", time.duration_since(started).as_secs_f64()))
+        .unwrap_or_else(|| "unreported".to_string());
+    let output = usage
+        .and_then(|usage| usage.usage.output_tokens)
+        .and_then(|tokens| usize::try_from(tokens).ok());
+    let rate = usage
+        .and_then(|usage| usage.stats.as_ref())
+        .and_then(|stats| stats.elapsed_ms)
+        .filter(|ms| *ms > 0)
+        .zip(output)
+        .map(|(ms, tokens)| format!("{:.1} tok/s", tokens as f64 * 1000.0 / ms as f64))
+        .unwrap_or_else(|| "tok/s unreported".to_string());
+    let output = output
+        .map(|tokens| tokens.to_string())
+        .unwrap_or_else(|| "unreported".to_string());
+    println!("  {}", console::style(format!("{:.1}s elapsed · first text {first} · {completed_tools} tools completed\n  Latest model call: {output} output tokens · {rate}", started.elapsed().as_secs_f64())).dim());
 }
 
 fn maybe_open_credits_top_up_url(

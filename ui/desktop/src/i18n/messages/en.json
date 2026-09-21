@@ -341,6 +341,39 @@
   "confirmationModal.processing": {
     "defaultMessage": "Processing..."
   },
+  "contextProfile.automatic": {
+    "defaultMessage": "Use provider default"
+  },
+  "contextProfile.compact": {
+    "defaultMessage": "Compact — lower context"
+  },
+  "contextProfile.custom": {
+    "defaultMessage": "Unrecognized saved profile"
+  },
+  "contextProfile.description": {
+    "defaultMessage": "Choose how much context the agent loads before your first message."
+  },
+  "contextProfile.detail": {
+    "defaultMessage": "Compact uses a shorter prompt and a limited tool set. Browser control and Jev screen tasks remain allowed when enabled; other extensions, including skills, may be excluded."
+  },
+  "contextProfile.failed": {
+    "defaultMessage": "Could not save the context profile. Try again."
+  },
+  "contextProfile.full": {
+    "defaultMessage": "Full — all enabled extensions"
+  },
+  "contextProfile.override": {
+    "defaultMessage": "A custom extension allowlist is configured and takes precedence over the profile’s tool selection."
+  },
+  "contextProfile.restart": {
+    "defaultMessage": "Shared with the CLI. Restart the app or CLI session after changing this setting. Environment overrides take precedence. Jev screen tasks require macOS permissions and a TypeSafe API key."
+  },
+  "contextProfile.saved": {
+    "defaultMessage": "Saved. Restart to apply consistently."
+  },
+  "contextProfile.title": {
+    "defaultMessage": "Startup context"
+  },
   "conversationLimitsDropdown.conversationLimits": {
     "defaultMessage": "Conversation Limits"
   },

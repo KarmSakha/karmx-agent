@@ -8,6 +8,10 @@ activities:
   - Initialize test workspace and logging infrastructure
   - Verify model inactivity errors and bounded browser discovery
   - Verify concise task completion without unrelated rewrites
+  - Verify startup context profile selection across CLI and desktop
+  - Verify terminal session resume, slash tool browsing, and activity reporting
+  - Verify evidence-based completion and bounded retries in full and compact prompt profiles
+  - Verify model, loaded tool count, context percentage, and input/output/cache counters remain visible during reasoning, tool calls, and streamed text without invoking /context. Values must reflect the latest provider report, with missing usage shown as unknown. Check narrow terminals, cancellation, and unchanged JSON output.
   - Test file operations (create, read, update, delete, undo)
   - Validate shell command execution and error handling
   - Validate Azure AI Foundry provider routing and deployment aliases
@@ -84,6 +88,11 @@ instructions: |
   - Error handling and recovery
 
   ### Phase 2: Extension System Testing
+  - In controlled fixtures, verify the agent reports an unavailable tool instead of inventing a call, labels an unrun check as unverified, waits on an existing job instead of duplicating it, and stops a step after two failures without new evidence. Include alternating tools that produce the same failure. Exercise full/compact prompts with both agent loops and report actual observed results; do not simulate successful tool output in the report.
+  - In an isolated configuration, create two sessions with different histories and modes. Use /resume to search and switch, confirm the saved model, mode, working directory choice, and history, then send another message. Cancel the picker and try an invalid ID; the current session must remain usable. Repeat with GOOSE_STATE_MACHINE unset and set to 1.
+  - Open /tools from the slash menu, search for an enabled tool, and inspect its description and input schema without executing it. Verify /context reports unknown token usage as unreported rather than zero. During a tool call, check the tool name, elapsed time, completion count, cancellation, and final timing summary. Keep JSON output free of status UI.
+  - In an isolated configuration directory, check `karmx context`, `karmx context compact`, `karmx context default`, and `karmx context auto`. Confirm saved profiles, provider fallback, and environment/allowlist precedence. Never change the user's active configuration for this check.
+  - Check desktop Settings → Extensions → Startup context for matching persistence, keyboard access, save errors, and restart guidance. Compact should retain enabled browser and Jev screen tools; do not claim measured latency improvements without measurements.
   Test dynamic extension management:
   - Discover available extensions
   - Enable/disable extensions

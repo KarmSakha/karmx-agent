@@ -1,5 +1,6 @@
 import { View, ViewOptions } from '../../utils/navigationUtils';
 import ExtensionsSection from '../settings/extensions/ExtensionsSection';
+import { ContextProfileSettings } from '../settings/extensions/ContextProfileSettings';
 import type { ExtensionConfig } from '../../types/extensions';
 import { MainPanelLayout } from '../Layout/MainPanelLayout';
 import { Button } from '../ui/button';
@@ -169,6 +170,7 @@ export default function ExtensionsView({
             onSearch={(term) => setSearchTerm(term)}
             placeholder={intl.formatMessage(i18n.searchPlaceholder)}
           >
+            <ContextProfileSettings />
             <ExtensionsSection
               key={refreshKey}
               deepLinkConfig={viewOptions.deepLinkConfig}

@@ -169,7 +169,7 @@ impl ThinkingIndicator {
         let hint = style("(Ctrl+C to interrupt)").dim();
         if Config::global()
             .get_param("RANDOM_THINKING_MESSAGES")
-            .unwrap_or(true)
+            .unwrap_or(false)
         {
             spinner.start(format!(
                 "{}...  {}",
@@ -177,7 +177,7 @@ impl ThinkingIndicator {
                 hint,
             ));
         } else {
-            spinner.start(format!("Thinking...  {}", hint));
+            spinner.start(format!("Waiting for model...  {}", hint));
         }
         self.spinner = Some(spinner);
     }
@@ -215,6 +215,21 @@ pub fn show_thinking() {
 pub fn hide_thinking() {
     if std::io::stdout().is_terminal() {
         THINKING.with(|t| t.borrow_mut().hide());
+    }
+}
+
+pub fn show_live_status(message: &str) {
+    if std::io::stdout().is_terminal() {
+        THINKING.with(|indicator| {
+            let mut indicator = indicator.borrow_mut();
+            if indicator.spinner.is_none() {
+                let spinner = cliclack::spinner();
+                spinner.start(message);
+                indicator.spinner = Some(spinner);
+            } else if let Some(spinner) = indicator.spinner.as_mut() {
+                spinner.set_message(message);
+            }
+        });
     }
 }
 
@@ -396,6 +411,7 @@ pub fn render_message_streaming(
     for content in &message.content {
         if !matches!(content, MessageContent::Thinking(_)) {
             if *thinking_header_shown {
+                flush_markdown_buffer(buffer, theme);
                 println!();
             }
             *thinking_header_shown = false;
@@ -595,12 +611,14 @@ fn render_thinking_streaming(
     theme: Theme,
 ) {
     if should_show_thinking() && !text.is_empty() {
-        flush_markdown_buffer(buffer, theme);
         if !*header_shown {
+            flush_markdown_buffer(buffer, theme);
             println!("\n{}", style("Thinking:").dim().italic());
             *header_shown = true;
         }
-        print!("{}", style(text).dim());
+        if let Some(text) = buffer.push(text) {
+            print!("{}", style(text).dim());
+        }
         let _ = std::io::stdout().flush();
     }
 }
@@ -1614,7 +1632,7 @@ pub fn display_context_usage(total_tokens: usize, context_limit: usize, sidekick
     }
 
     println!(
-        "  {} {} {}{}",
+        "  context {} {} {}{}",
         colored_bar,
         style(format!("{}%", percentage)).dim(),
         style(format!(

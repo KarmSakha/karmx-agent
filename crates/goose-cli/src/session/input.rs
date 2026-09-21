@@ -30,6 +30,9 @@ pub enum InputResult {
     EndPlan,
     Clear,
     New,
+    Resume(Option<String>),
+    Tools,
+    Context,
     Compact,
     ToggleFullToolOutput,
     Edit(Option<String>),
@@ -482,6 +485,12 @@ pub(super) fn handle_slash_command(input: &str) -> Option<InputResult> {
     const CMD_SKILLS: &str = "/skills";
 
     match input {
+        "/resume" => Some(InputResult::Resume(None)),
+        s if s.starts_with("/resume ") => Some(InputResult::Resume(
+            s.strip_prefix("/resume ").map(|id| id.trim().to_string()),
+        )),
+        "/tools" => Some(InputResult::Tools),
+        "/context" => Some(InputResult::Context),
         "/exit" | "/quit" => Some(InputResult::Exit),
         "/?" | "/help" => {
             print_help();
@@ -692,6 +701,9 @@ fn help_text() -> String {
 /prompts [--extension <name>] - List all available prompts, optionally filtered by extension
 /prompt <n> [--info] [key=value...] - Get prompt info or execute a prompt
 /mode <name> - Set the karmx mode to use ({modes})
+/resume [id] - Browse saved sessions or resume a specific session ID
+/tools - Browse available tools and inspect their inputs
+/context - Show model, session, tools, context and token usage
 /model - Open the model picker (↑↓ select, → thinking effort, tab sidekick)
 /model [name] - Switch models for this session while keeping the same provider
 /model --provider <name> [model] - Switch to a different provider (optionally specifying a model)

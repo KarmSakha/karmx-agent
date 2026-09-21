@@ -111,6 +111,13 @@ fn menu_entries() -> Vec<MenuEntry> {
     let mut entries = vec![
         entry("exit", "Exit the session", Flow::Run),
         entry("help", "Show available commands", Flow::Run),
+        entry("resume", "Search and resume a saved session", Flow::Run),
+        entry("tools", "Browse tools and inspect their inputs", Flow::Run),
+        entry(
+            "context",
+            "Inspect model, context, tools, and token usage",
+            Flow::Run,
+        ),
         entry(
             "new",
             "Start a fresh session (keeps provider, model, extensions)",

@@ -244,6 +244,9 @@ impl GooseCompleter {
             "/mode".to_string(),
             "/model".to_string(),
             "/new".to_string(),
+            "/resume".to_string(),
+            "/tools".to_string(),
+            "/context".to_string(),
             "/sidekick".to_string(),
             "/fusion".to_string(),
         ];
