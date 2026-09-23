@@ -1,0 +1,22 @@
+version: 1.0.0
+title: NeoHorse Local Task
+description: Compact repository task recipe for NeoHorse-1-9B with the typed Leaf tools
+parameters:
+  - key: task
+    input_type: string
+    requirement: required
+    description: The task to complete in the current repository
+
+extensions:
+  - type: platform
+    name: neohorse_leaf
+    display_name: NeoHorse Leaf
+    bundled: true
+
+instructions: |
+  Work only in the current task directory. Inspect the relevant files before editing.
+  Use focused changes, run the most relevant available checks, and report what changed
+  and which checks you ran. If the task is already complete, explain why without
+  changing files. Call tools in order and give a normal final answer when finished.
+
+prompt: "{{ task }}"

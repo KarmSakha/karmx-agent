@@ -64,6 +64,51 @@ OPENAI_API_KEY=sk-...
 
 alternatively, you can just export them in the session where you run the benchmark
 
+For the local NeoHorse endpoint, set both variables from a URL the task container
+can reach. `NEOHORSE_BASE_URL` is the endpoint root without `/v1`:
+
+```bash
+NEOHORSE_API_KEY=your-local-endpoint-key
+NEOHORSE_BASE_URL=http://host.docker.internal:8080
+```
+
+On Docker Desktop, `host.docker.internal` reaches a service forwarded onto the
+Mac host (for example, an SSH tunnel to the Vast inference server). On Linux, make
+the host-gateway name available to task containers or use another private reachable
+address. The NeoHorse runner enables only `neohorse_leaf`, caps runs at eight turns,
+and expects the endpoint to preserve native OpenAI tool-call IDs and tool-role replies.
+It asks the model to make one tool call per response and wait for its result, which
+reduces duplicate parallel inspections. The compact recipe is `recipes/neohorse_local.yaml`.
+The packaged binary targets Linux x86-64; on ARM Macs the runner sets
+`DOCKER_DEFAULT_PLATFORM=linux/amd64` for Harbor task containers. Set that variable
+explicitly if you need a different Docker platform.
+
+```bash
+./evals/harbor/cmd.py run /path/to/karmx \
+  --model neohorse_local/neohorse-1-9b \
+  --tasks terminal-bench/fix-git \
+  --job-name neohorse-smoke --dry-run
+```
+
+Replace the example task with the task or task subset you intend to run.
+
+For a custom task panel stored as Harbor task directories, use `--dataset-path`
+instead of a registry dataset. Training rollouts use the dedicated sampled
+profile (`neohorse_local/neohorse-1-9b-rollout`, temperature 0.8, top-p 0.95,
+presence penalty 0); paired evaluations use the deterministic
+`neohorse_local/neohorse-1-9b-greedy` profile (temperature 0, top-p 1, top-k 0,
+presence penalty 0). These aliases are in the current provider definition and
+require a karmX binary rebuilt from this checkout. The previously packaged Linux
+binary only exposes `neohorse-1-9b`; for that binary, apply the rollout or greedy
+settings at the OpenAI-compatible endpoint.
+
+```bash
+./evals/harbor/cmd.py run /path/to/karmx \
+  --dataset-path /path/to/neohorse-panel \
+  --model neohorse_local/neohorse-1-9b-rollout \
+  --concurrency 4 --max-turns 8 --job-name neohorse-rollout
+```
+
 ## Running a goose benchmark
 
 The `run` subcommand builds a harbor config that uses our `GooseBinaryAgent`
@@ -235,4 +280,3 @@ task?), see the `compare-tasks` skill under `.agents/skills/`. Delegate to
 it with the two job names and a task name and it will read both
 trajectories, the task spec, and the verifier output, then explain the
 mechanism behind the divergence.
-

@@ -14,7 +14,7 @@ from typing import Any
 
 import yaml
 
-from agent import PROVIDER_SECRETS
+from agent import PROVIDER_ENV, PROVIDER_SECRETS
 
 
 HARBOR_DIR = Path(__file__).resolve().parent
@@ -137,9 +137,10 @@ def build_harbor_config(args: argparse.Namespace) -> dict[str, Any]:
     if not goose_binary.is_file():
         raise ValueError(f"--goose-binary does not exist or is not a file: {args.goose_binary}")
 
-    config_yaml, extension_entries = render_goose_config(args.extensions)
-
     provider = args.model.split("/", 1)[0]
+    if provider == "neohorse_local":
+        args.extensions = ["neohorse_leaf"]
+    config_yaml, extension_entries = render_goose_config(args.extensions)
     missing_secrets = [
         key for key in PROVIDER_SECRETS.get(provider, []) if not os.environ.get(key)
     ]
@@ -148,6 +149,14 @@ def build_harbor_config(args: argparse.Namespace) -> dict[str, Any]:
             f"Missing env vars for provider '{provider}': {', '.join(missing_secrets)}. "
             f"Set them in a .env file (cwd or {HARBOR_DIR}) or your shell."
         )
+    missing_provider_env = [
+        key for key in PROVIDER_ENV.get(provider, []) if not os.environ.get(key)
+    ]
+    if missing_provider_env:
+        raise ValueError(
+            f"Missing endpoint configuration for provider '{provider}': "
+            f"{', '.join(missing_provider_env)}. Set these in a .env file or shell."
+        )
 
     agent_kwargs: dict[str, Any] = {
         "goose_binary": str(goose_binary),
@@ -155,7 +164,11 @@ def build_harbor_config(args: argparse.Namespace) -> dict[str, Any]:
         "extension_entries": extension_entries,
         "install_goose_runtime_deps": args.install_goose_runtime_deps,
     }
-    if args.max_turns is not None:
+    if provider == "neohorse_local":
+        agent_kwargs["max_turns"] = (
+            min(args.max_turns, 8) if args.max_turns is not None else 8
+        )
+    elif args.max_turns is not None:
         agent_kwargs["max_turns"] = args.max_turns
 
     job_name = (
@@ -170,6 +183,19 @@ def build_harbor_config(args: argparse.Namespace) -> dict[str, Any]:
         for key in PROVIDER_SECRETS.get(provider, [])
         if os.environ.get(key)
     ] + [f"{key}={value}" for key, value in index_env.items()]
+    container_env_passthrough += [
+        f"{key}=${{{key}}}"
+        for key in PROVIDER_ENV.get(provider, [])
+        if os.environ.get(key)
+    ]
+
+    if args.dataset_path is not None:
+        dataset_path = args.dataset_path.expanduser().resolve()
+        if not dataset_path.is_dir():
+            raise ValueError(f"--dataset-path is not a directory: {dataset_path}")
+        datasets = [{"path": str(dataset_path)}]
+    else:
+        datasets = [dataset_config(args.dataset, args.tasks)]
 
     config: dict[str, Any] = {
         "job_name": job_name,
@@ -189,7 +215,7 @@ def build_harbor_config(args: argparse.Namespace) -> dict[str, Any]:
                 "kwargs": agent_kwargs,
             }
         ],
-        "datasets": [dataset_config(args.dataset, args.tasks)],
+        "datasets": datasets,
     }
     if index_env:
         config["verifier"] = {"env": index_env}
@@ -220,6 +246,10 @@ def cmd_run(args: argparse.Namespace) -> int:
         return 0
 
     env = os.environ.copy()
+    # The packaged karmX binary used by this harness targets Linux x86-64.
+    # On Apple Silicon, Docker Desktop otherwise builds an arm64 task image and
+    # Rosetta cannot launch that binary from the container.
+    env.setdefault("DOCKER_DEFAULT_PLATFORM", "linux/amd64")
     env["PYTHONPATH"] = f"{HARBOR_DIR}{os.pathsep}{env.get('PYTHONPATH', '')}".rstrip(os.pathsep)
     completed = subprocess.run(command, env=env, check=False)
     return completed.returncode

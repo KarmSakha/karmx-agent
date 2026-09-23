@@ -37,3 +37,8 @@ extensions:
     name: codemode
     type: builtin
     timeout: 300
+  neohorse_leaf:
+    bundled: true
+    enabled: false
+    name: neohorse_leaf
+    type: platform

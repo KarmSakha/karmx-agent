@@ -5216,6 +5216,7 @@ dependencies = [
  "fs2",
  "futures",
  "gethostname",
+ "globset",
  "goose-acp-macros",
  "goose-agent",
  "goose-context-management",

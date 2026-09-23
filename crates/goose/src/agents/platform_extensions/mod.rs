@@ -8,6 +8,7 @@ pub mod computer_control;
 pub mod context_engine;
 pub mod developer;
 pub mod ext_manager;
+pub mod neohorse_leaf;
 pub mod orchestrator;
 pub mod scheduler;
 pub mod screen_task;
@@ -181,6 +182,23 @@ pub static PLATFORM_EXTENSIONS: Lazy<HashMap<&'static str, PlatformExtensionDef>
                 unprefixed_tools: true,
                 hidden: false,
                 client_factory: |ctx| Some(Box::new(developer::DeveloperClient::new(ctx).unwrap())),
+            },
+        );
+
+        map.insert(
+            neohorse_leaf::EXTENSION_NAME,
+            PlatformExtensionDef {
+                name: neohorse_leaf::EXTENSION_NAME,
+                display_name: "NeoHorse Leaf",
+                description: "Compact repository tools for NeoHorse coding agents",
+                default_enabled: false,
+                unprefixed_tools: true,
+                hidden: false,
+                client_factory: |ctx| {
+                    Some(Box::new(
+                        neohorse_leaf::NeoHorseLeafClient::new(ctx).unwrap(),
+                    ))
+                },
             },
         );
 

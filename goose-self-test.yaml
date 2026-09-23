@@ -18,6 +18,7 @@ activities:
   - Validate the configurable Databricks AI Gateway path across all inference routes
   - Analyze code structure and parsing capabilities
   - Test extension discovery and management
+  - Validate the NeoHorse Leaf five-tool interface when enabled
   - Test load tool for knowledge injection and discovery
   - Test delegate tool for task delegation (sync and async)
   - Test multi-turn thinking preservation for providers that reject replayed reasoning_content
@@ -228,6 +229,15 @@ prompt: |
   2. Document all available extensions
   3. Test enabling and disabling dynamic extensions (if any available)
   4. Verify extension isolation between enabled extensions
+
+  ### NeoHorse Leaf Testing (when enabled)
+  If `neohorse_leaf` is active, verify that its tools are exactly `read`, `write`, `edit`, `glob`, and `bash`.
+  Work only inside `{{ workspace_dir }}/neohorse_leaf_smoke`:
+  1. In one assistant response, call `write` to create `note.txt` with `before`, then call `read` on that path. Confirm the read sees `before`; this checks execution order. Goose's existing tool-call correlation tests cover preservation of native call IDs.
+  2. Call `edit` to replace the unique text `before` with `after`, then `glob` for `**/*.txt` and confirm `note.txt` appears.
+  3. Call `bash` with a command that changes into this test directory and verifies `note.txt` contains exactly `after`.
+  4. Remove only the test directory you created and record each tool result.
+  If `neohorse_leaf` is not active, mark this check skipped. Do not enable it or contact an endpoint for this check.
 
   Log results to: {{ workspace_dir }}/phase2_extensions.md
   {% endif %}

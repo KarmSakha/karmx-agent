@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import re
 import shlex
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -23,14 +25,32 @@ PROVIDER_SECRETS = {
     "google": ["GOOGLE_API_KEY"],
     "gemini": ["GEMINI_API_KEY"],
     "openrouter": ["OPENROUTER_API_KEY"],
+    "neohorse_local": ["NEOHORSE_API_KEY"],
+}
+
+PROVIDER_ENV = {
+    "neohorse_local": ["NEOHORSE_BASE_URL"],
 }
 
 CONTAINER_GOOSE_PATH_ROOT = "/installed-agent/goose-profile"
 CONTAINER_CONFIG_PATH = f"{CONTAINER_GOOSE_PATH_ROOT}/config/config.yaml"
 CONTAINER_RECIPE_PATH = "/installed-agent/harbor-recipe.yaml"
 CONTAINER_CA_BUNDLE_PATH = "/installed-agent/ca-certificates.crt"
+_TASK_ID_MARKER = re.compile(r"(?m)^NEOHORSE_TASK_ID=([A-Za-z0-9._:-]+)\s*$")
 
 FATAL_GOOSE_NOTIFICATIONS = ("creditsExhausted",)
+
+
+def add_neohorse_rollout_trace(instruction: str, attempt_identity: str) -> tuple[str, str | None]:
+    """Replace the panel's task marker with a stable per-Harbor-attempt trace."""
+    task_match = _TASK_ID_MARKER.search(instruction)
+    if not task_match:
+        return instruction, None
+    task_id = task_match.group(1)
+    episode_id = hashlib.sha256(attempt_identity.encode("utf-8")).hexdigest()[:24]
+    marker = f"NEOHORSE_TRACE episode={episode_id} task={task_id}"
+    cleaned = _TASK_ID_MARKER.sub("", instruction, count=1).lstrip()
+    return cleaned, marker
 
 
 class GooseBinaryAgent(Goose):
@@ -80,7 +100,16 @@ class GooseBinaryAgent(Goose):
             "GOOSE_PATH_ROOT": CONTAINER_GOOSE_PATH_ROOT,
             "GOOSE_DISABLE_KEYRING": "true",
         }
+        if provider == "neohorse_local":
+            env["GOOSE_THINKING_EFFORT"] = "medium"
+            env["KARMX_PROMPT_PROFILE"] = "compact"
+            env["KARMX_EXTENSIONS_ALLOWLIST"] = "neohorse_leaf"
+            env["GOOSE_SHELL"] = "bash"
         for key in PROVIDER_SECRETS.get(provider, []):
+            value = os.environ.get(key)
+            if value:
+                env[key] = value
+        for key in PROVIDER_ENV.get(provider, []):
             value = os.environ.get(key)
             if value:
                 env[key] = value
@@ -187,17 +216,28 @@ class GooseBinaryAgent(Goose):
         )
 
     def _create_recipe_yaml(self, instruction: str) -> str:
+        rollout_trace = ""
+        instruction, trace = add_neohorse_rollout_trace(
+            instruction, str(self.logs_dir.resolve())
+        )
+        if trace:
+            rollout_trace = trace + "\n\n"
         return yaml.dump(
             {
                 "version": "1.0.0",
                 "title": "harbor-task",
                 "description": "harbor task recipe",
-                "instructions": (
+                "instructions": rollout_trace + (
                     "You are given a task and you need to complete it. "
-                    "You are currently executing in a docker container where you are "
-                    "being evaluated on a benchmark for LLM agents. Act autonomously. "
-                    "You will not receive any feedback on your progress, so you must "
-                    "use your own tools to complete the task without any intervention."
+                "You are currently executing in a docker container where you are "
+                "being evaluated on a benchmark for LLM agents. Act autonomously. "
+                "You will not receive any feedback on your progress, so you must "
+                "use your own tools to complete the task without any intervention. "
+                "Use tools sequentially: make at most one tool call per assistant "
+                "response and wait for its result before choosing the next action. "
+                "Do not repeat an inspection or run equivalent searches with another "
+                "tool. After you have enough information, make the required change, "
+                "check it once, and finish with a concise result."
                 ),
                 "prompt": instruction,
                 "extensions": self.extension_entries,

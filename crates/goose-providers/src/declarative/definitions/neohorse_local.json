@@ -1,0 +1,80 @@
+{
+  "name": "neohorse_local",
+  "engine": "openai",
+  "display_name": "NeoHorse Local",
+  "description": "Private OpenAI-compatible endpoint for the local NeoHorse model",
+  "api_key_env": "NEOHORSE_API_KEY",
+  "base_url": "${NEOHORSE_BASE_URL}/v1/chat/completions",
+  "env_vars": [
+    {
+      "name": "NEOHORSE_BASE_URL",
+      "required": true,
+      "secret": false,
+      "primary": true,
+      "description": "Required private endpoint host without /v1, reachable from the agent process. For Harbor containers, use a host address such as http://host.docker.internal:8080 when available."
+    }
+  ],
+  "models": [
+    {
+      "name": "neohorse-1-9b",
+      "context_limit": 8192,
+      "reasoning": false,
+      "thinking_preservation_format": "reasoning_content",
+      "request_params": {
+        "temperature": 0,
+        "top_p": 0.95,
+        "top_k": 20,
+        "min_p": 0,
+        "presence_penalty": 1.5,
+        "max_tokens": 512,
+        "parallel_tool_calls": false,
+        "chat_template_kwargs": {
+          "enable_thinking": true
+        }
+      }
+    },
+    {
+      "name": "neohorse-1-9b-rollout",
+      "context_limit": 8192,
+      "reasoning": false,
+      "thinking_preservation_format": "reasoning_content",
+      "request_params": {
+        "temperature": 0.8,
+        "top_p": 0.95,
+        "top_k": 0,
+        "min_p": 0,
+        "presence_penalty": 0,
+        "max_tokens": 512,
+        "parallel_tool_calls": false,
+        "chat_template_kwargs": {
+          "enable_thinking": true
+        }
+      }
+    },
+    {
+      "name": "neohorse-1-9b-greedy",
+      "context_limit": 8192,
+      "reasoning": false,
+      "thinking_preservation_format": "reasoning_content",
+      "request_params": {
+        "temperature": 0,
+        "top_p": 1,
+        "top_k": 0,
+        "min_p": 0,
+        "presence_penalty": 0,
+        "max_tokens": 512,
+        "parallel_tool_calls": false,
+        "chat_template_kwargs": {
+          "enable_thinking": true
+        }
+      }
+    }
+  ],
+  "supports_streaming": false,
+  "requires_auth": true,
+  "dynamic_models": false,
+  "skip_canonical_filtering": true,
+  "toolshim": false,
+  "preserves_thinking": true,
+  "prompt_profile": "compact"
+}

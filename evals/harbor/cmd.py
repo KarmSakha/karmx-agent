@@ -40,6 +40,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_run = sub.add_parser("run", help="run a benchmark job")
     p_run.add_argument("goose_binary", type=Path, help="path to the goose binary to test")
     p_run.add_argument("--dataset", default=DEFAULT_DATASET)
+    p_run.add_argument(
+        "--dataset-path",
+        type=Path,
+        help="run a local Harbor task-set directory instead of a registry dataset",
+    )
     p_run.add_argument("--model", default=DEFAULT_MODEL)
     p_run.add_argument(
         "--tasks",
