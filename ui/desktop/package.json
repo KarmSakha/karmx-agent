@@ -144,7 +144,7 @@
     "autoprefixer": "^10.5.4",
     "electron": "43.4.0",
     "electron-devtools-installer": "^4.0.0",
-    "eslint": "^9.39.2",
+    "eslint": "^10.10.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "jsdom": "^28.1.0",
